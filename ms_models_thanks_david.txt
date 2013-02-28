@@ -1,0 +1,42 @@
+##constant size, 100 individuals
+
+ms 10 1 -t 3.4 
+
+##expanding population
+#-->expanding after cessation of treatment in 1998; assumes 5gens/year, with a current pop size of 10,000 and a theta=3.4
+#The population is constant until 1988 after which the population is 1/10th its original size for 10 years (some sort of treatment or MDA).
+#In 1998 the treatment is stopped and the population grows exponentially back to its original (pre 1988 size) of 10,000.
+#10,000-->1,000-->10,000
+#growth rate = − ln(1,000/40,000)/0.001625 
+
+ms 100 1 -t 3.4 -G 1416 -eG .001625 0.0 -eN .001625 .1 -eN .002875 1.0 
+
+##bottleneck population
+#-->population is a constant size until treatment in 1998 which resulted in a exponential decrease in population size.
+#10,000-->1000
+#In 2008 the population ceased to decrease and is now at a stable size which is 1/10th the population size in 1998.
+#growth rate = − ln(10,000/4,000)/0.01625
+
+ms 100 1 -t .304 -G -56 -eN .00375 1.0 -eG .01625 0.0 -eN .01625 10
+
+
+##seq-gen ACGC on a genealogy
+-T | tail +4 | grep -v // >treefile
+seq-gen -mHKY -l 40 -s 0.2 <treefile >seqfile
+
+##values for 2008
+
+# No MDA
+ms 100 -10 -t 15
+
+#30% effective
+ms 100 1 -t 15 -G 791 -eG .00005102 0.0 -eN 0.000178571429 .2401 -eN 0.000191326531 .343 -eN 0.000204081633 .49 -eN 0.000216836735 .7 -eN .000229 2.0
+
+#50% effective
+ms 100 1 -t 15 -G 791 -eG .00005102 0.0 -eN 0.000178571429 .0625 -eN 0.000191326531 .125 -eN 0.000204081633 .25 -eN 0.000216836735 .5 -eN .000229 2.0
+
+#90% effective
+ms 100 1 -t 15 -G 791 -eG .00005102 0.0 -eN 0.000178571429 .0001 -eN 0.000191326531 .001 -eN 0.000204081633 .01 -eN 0.000216836735 .1 -eN .000229 2.0
+
+
+
