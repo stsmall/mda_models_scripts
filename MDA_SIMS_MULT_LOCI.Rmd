@@ -1,0 +1,18 @@
+```MDA_SIMS_MULT_LOCI```
+========================================================
+
+```{r, MS_SIMS_MULTLOCI, eval=TRUE}
+mtajd <- function( texpansion0=50/(8.438/(4*.0000342)),texpansion1=55/(8.438/(4*.0000342)), rf=5, nloci=20, MDA_N=.001) {
+  # theta and rho values are randomly assigned from uniform distrib.
+  thetavalues <- runif(nloci,min=5.0, max=20.) 
+	rhovalues <- runif(nloci,max=10.)
+	paramvalues <- cbind(thetavalues,rhovalues)
+	# With the following two lines, the theta and rho values are piped to mstbs 
+	mscall <- paste( "| ms 100 ",nloci," -t tbs -r tbs 1000 -eN",texpansion0,MDA_N,"-eN",texpansion1,rf,"| sample_stats | cut -f 6 >tajd.out") 
+	write(t(paramvalues),file=mscall)
+   tajd <- scan("tajd.out", quiet=TRUE)
+   mtajd <- mean(  tajd )
+   mtajd
+  }
+mtajd()
+```

@@ -1,0 +1,103 @@
+Title
+========================================================
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring web pages (click the **MD** toolbar button for help on Markdown).
+
+When you click the **Knit HTML** button a web page will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+Prev=.10
+infected_human_population_size=5000
+avg_strains_per_infected=seq(2,60,10)
+WB_adults=avg_strains_per_infected*Prev*infected_human_population_size
+proportion_killed<-c(1,.7,.5,.25,.10,.01)
+years<-c(0,4.374554,4.91083,5.653901,6.290397,7.273105)
+#30% years=4.374554
+#50% years=4.91083
+#75% years=5.653901
+#90% years=6.290397
+#99% years=7.273105
+
+##functions##
+K_haps<-function(haps,samples){
+  thetas<-haps/log(samples)
+  return(thetas)
+}
+HAPS<-function(sub_POP,N_MDA){
+  x<-sample(N_MDA,sub_POP,replace=TRUE)
+  y<-unique(x)
+  z<-length(y)
+  return(z)
+}
+call_MS<-function(nsample){  
+  mscall<- paste( "| ms ",nsample," 1 -t 8.342 >N_MDA.out")
+  #write(t(thetas),file=mscall)
+  write(mscall,file=mscall)
+  N_MDA<-scan("N_MDA.out", what ="character",quiet=TRUE)}
+  return(N_MDA)
+}
+
+TAJD<-function(sub_POP){
+ x<-sample(N_MDA,sub_POP,replace=TRUE)
+ stats<-paste( "| sample_stats < N_MDA.out >tajd.out")
+ #stats<-paste( "| sample_stats < N_MDA.out | cut -f 2 >pi.out")
+ write(stats,file=stats) 
+  }
+
+##how long to treat to kill X% of the population
+time_years<-function(years_treated){
+  age_dist_WB<-rnorm(1000,5,1)
+  age_dist_WB<-sort(age_dist_WB)
+  age_CDF<-ecdf(age_dist_WB)
+  age_CDF(age_dist_WB)
+  #from proportion to years
+  #percent_pop<-which(age_CDF(age_dist_WB)==percent_killed)
+  #years<-age_dist_WB[percent_pop]
+  #from years to proportion
+  percent<-max((which(age_dist_WB<years_treated)))
+  proportion_killed<-age_CDF(age_dist_WB[percent])
+  #return(years)
+  return(proportion_killed)
+}
+
+###begin code
+hap_means<-data.frame()
+temp_means<-c()
+for (i in WB_adults){
+  print(i)
+#thetas<-K_haps(haps,i)
+for (j in proportion_killed){
+  print(j)
+sub_POP<-round((i*j))
+hap_mean<-replicate(100,sapply(sub_POP,function(x) HAPS(sub_POP,call_MS(i))))
+temp_means<-append(temp_means,(mean(hap_mean)))
+hap_means1<-rbind(hap_mean)
+}
+hap_means<-rbind(hap_means,temp_means)
+temp_means<-c()
+}
+rownames(hap_means)<-WB_adults
+colnames(hap_means)<-years
+
+
+##plotting functions
+plot(years,hap_means[6,],type="b", xlab="Years Treatment",ylab="Strains",ylim=c(1,130))
+axis(1,at=c(0,1,2,3,4,5,6,7),labels=c(0,1,2,3,4,5,6,7))
+points(years,hap_means[5,],type="b",col="blue")
+points(years,hap_means[4,],type="b",col="green")
+points(years,hap_means[3,],type="b",col="purple")
+points(years,hap_means[2,],type="b",col="orange")
+points(years,hap_means[1,],type="b",col="red")
+legend("topright",c("25k","20k","15k","10k","5k","1k"),fill=c("black","blue","green","purple","orange","red"),cex=.5)
+#plot(log10(POP),hap_mean[,1],type="l",col="light gray",lwd=1,lty=6, xlim=c(6,3))
+#for (i in 1:100){lines(log10(POP),hap_mean[,i],type="l",col="light gray",lwd=1,lty=6)}
+#lines(log10(POP),hap_means,type="l",col="dark red", lwd=2)
+#plot(age_dist_WB,age_CDF(age_dist_WB),type='h')
+```
+
+You can also embed plots, for example:
+
+```{r fig.width=7, fig.height=6}
+plot(cars)
+```
+
