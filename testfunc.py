@@ -10,10 +10,9 @@ from math import pi, exp, sqrt
 import math
 import subprocess, re, random
 from sklearn.metrics.pairwise import euclidean_distances
-import argparse
 import copy
-prev=[.1,.1,.05]
-hostpopsize=[100,100,100]
+prev=[.1]
+hostpopsize=[100]
 
 
 class AutoVivification(dict):
@@ -31,9 +30,9 @@ def migration_matrix(villages):
     #distance_m is list [1000,1500] such that distance_m[0] is between 1 & 2
     #distance_m[1] is between 1 & 3 etc ...
     #villages is int 3; such that len(distance_m) == ((villages)*(villages-1)/2)
-    m = 0.0001
-    Ne = 10000
-    distance_m = [1000,1500,500]
+    m = 0.0001 #migration rate
+    Ne = 10000 #effective size
+    distance_m = [1000] #distance in meters between 2 villages
     if villages > 4: 
         raise ValueError("only handles 4 villages ATM")
     elif villages < 4:
@@ -67,10 +66,10 @@ referenced in the dictionary recording the metapopulation information
     metapop_init = [100,100] #2 metapops
     theta = [metapop1,metapop2]    
     ''' 
-    theta = [5,6,2]
-    theta_anc = 12
-    ta = 0.05
-    t12 = 0.05
+    theta = [5] #theta for pop
+    theta_anc = 12 #theta for ancestral
+    ta = 0.05 #time for ancestral
+    t12 = 0.05 #time for pop 1 and 2
     t23 = 0.05
     t34 = 0.05
     if len(worm_popsize) == 1: #1 village
@@ -172,46 +171,51 @@ def worm_burden(prev,hostpopsize):
         meta += 1 #advances the meta counter
         pop = 1 #resets pop counter for new meta
     transmission_mat,dispersal=trans_init(prev,hostpopsize)
-    return meta_popdict, hap_pop, transmission_mat #dictionary, max(max(hap_pop))
+    return meta_popdict,hap_pop,transmission_mat,dispersal #dictionary, max(max(hap_pop))
     
-#-------    
-    
+ 
 def maturation(meta_popdict, hap_pop, month):
     '''step all individuals forward, after deaths. Kill them then move, then births'''    
 
+    # stat collection and counters    
+#    rzero_freq = []
+    sum_adults = 0
+    
+    # Survival; choose fixed or density dependent
+
     # density dependent mortality    
+#    Km = 100
+#    bm = 1.0/Km #K is carrying capacity
+#    Sm = 0.99
+#    am = (Sm*bm)/math.exp(-1) #where S is maximum survival
+#    sum_adults = 
+#    mort_A = am * sum(len(A_1 ... A_8)) * math.exp(-bm * sum(len(A_1 ... A_8))) #Ricker fx 
 
-#    b = 1.0/K #K is carrying capacity
-#    S = 0.99
-#    a = (S*b)/exp(-1) #where S is maximum survival
-#    mort_A = a * sum(len(A_1 ... A_8)) * exp(-b * sum(len(A_1 ... A_8))) #Ricker fx 
-
-# fixed mortality actually prob of surviving  
-
+    # fixed mortality, actually prob of surviving  
     mort_A = .88 #year
     mort_J = .86 #month
     mort_M = .90 #month
-    
-# density dep fecundity   
 
-#    b = 1.0/K #K is carrying capacity
-#    S = 0.99
-#    a = (S*b)/exp(-1) #where S is maximum survival
-#    fecund = 20 * a * sum(len(A_1 ... A_8)) * exp(-b * sum(len(A_1 ... A_8))) #Ricker fx 
+    # Fecundity choose fixed or density dependent   
 
-# fixed fecundity     
+    # density dep fecundity   
+#    Kf = 100
+#    bf = 1.0/Kf #K is carrying capacity
+#    Sf = 0.99
+#    af = (Sf*bf)/math.exp(-1) #where S is maximum survival
+#    sum_adults = 
+#    fecund = 20 * af * sum(len(A_1 ... A_8)) * math.exp(-bf * sum(len(A_1 ... A_8))) #Ricker fx 
+
+    # fixed fecundity     
 
     fecund = 20   
 
-# mutation
-
+    # Locus info, for multiple loci this should be a list
     bp = 13000
     pmut = 7.6E-8
     frac_gen = 0.125 #gen is 8 months so 1 month is .125 of a generation
-    
-    rzero_freq = []
-    hap_freq = []
-   #since this month to month 
+
+    #since this month to month 
     if month%12 is 0: #this denotes 1 year has passed so adults mature to next age class 
         for mpop in meta_popdict.keys(): #villages
             for npop in meta_popdict[mpop].keys(): #inf
@@ -248,23 +252,26 @@ def maturation(meta_popdict, hap_pop, month):
                 meta_popdict[mpop][npop]["MF_4"] = random.sample(meta_popdict[mpop][npop]["MF_3"],int(round(len(meta_popdict[mpop][npop]["MF_3"])*mort_M)))
                 meta_popdict[mpop][npop]["MF_3"] = random.sample(meta_popdict[mpop][npop]["MF_2"],int(round(len(meta_popdict[mpop][npop]["MF_2"])*mort_M)))
                 meta_popdict[mpop][npop]["MF_2"] = random.sample(meta_popdict[mpop][npop]["MF_1"],int(round(len(meta_popdict[mpop][npop]["MF_1"])*mort_M)))
+
                 #count A_1                
-                rzero_freq.append([i[0]for i in meta_popdict[mpop][npop]["A_1"]])
+#                rzero_freq.append([i[0]for i in meta_popdict[mpop][npop]["A_1"]])
                 #reset A_1 since they are new from Juv12
+
                 for subl in meta_popdict[mpop][npop]["A_1"]:
                     subl[0] = random.random()
-                #MF_1
+
+                # birth of MF_1
                 mf1 = []                
                 for i in range(1,8):
                     for j in meta_popdict[mpop][npop]["A_{}".format(i)]:
                         mf1.append([j]*np.random.poisson(fecund)) 
                 mf = sum(mf1,[])
-                #set up mutation        
+                
+                #mutation in new mf        
                 num_muts = np.random.binomial(len(mf), bp * pmut * frac_gen)
                 if num_muts != 0:
                     mf,hap_pop = mutation(mf,hap_pop,num_muts)
                 meta_popdict[mpop][npop]["MF_1"] = mf
-                hap_freq.append([i[1]for i in mf])
                 
     else: #a year has not passed on months, juveniles and MF move to next age class
         for mpop in meta_popdict.keys():        
@@ -295,27 +302,31 @@ def maturation(meta_popdict, hap_pop, month):
                 meta_popdict[mpop][npop]["MF_4"] = random.sample(meta_popdict[mpop][npop]["MF_3"],int(round(len(meta_popdict[mpop][npop]["MF_3"])*mort_M)))
                 meta_popdict[mpop][npop]["MF_3"] = random.sample(meta_popdict[mpop][npop]["MF_2"],int(round(len(meta_popdict[mpop][npop]["MF_2"])*mort_M)))
                 meta_popdict[mpop][npop]["MF_2"] = random.sample(meta_popdict[mpop][npop]["MF_1"],int(round(len(meta_popdict[mpop][npop]["MF_1"])*mort_M)))
-                #count A_1                
-                rzero_freq.append([i[0]for i in meta_popdict[mpop][npop]["A_1"]])
-                #reset A_1
+
+                #count freq of random numbers in A_1 to calculate R0                
+#                rzero_freq.append([i[0]for i in meta_popdict[mpop][npop]["A_1"]])
+                
+                #reset A_1 random number to keep track of R0 calculation
                 for subl in meta_popdict[mpop][npop]["A_1"]:
                     subl[0] = random.random()
-                # MF_1
+
+                # birth of MF_1
                 mf1 = []                
                 for i in range(1,8):
                     for j in meta_popdict[mpop][npop]["A_{}".format(i)]:
                         mf1.append([j]*np.random.poisson(fecund)) 
                 mf = sum(mf1,[])
-                #set up mutation        
+                
+                # mutation in new MF_1 population         
                 num_muts = np.random.binomial(len(mf), bp * pmut * frac_gen)
                 if num_muts != 0:
                     mf,hap_pop = mutation(mf,hap_pop,num_muts)
                 meta_popdict[mpop][npop]["MF_1"] = mf
-                hap_freq.append([i[1]for i in mf])
 
     #this will calculate for the enitre meta and each inf
-    return meta_popdict, hap_pop, {x:rzero_freq.count(x) for x in rzero_freq},{y:hap_freq.count(y) for y in hap_freq}  
-    
+    #return meta_popdict, hap_pop, {x:rzero_freq.count(x) for x in rzero_freq},{y:hap_freq.count(y) for y in hap_freq}  
+    return meta_popdict, hap_pop, sum_adults     
+
 def mutation(mf,hap_pop,num_muts):
    '''this is run every time the prob of a mutation is true, updates seq_base'''   
    #calculate the number of mutations expected
@@ -327,13 +338,7 @@ def mutation(mf,hap_pop,num_muts):
        new_hap.append(new_allele)
        hap_pop.append(new_hap)
        mf[m][1] = len(hap_pop)-1
-   return mf, hap_pop
-
-   
-   
-   
-   
-meta_popdict,hap_pop,transmission_mat=worm_burden(prev,hostpopsize)   
+   return mf, hap_pop  
    
 def transmission(transmission_mat,meta_p,meta_popdict,dispersal):    
     '''this has a continious prob using a gillepsie algorithm to get the waiting time between transmission events'''    
@@ -383,4 +388,74 @@ def new_infection(transmission_mat, meta_p,dpop,newpop,dispersal):
     #if pop dies it is N in the transmission_mat, it is removed from meta_popdict
      
     return transmission_mat
+    
+def wb_sims(numberGens):
+    '''this will call other functions to intialize, then functions from the life cycle
+    num_gen: how long to run
+    prevalance: .80 is 80%
+    hostpop_size: number of potentially infected hosts'''
+    f = open("sims.out",'w')
+    f.write("time\tvillage\tnpops\tnumA1\tnumA2\tnumA2\tnumA4\tnumA5\tnumA6\tnumA7\tnumA8\tnumMF\ttrans_event\tRzero\tnum_uniqHapsAdult\tnum_uniqHapsMF\n")
+    
+    #initialize
+    meta_popdict, hap_pop, transmission_mat, dispersal = worm_burden(prev, hostpopsize)  
+    #set counters
+    time_hours = 0 #hour counter for months
+    bites_person = 0 #counter for bites
+    MFpos_mosq = 0 #counter for infected mosquitoes
+    month = 0 #keep track of months for maturation
+    #set empty recording variables
+    sum_adults = []
+    #how long to run the simulation
+    sim_time = numberGens * 10 * 720 #gens per year are 1.2, 12/1.2 is 10 months for 1 generation    
+    
+    #gillespie: rates/hour
+    ##for 1 village
+    events = ["bite", "infbite","L3_transmission"] #what can happen
+    #rate of bite is: 20 bites per person per month * hostpopsize / 720 = bites/hour; rate_b = (20.00*hostpopsize[0])/720   
+    #rate of bites that have MF: rate of bite * prev * prob pickup MF; rate_ib = rate_b * len(meta_popdict.keys()) * 0.37 
+    #rate of transmission: rate_ib * number_L3 * reinjected to new host; number_L3 = 4.395(1-exp^-(.055(m))/4.395)^2; leave with bite = .414; reinjected = .32; m=(sum[donor["MF"]]/235)/50    
+    #(sum[allMFstages]/235)/50 number of MF in 20ul of blood 235ml is 5% of total body blood and there are 50*20ul in 1 ML
+    
+    #for 2 villages there would be an extra rate category determining the rate of migration of hosts between 2 villages
+    #events = ["bite1","bite2",infbite1,infbite2,L3trans1,L3trans2,Hostmig]
+    while time_hours <= sim_time:
+        rates = [2.7, 0.7992, 0.28] #rates of events per hour bites, Y, Z
+#        rb = 20*hostpopsize[0]/720.0
+#        rib = rb * len(meta_popdict["meta_1"].keys()) 
+#        mf = 22.5 #(sum(allMF stages)/235)/50
+#        trL3 = rib * (4.395*(1-math.exp((.055*(mf))/4.395))**2) * 0.13248
+#        rates = [rb,rib,trL3]
+        random_t = np.random.uniform(0,1,len(rates)) #vector of random variables
+        wait_t = -(np.log(random_t))/rates #wait time to next event
+        event_t = np.argmin(wait_t) #which event has the shortest wait time
+        time =+ wait_t[event_t] #update time
+        if events[event_t] is "bite":
+            bites_person += 1
+        elif events[event_t] is "infbite":
+            MFpos_mosq += 1
+            bites_person += 1
+        elif events[event_t] is "L3_transmission":
+            meta_p = random.choice(meta_popdict.keys())
+            meta_popdict, transmission_mat = transmission(transmission_mat,meta_p)
+            bites_person += 1
+            MFpos_mosq += 1
+        #update times
+        time_hours += time
+        if time_hours >= 720*month: #each month is survival life cycle
+            month += 1  #next month counter          
+            meta_popdict, hap_pop, rzero_freq, hap_freq = maturation(meta_popdict,hap_pop,month) #update matrices    
+            #sum data for month and print to out file
+            for metap in meta_popdict.keys():
+                sum_adults = []                
+                sum_adults = sum_adults + [0]*9             
+                for npop in metap:
+                    for i in range(0,7):
+                        sum_adults[i] += len(npop["A_{}".format(i+1)])
+                    for j in range(1,12):
+                        sum_adults[8] += len(npop["MF_{}".format(j)])
+                f.write("%i\t%s\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%f \t%i\n")%(month,metap,len(metap.keys()),sum_adults[0],sum_adults[1],sum_adults[2],sum_adults[3],sum_adults[4],sum_adults[5],sum_adults[6],sum_adults[7],sum_adults[8],0,np.mean(rzero_freq.values()),len(hap_freq.keys()))
+        f.close()
+
+#prevelance: float(len(meta_popdict["meta_1"].keys()))/hostpopsize[0]
 

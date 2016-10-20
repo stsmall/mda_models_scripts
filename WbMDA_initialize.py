@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Jan 22 12:56:02 2016
-
+A simulation to examine population genetic statistics in a epidemiological setting
+incorporating historical demographic history in the parasite to account for observed patterns of genetic diversity.
+There is a ridiculous number of options to set so see --help.
+NOTE: If you want to use the gillepsie algorithm invoked by --continuous then it can only be 
+a sinlge village since I couldnt figure out how to sync the times with waiting times. 
+For multiple villages time is in discrete units
 @author: stsmall
 """
 #install anaconda
 import numpy as np
 from math import pi, exp, sqrt
-import math
 import subprocess, re, random
 from sklearn.metrics.pairwise import euclidean_distances
 import argparse
@@ -36,7 +40,7 @@ def get_args():
     parser.add_argument('-ta','--timeA',type=int, default=0.05)
     parser.add_argument('-m', '--migration',type=int,default=.0001,help="migration rate between hostpops")
     parser.add_argument('-N', '--Ne',type=int,default=10000,help="effective population size")
-    #class wblifecycle
+    #class wblifecycles
     parser.add_argument('-ma','--mortalityAdults',type=int,default=0.8863848717161292,help="adult worms dies at rate 0.01 per month or survive at .99")
     parser.add_argument('-mj','--mortalityJuv',type=int,default=0.865880173963825,help="prob that juv makes it to adult is 0.2 or 0.8177651 per month")
     parser.add_argument('-mf','--mortalityMF',type=int,default=0.90,help="MF die at rate 0.10 per month or survive at 0.90")
@@ -44,7 +48,8 @@ def get_args():
     parser.add_argument('-u','--mutation',type=int,default=7.6E-8,help="")
     parser.add_argument('-g','--generations',type=int,default=0.125,help="generation time in years")
     parser.add_argument('-bp','--basepairs',type=int,default=13000,help="")
-
+    parser.add_arguement('-cont','--continuous',action='store_true',help='runs transmission as continuous using gillespie algorithm and state dependent rates. This only works for 1 village and invoking will default everything to 1 village')
+    parser.add_arguement('-hostmig','--host_migrationrates', help="list of host migration rates between villages per month")
     args = parser.parse_args()
     return args
 
@@ -81,6 +86,8 @@ class wbinit:
         self.time34 = args.time34
         self.migration = args.migration
         self.Ne = args.Ne
+        self.continuous = args.continuous
+        self.hostmig = args.host_migrationrates
 
     def migration_matrix(self,villages):
         '''calculated a migration matrix for use with ms (hudson 2000) from euclidian
@@ -241,13 +248,6 @@ class wbinit:
             pop = 1 #resets pop counter for new meta
         transmission_mat,dispersal=self.trans_init(self.prev,self.hostpopsize)
         return meta_popdict, hap_pop, transmission_mat #dictionary, max(max(hap_pop))
-
-#def main():
-#    args = get_args()
-#    wb = wb_init(args)
-#    wb.worm_burden()
-#if __name__ == '__main__':
-#    main()
 
 #----------------------------------------------------------------------------
 # life cycle
@@ -470,7 +470,7 @@ class wbsims:
     def __init__(self,args):
         self.numberGens = self.numberGens
         
-    def wb_sims(self):
+    def wb_cont(self,numberGens):
         '''this will call other functions to intialize, then functions from the life cycle
         num_gen: how long to run
         prevalance: .80 is 80%
@@ -479,38 +479,54 @@ class wbsims:
         f.write("time\tvillage\tnpops\tnumA1\tnumA2\tnumA2\tnumA4\tnumA5\tnumA6\tnumA7\tnumA8\tnumMF\ttrans_event\tRzero\tnum_uniqHapsAdult\tnum_uniqHapsMF\n")
         
         #initialize
-        meta_popdict, hap_pop = wbinit.worm_burden() #[.8,.1] [100,1000] [2000]   
-        transmission_mat, dispersal = wbinit.trans_init()
-
-        gens = 0
-        gen = 0
-        month = 1
-        sum_adults = []    
-        #iterate
-        #gillespie
-        #rates/hour
-        rates = [2.5,2.6,.001]    
-        wait_t = np.random.uniform(0,1,len(rates))
-        event = np.argmin(rates*wait_t)
+        meta_popdict, hap_pop, transmission_mat, dispersal = self.worm_burden([.8], [100])  
+        #set counters
+        time_hours = 0 #hour counter for months
+        bites_person = 0 #counter for bites
+        MFpos_mosq = 0 #counter for infected mosquitoes
+        month = 0 #keep track of months for maturation
+        #set empty recording variables
+        sum_adults = []
+        #how long to run the simulation
+        sim_time = numberGens * 10 * 720 #gens per year are 1.2, 12/1.2 is 10 months for 1 generation    
         
-        #bites/person/hour 2000/month 720 hours/month = 1.25 bites per hour
-        #bites per hour
-        #bites on infet = prev 
-        #prob of MF = number of MF in inf
-        #prob MF-L3 = number of MF in inf * maturity
-    
-        while gens <= self.numberGens*720:    
-            wait_time = -math.log(random.uniform(0,1)/1)       
-            if random.uniform(0,1) <= bite_trans:
-                meta_p = random.choice(meta_popdict.keys())
-                meta_popdict, transmission_mat = wblifecycle.transmission(transmission_mat,meta_p)
-            else:
+        #gillespie: rates/hour
+        ##for 1 village
+        events = ["bite", "infbite","L3_transmission"] #what can happen
+        #rate of bite is: 20 bites per person per month * hostpopsize / 720 = bites/hour; rate_b = (20.00*hostpopsize[0])/720   
+        #rate of bites that have MF: rate of bite * prev * prob pickup MF; rate_ib = rate_b * len(meta_popdict.keys()) * 0.37 
+        #rate of transmission: rate_ib * number_L3 * reinjected to new host; number_L3 = 4.395(1-exp^-(.055(m))/4.395)^2; leave with bite = .414; reinjected = .32; m=(sum[donor["MF"]]/235)/50    
+        #(sum[allMFstages]/235)/50 number of MF in 20ul of blood 235ml is 5% of total body blood and there are 50*20ul in 1 ML
+        
+        #for 2 villages there would be an extra rate category determining the rate of migration of hosts between 2 villages
+        #events = ["bite1","bite2",infbite1,infbite2,L3trans1,L3trans2,Hostmig]
+        while time_hours <= sim_time:
+            rates = [2.7, 0.7992, 0.28] #rates of events per hour bites, Y, Z
+    #        rb = 20*hostpopsize[0]/720.0
+    #        rib = rb * len(meta_popdict.keys())
+    #        mf = 22.5 #(sum(allMF stages)/235)/50
+    #        trL3 = rib * (4.395*(1-math.exp((.055*(mf))/4.395))**2) * 0.13248
+    #        rates = [rb,rib,trL3]
+            random_t = np.random.uniform(0,1,len(rates)) #vector of random variables
+            wait_t = -(np.log(random_t))/rates #wait time to next event
+            event_t = np.argmin(wait_t) #which event has the shortest wait time
+            time =+ wait_t[event_t] #update time
+            if events[event_t] is "bite":
                 bites_person += 1
-            gens += wait_time
-            gen += wait_time        
-            if gen >= 720*month: #hours per month
-                month += 1            
-                meta_popdict, hap_pop, rzero_freq, hap_freq = wblifecycle.maturation(meta_popdict,hap_pop,month)    
+            elif events[event_t] is "infbite":
+                MFpos_mosq += 1
+                bites_person += 1
+            elif events[event_t] is "L3_transmission":
+                meta_p = random.choice(meta_popdict.keys())
+                meta_popdict, transmission_mat = self.transmission(transmission_mat,meta_p)
+                bites_person += 1
+                MFpos_mosq += 1
+            #update times
+            time_hours += time
+            if time_hours >= 720*month: #each month is survival life cycle
+                month += 1  #next month counter          
+                meta_popdict, hap_pop, rzero_freq, hap_freq = self.maturation(meta_popdict,hap_pop,month) #update matrices    
+                #sum data for month and print to out file
                 for metap in meta_popdict.keys():
                     sum_adults = []                
                     sum_adults = sum_adults + [0]*9             
@@ -519,9 +535,23 @@ class wbsims:
                             sum_adults[i] += len(npop["A_{}".format(i+1)])
                         for j in range(1,12):
                             sum_adults[8] += len(npop["MF_{}".format(j)])
-                f.write("%i\t%s\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%f \t%i\n")%(month,metap,len(metap.keys()),sum_adults[0],sum_adults[1],sum_adults[2],sum_adults[3],sum_adults[4],sum_adults[5],sum_adults[6],sum_adults[7],sum_adults[8],0,np.mean(rzero_freq.values()),len(hap_freq.keys()))
-        f.close()
+                    f.write("%i\t%s\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%i\t%f \t%i\n")%(month,metap,len(metap.keys()),sum_adults[0],sum_adults[1],sum_adults[2],sum_adults[3],sum_adults[4],sum_adults[5],sum_adults[6],sum_adults[7],sum_adults[8],0,np.mean(rzero_freq.values()),len(hap_freq.keys()))
+            f.close()
+        def wb_discrete(self,numberGens):
     
+def main():
+    args = get_args()
+    if self.continuous: #make certain only 1 village is passed
+        if len(self.hostpopsize) > 1: 
+            raise ValueError("invoking continuous will only use 1 village")
+        wbsims.wb_cont(self.numberGens)
+    else:
+        wbsims.wb_discrete(self.numberGens)
+    
+if __name__ == '__main__':
+    main()
+    
+##Extra infor for worms
     #   return output_table.txt, sample.ms.out #in ggplot2 format for easy plotting, ms style with the first seq all 0's to pipe through ms2dna     
     # -t 2358.4794411347116 -eN 6.6821231193e-06 0.01572188706250533 -eN 1.42572368508e-05 0.00040268391361331134 -eN 2.2844591757e-05 0.00035830347485127096 -eN 3.2579677677e-05 0.00033732875077569337 -eN 4.3615813734e-05 0.00037284734435455506 -eN 5.6126628747000005e-05 0.00046205198060262633 -eN 7.0309283646e-05 0.0005462373570481679 -eN 8.6387439486e-05 0.0005799713845657212 -eN 0.000104614225461 0.0005540858410826578 -eN 0.000125276902926 0.0005296681469822175 -eN 0.00017525486667000002 0.0006835004731284024 -eN 0.00023948268963 0.0010190469552510712 -eN 0.00032202527898000005 0.001383597270671466 -eN 0.0004281042193500001 0.0016691809241864753 -eN 0.00056442934239 0.0020381379966736206 -eN 0.0007396248487800001 0.002753402774170087 -eN 0.0009647741508000001 0.003985880273745958 -eN 0.00125412371565 0.005853123192477116 -eN 0.00162597558966 0.00812486945657527 -eN 0.0021038555238 0.009899002633495827 -eN 0.0027180012207 0.010009088398246529 -eN 0.0035072597436 0.007449897915795466 -eN 0.004521557328 0.002036698834187558 -eN 0.0058250666766 1.0000330198024472
     '''at each year collect all the seq from the MF and store them. at end transform them back to binary '001001010'
@@ -532,11 +562,10 @@ class wbsims:
     ---the waiting time to the first event is an exponential with rate and time
     ---the waiting time to the nth event is a gamma distribution
     
-    each population receives 10 bites per month from mosquitoes
-        proportion of these are anopheles vs culex will determine which uptake fx to use
-    proportion of mosquitoes that pick up MF when biting infected host .37; 10 bites/month per person on avg
+    -each person receives 10 bites per month from mosquitoes, proportion of mosquitoes that pick up MF when biting infected host .37; 10 bites/month per person on avg
         3.7 of those bites pick up MF; 1 in every 2.7
-    uptake rate in mosquito determines the number of L3 produced from number of MF in 20ul blood. Nmf/50 is number in 20ul blood
+    -proportion of these bites that are anopheles vs culex will determine which uptake function to use
+        -uptake rate in mosquito determines the number of L3 produced from number of MF in 20ul blood. Nmf/50 is number in 20ul blood
         culex: L3 = Ks1(1-exp^-(r1*m/Ks1))
             where L3 is the number of L3 produced; m is the number of MF per 20ul, r1 is the rate of development with more MF ingested
             Ks1 is the max limiting value of L3 developing.
