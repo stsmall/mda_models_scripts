@@ -358,7 +358,6 @@ def maturation(meta_popdict, hap_pop, month):
     #this will calculate for the enitre meta and each inf
     rzero_freq = sum(rzero_freq,[])
     hap_freq = sum(hap_freq,[])
-    #{x:rzero_freq.count(x) for x in rzero_freq},{y:hap_freq.count(y) for y in hap_freq}  
     
     return meta_popdict, hap_pop, [sum_adult_vil,sum_juv_vil,sum_mf_vil],{x:rzero_freq.count(x) for x in rzero_freq},{y:hap_freq.count(y) for y in hap_freq}     
 
@@ -489,5 +488,28 @@ def wb_sims(numberGens):
 #prevelance: float(len(meta_popdict["meta_1"].keys()))/hostpopsize[0]
 
 #if host dies, blank all the Wb worms but leave the pop to become reinfected, this should happen during the year maturation period and all classes will just then = []
-#for prev need to count the number of pops with > worms or >0 MF
+
+#                adult = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['A_1','A_2','A_3','A_4','A_5','A_6','A_7','A_8']}
+#                juv = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['J_1','J_2','J_3','J_4','J_5','J_6','J_7','J_8','J_9','J_10','J_11','J_12']}
+#                mf = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['MF_1','MF_2','MF_3','MF_4','MF_5','MF_6','MF_7','MF_8','MF_9','MF_10','MF_11','MF_12']}
+#                sum_adult = sum(adult_vil.values())
+#                sum_juv = sum(juv_vil.values())
+#                sum_mf = sum(mf_vil.values())
+
+for mp in meta_popdict.keys():
+    if meta_popdict[mp].values()
+prev += 1
+
+
+
+
+
+
+
+
+
+
+
+
+
 
