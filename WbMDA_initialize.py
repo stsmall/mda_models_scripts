@@ -581,4 +581,15 @@ if __name__ == '__main__':
     proportion of L3 that leave mosquito with bite 0.414; 1 in every 2.4
     proportion of L3 that enter the host 0.32; 1 in every 3.125
     
+    #unused gillespie:
+        #random_t = np.random.uniform(0,1,len(rates)) #vector of random variables
+        #wait_t = -(np.log(random_t))/rates #wait time to next event
+        #event_t = np.argmin(wait_t) #which event has the shortest wait time
+        #time =+ wait_t[event_t] #update time
+        #rate of bite is: 20 bites per person per month * hostpopsize / 720 = bites/hour; rate_b = (20.00*hostpopsize[0])/720   
+        #rate of bites that have MF: rate of bite * prev * prob pickup MF; rate_ib = rate_b * len(meta_popdict.keys()) * 0.37 
+        #rate of transmission: rate_ib * number_L3 * reinjected to new host; number_L3 = 4.395(1-exp^-(.055(m))/4.395)^2; leave with bite = .414; reinjected = .32; m=(sum[donor["MF"]]/235)/50    
+        #(sum[allMFstages]/235)/50 number of MF in 20ul of blood 235ml is 5% of total body blood and there are 50*20ul in 1 ML
+
     '''
+    

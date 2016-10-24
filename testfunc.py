@@ -167,9 +167,9 @@ def worm_burden(prev,hostpopsize):
     return meta_popdict,hap_pop,transmission_mat,dispersal
     
  
-def maturation(meta_popdict, hap_pop, month):
+def maturation(meta_popdict, hap_pop, month, prev_t):
     '''actual life cycle stage, including births/deaths of worms'''    
-
+    hostmort = 1/70.00 # hostmortality 1 death per 70 years
     # stat collection and counters    
     rzero_freq = []
     hap_freq = []
@@ -195,6 +195,9 @@ def maturation(meta_popdict, hap_pop, month):
     #since this month to month 
     if month%12 is 0: #this denotes 1 year has passed so adults mature to next age class 
         for mpop in meta_popdict.keys(): #villages
+            r = random.uniform(0,1) 
+            if r < hostmort:
+                meta_popdict, prevt_t = hostcured(meta_popdict, mpop, prev_t)      
             for npop in meta_popdict[mpop].keys(): #inf
                 #count individuals in each class for density dependent calculations
 #                adult = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['A_1','A_2','A_3','A_4','A_5','A_6','A_7','A_8']}
@@ -382,8 +385,12 @@ def transmission(transmission_mat,mpop,meta_popdict,dispersal):
     while [len(meta_popdict[mpop][dpop][i]) is 0 for i in meta_popdict[mpop][dpop] if "MF" in i].count(True) is 12:
         dpop = random.choice(meta_popdict[mpop].keys())
     r = random.uniform(0,1)    
+    if len(transmission_mat[mpop][dpop][1]) >= hostpopsize:
+        prob_newinf = 0
+    else:
+        prob_newinf = (float(1)/len(transmission_mat[mpop][dpop][1]))
     #new infection
-    if r > 1 - (float(1)/len(transmission_mat[mpop][dpop][1])):
+    if r < prob_newinf:
         newpop = "pop_{}".format(len(meta_popdict[mpop].keys())+1)
         meta_popdict[mpop][newpop]["J_1"] = []
         rmf = int(round(random.uniform(.51,12)))
@@ -422,6 +429,12 @@ def new_infection(transmission_mat, mpop,dpop,newpop,dispersal):
     #if pop dies it is N in the transmission_mat, it is removed from meta_popdict
      
     return transmission_mat
+
+def hostcured(meta_popdict, mpop, prev_t):
+    dpop = random.choice(meta_popdict[mpop].keys()) #draw random host infection
+    meta_popdict[mpop][dpop] = {} #blanks the dictionary
+    prev_t[int(dpop.split("_")[1])] = 0 #update prev_t
+    return meta_popdict, prev_t
     
 def wb_sims(numberGens):
     '''this will call other functions to intialize, then functions from the life cycle
@@ -430,81 +443,39 @@ def wb_sims(numberGens):
     hostpop_size: number of potentially infected hosts'''
     f = open("sims.out",'w')
     f.write("time\tvillage\tnpops\tnumA1\tnumA2\tnumA2\tnumA4\tnumA5\tnumA6\tnumA7\tnumA8\tnumMF\ttrans_event\tRzero\tnum_uniqHapsAdult\tnum_uniqHapsMF\n")
-    
     #initialize
     meta_popdict, hap_pop, transmission_mat, dispersal = worm_burden(prev, hostpopsize)  
     #set counters
-    time_hours = 0 #hour counter for months
-    bites_person = 0 #counter for bites
-    MFpos_mosq = 0 #counter for infected mosquitoes
-    month = 0 #keep track of months for maturation
+    time_month = 0
+    #mf = 100
+    mpop = 1
+    #set prev counter
+    prev_t = [0] * hostpopsize[0]
+    X = prev[0] * hostpopsize[0]
+    prev_t[0:X] = [1] * X 
     #how long to run the simulation
-    sim_time = numberGens * 10 * 720 #gens per year are 1.2, 12/1.2 is 10 months for 1 generation    
-    
-    #gillespie: rates/hour
-    ##for 1 village
-    events = ["bite", "infbite","L3_transmission"] #what can happen
-    rates = [2.7, 0.7992, 0.28] #initial rates of events per hour bites, Y, Z;; rate vs prob
-    
-    #rate of bite is: 20 bites per person per month * hostpopsize / 720 = bites/hour; rate_b = (20.00*hostpopsize[0])/720   
-    #rate of bites that have MF: rate of bite * prev * prob pickup MF; rate_ib = rate_b * len(meta_popdict.keys()) * 0.37 
-    #rate of transmission: rate_ib * number_L3 * reinjected to new host; number_L3 = 4.395(1-exp^-(.055(m))/4.395)^2; leave with bite = .414; reinjected = .32; m=(sum[donor["MF"]]/235)/50    
-    #(sum[allMFstages]/235)/50 number of MF in 20ul of blood 235ml is 5% of total body blood and there are 50*20ul in 1 ML
-    
-    #for 2 villages there would be an extra rate category determining the rate of migration of hosts between 2 villages
-    #events = ["bite1","bite2",infbite1,infbite2,L3trans1,L3trans2,Hostmig]
-    while time_hours <= sim_time:
-        random_t = np.random.uniform(0,1,len(rates)) #vector of random variables
-        wait_t = -(np.log(random_t))/rates #wait time to next event
-        event_t = np.argmin(wait_t) #which event has the shortest wait time
-        time =+ wait_t[event_t] #update time
-        if events[event_t] is "bite":
-            bites_person += 1
-        elif events[event_t] is "infbite":
-            MFpos_mosq += 1
-            bites_person += 1
-        elif events[event_t] is "L3_transmission":
-            mpop = random.choice(meta_popdict.keys())
-            meta_popdict, transmission_mat = transmission(transmission_mat,mpop)
-            bites_person += 1
-            MFpos_mosq += 1
-        #update times
-        time_hours += time
-        if time_hours >= 720*month: #each month is survival life cycle
-            month += 1  #next month counter          
-            meta_popdict, hap_pop, wb_pop, rzero_freq, hap_freq = maturation(meta_popdict,hap_pop,month) #update matrices    
-    #        rb = 20*hostpopsize[0]/720.0
-    #        prev_t =  
-    #        rib = rb * len(meta_popdict["meta_1"].keys()) #skip those that have 0 adult worms
-    #        mf = (wb_pop[2]/235)/50 #total MF in the village
-    #        trL3 = rib * (4.395*(1-math.exp((.055*(mf))/4.395))**2) * 0.13248
-    #        rates = [rb,rib,trL3] #update rates            
-
-            #sum data for month and print to out file
+    sim_time = numberGens * 10 #gens per year are 1.2, 12/1.2 is 10 months for 1 generation            
+    while time_month <= sim_time:
+        #transmission
+        totalbitesvillage = 20 * 6 * 30 * hostpopsize[0] #bites per person per hour * 6 hours (atnight) * 30 days * hostpopsize
+        infbites=np.random.binomial(totalbitesvillage,(prev_t*0.37))
+        L3trans=np.random.binomial(infbites,(0.13248))
+#        mf = (((wb_pop[2])/hostpopsize*prev_t)/235)/50 #total MF in the village
+#        L3trans = infbites * (4.395*(1-math.exp((.055*(mf))/4.395))**2) * 0.13248
+        for i in range(L3trans):
+            meta_popdict, transmission_mat = transmission(transmission_mat,mpop,meta_popdict,dispersal)  
+        #maturation
+        meta_popdict, hap_pop, wb_pop, rzero_freq, hap_freq = maturation(meta_popdict,hap_pop,time_month) #update matrices    
+        
+        #update prev_t
+        prev_t = [i>0 for i in list(len(lst) for pop in meta_popdict["meta_1"].values() for lst in pop.values())].count(True) / float(hostpopsize[0])
+        #len(meta_popdict[mpop].values()) #number of pops if all are not 0 then this is prevs
+        
+        #sum data for month and print to out file
+        f.write("%i\t%s\t%f\t%i\t%i\t%i\f%i\t%i\n" %(time_month,"meta_1",prev,wb_pop[0],wb_pop[1],wb_pop[2],np.mean(rzero_freq.values()),len(hap_freq.keys())))
+        time_month += 1
             
-            f.write("%i\t%s\t%f\t%i\t%i\t%i\f%i\t%i\n" %(month,"meta_1",prev,wb_pop[0],wb_pop[1],wb_pop[2],np.mean(rzero_freq.values()),len(hap_freq.keys())))
-        f.close()
-
-#prevelance: float(len(meta_popdict["meta_1"].keys()))/hostpopsize[0]
-
-#if host dies, blank all the Wb worms but leave the pop to become reinfected, this should happen during the year maturation period and all classes will just then = []
-
-#                adult = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['A_1','A_2','A_3','A_4','A_5','A_6','A_7','A_8']}
-#                juv = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['J_1','J_2','J_3','J_4','J_5','J_6','J_7','J_8','J_9','J_10','J_11','J_12']}
-#                mf = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['MF_1','MF_2','MF_3','MF_4','MF_5','MF_6','MF_7','MF_8','MF_9','MF_10','MF_11','MF_12']}
-#                sum_adult = sum(adult_vil.values())
-#                sum_juv = sum(juv_vil.values())
-#                sum_mf = sum(mf_vil.values())
-
-for mp in meta_popdict.keys():
-    if meta_popdict[mp].values()
-prev += 1
-
-
-
-
-
-
+    f.close()
 
 
 
