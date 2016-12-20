@@ -6,6 +6,7 @@ things to do: 1) add multiple loci 2) make discrete case for multiple villages
 @author: scott
 """
 import numpy as np
+from collections import defaultdict
 from math import pi, exp, sqrt
 import math
 import subprocess, re, random
@@ -66,36 +67,52 @@ referenced in the dictionary recording the metapopulation information
     metapop_init = [100,100] #2 metapops
     theta = [metapop1,metapop2]    
     ''' 
-    theta = [5] #theta for pop
-    theta_anc = 12 #theta for ancestral
+    theta = [[5,2]] #4Neu expected number of mutations; [locus1],[locus2]
+    rho = [0,100] #4Ner expected number of recombination of a locus per generation; [rho_1, rho_2]    
+    seqL = [13000,200000]    
+    theta_anc = [12,9] #theta for ancestral all pops
     ta = 0.05 #time for ancestral
     t12 = 0.05 #time for joining/splitting pop 1 into 2
     t23 = 0.05 #time for joining/splitting pop 2 into 3
     t34 = 0.05 #time for joining/splitting pop 3 into 4
-    if len(worm_popsize) == 1: #ms set up for just 1 village
-        mscmd = "ms {} 1 -t {} -eN {} {} > temp_file".format(worm_popsize[0],theta[0],ta,float(theta_anc/theta[0]))        
-    else: #ms setup for >1 villages
-        num_subpops = len(worm_popsize) #-I num_pops
-        total_inds = sum(worm_popsize) # how many
-        sub_pop = " ".join(map(str,worm_popsize))#-I X i j ...
-        if len(worm_popsize) == 2:        
-            mscmd = "ms {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -ma {} -ej {} 1 2 -eN {} {} > temp_file".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],migration_matrix(len(worm_popsize)),t12,ta,theta_anc)       
-        elif len(worm_popsize)==3:
-            mscmd = "ms {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -ma {} -ej {} 1 2 -ej {} 2 3 -eN {} 1 > temp_file".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],float(theta[2])/theta[0],migration_matrix(len(worm_popsize)),t12,t23,ta,theta_anc)       
-        elif len(worm_popsize)==4:
-            mscmd = "ms {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -n4 {} -ma {} -ej {} 1 2 -ej {} 2 3 -ej {} 3 4 -eN {} 1> temp_file".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],float(theta[2])/theta[0],float(theta[3])/theta[0],migration_matrix(len(worm_popsize)),t12,t23,t34,ta,theta_anc)       
-    print mscmd
-    proc = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
-    proc.wait()
-
-    #parses ms output from stdout; works only for 1 locus  
-    hap_pop = [] #list intialization for recording haplotypes   
-    for line in iter(proc.stdout.readline,''):
-        if line.startswith("positions"):
-            for line in iter(proc.stdout.readline,''):
-                hap = line.rstrip("\n")                    
-                hap_pop.append([m.start() for m in re.finditer("1", hap)])                 
-                                        
+    ploidy = 1    
+    popsize = worm_popsize
+    hap_pop = defaultdict(list) #list intialization for recording haplotypes
+    
+    for i in range(len(rho)):
+        if rho[i] is not 0:
+            ploidy = 2
+        else:
+            ploidy = 1
+            
+        popsize[:] = [x * ploidy for x in popsize]
+        total_inds = sum(popsize) # how many
+            
+        if len(worm_popsize) == 1: #ms set up for just 1 village
+            mscmd = "scrm {} 1 -t {} -r {} {} -eN {} {}".format(total_inds,theta[0][i],rho[i],seqL[i],ta,float(theta_anc[i]/theta[0][i]))        
+        else: #ms setup for >1 villages
+            num_subpops = len(popsize) #-I num_pops
+            sub_pop = " ".join(map(str,popsize))#-I X i j ...
+            if len(worm_popsize) == 2:        
+                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -ma {} -ej {} 1 2 -eN {} {}".format(total_inds,theta[0][i],rho[i],seqL[i],num_subpops,sub_pop,1,float(theta[1][i])/theta[0][i],migration_matrix(len(worm_popsize)),t12,ta,theta_anc[i])       
+            elif len(worm_popsize)==3:
+                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -ma {} -ej {} 1 2 -ej {} 2 3 -eN {} 1".format(total_inds,theta[0][i],rho[i],seqL[i],num_subpops,sub_pop,1,float(theta[1][i])/theta[0][i],float(theta[2][i])/theta[0][i],migration_matrix(len(worm_popsize)),t12,t23,ta,theta_anc[i])       
+            elif len(worm_popsize)==4:
+                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -n4 {} -ma {} -ej {} 1 2 -ej {} 2 3 -ej {} 3 4 -eN {} 1".format(total_inds,theta[0][i],rho[i],seqL[i],num_subpops,sub_pop,1,float(theta[1][i])/theta[0][i],float(theta[2][i])/theta[0][i],float(theta[3][i])/theta[0][i],migration_matrix(len(worm_popsize)),t12,t23,t34,ta,theta_anc[i])       
+        print mscmd
+        proc = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
+        proc.wait()
+    
+        #parses ms output from stdout  
+   
+        for line in iter(proc.stdout.readline,''):
+            if line.startswith("positions"):
+                positions = map(int,line.strip().split())               
+                for line in iter(proc.stdout.readline,''):
+                    hap = line.strip()
+                    #print hap                    
+                    hap_pop["locus"+str(i)].append([m.start() for m in re.finditer("1", hap)]) #for non-recombining and infinite sites
+        rel_pos = set([item for sublist in hap_pop["locus"+str(i)] for item in sublist])
     return hap_pop
     
 
@@ -152,14 +169,21 @@ def worm_burden(prev,hostpopsize):
     pop = 1
     meta = 1
     k = 0 #count lines of haplotypes and assigns them in order to populations
+    kd = 0
+    locus_x = 1 #autosomal loci number
     for metapop in pop_init:
         for wb_a1 in metapop: #all infections are initialized from A1. Prob need a burn in to get away from initialization
             j = 0 #initial counter       
             meta_popdict["meta_" + str(meta)]["pop_" + str(pop)]["A_1"]=[]
             while j < wb_a1:
-                meta_popdict["meta_" + str(meta)]["pop_" + str(pop)]["A_1"].append([np.random.uniform(), k])
+                dipset=[np.random.uniform(), k]
+                for i in range(locus_x):                    
+                    dipset.append([kd,kd+1])
+                #meta_popdict["meta_" + str(meta)]["pop_" + str(pop)]["A_1"].append([np.random.uniform(), k, dipset])        
+                meta_popdict["meta_" + str(meta)]["pop_" + str(pop)]["A_1"].append(dipset)
                 j += 1 #counts the A1 in population
                 k += 1 #counts the haps in hap_pop[]
+                kd += 2
             pop += 1 #advances the pop counter
         meta += 1 #advances the meta counter
         pop = 1 #resets pop counter for new meta populations aka village
@@ -189,9 +213,17 @@ def maturation(meta_popdict, hap_pop, month, prev_t):
         sum_mf_vil.append(sum(mf_vil.values()))
         
     # Locus info, for multiple loci this should be a list
+<<<<<<< HEAD
     bp = [13000]
     pmut = [7.6E-8]
     frac_gen = 0.125 #gen is 8 months so 1 month is .125 of a generatio
+=======
+    bp = [13000,200000]
+    pmut = [7.6E-8,2.9E-9]
+    precomb = [0,7.6E-8]
+    frac_gen = 0.125 #gen is 8 months so 1 month is .125 of a generation
+
+>>>>>>> master
     #since this month to month 
     if month%12 is 0: #this denotes 1 year has passed so adults mature to next age class 
         for mpop in meta_popdict.keys(): #villages
@@ -268,26 +300,49 @@ def maturation(meta_popdict, hap_pop, month, prev_t):
                 meta_popdict[mpop][npop]["MF_3"] = random.sample(meta_popdict[mpop][npop]["MF_2"],int(round(len(meta_popdict[mpop][npop]["MF_2"])*mort_M)))
                 meta_popdict[mpop][npop]["MF_2"] = random.sample(meta_popdict[mpop][npop]["MF_1"],int(round(len(meta_popdict[mpop][npop]["MF_1"])*mort_M)))
 
-                #count A_1 random number_tracker               
-                rzero_freq.append([i[0]for i in meta_popdict[mpop][npop]["A_1"]])
-                #reset A_1 since they are new from Juv12 and 1 year has passed so all are moving to A2
+                #add generation to A_1 since they are new from Juv12 and 1 year has passed so all are moving to A2
                 for subl in meta_popdict[mpop][npop]["A_1"]:
-                    subl[0] = random.random()
+                    subl[0] += 1
 
                 # birth of MF_1
                 mf1 = []                
                 for i in range(1,8):
                     for j in meta_popdict[mpop][npop]["A_{}".format(i)]:
-                        mf1.append([j]*np.random.poisson(fecund)) 
-                mf = sum(mf1,[])
+                        births = np.random.poisson(fecund)                        
+                        while n < births:                         
+                            newmf1 = copy.copy(j) #j[2][i] is vector of diploid
+                            wb_parent2 = meta_popdict[mpop][npop]["A_{}".format(random.randint(1,8))] #                           
+                            for p in range(2,len(newmf1)):                             
+                                newmf1[p] = newmf1[p] + wb_parent2[p]
+                            mf1.append(newmf1)
+                            n += 1
+                ???? mf = sum(mf1,[])
                 
-                #mutation in new mf        
-                num_muts = np.random.binomial(len(mf), bp * pmut * frac_gen)
-                if num_muts != 0:
+                # recombination in new mf
+                num_recomb = []
+                for i in range(len(bp)):
+                    num_recomb.append(np.random.binomial(2*len(mf), bp[i] * precomb[i])) 
+                if sum(num_recomb) != 0:
+                    mf,hap_pop = recombination(mf,hap_pop,num_recomb)
+                    
+                #makes diploid
+                for m in mf:
+                    for item in m:
+                        if len(item) == 4:
+                            item = [item[random.randint(0,1)],item[random.randint(2,3)]] 
+                            
+                #mutation in new mf  
+                num_muts = []
+                for i in range(0,len(bp)):
+                    if precomb[i] == 0:
+                        num_muts.append(np.random.binomial(len(mf), bp[i] * pmut[i]))
+                    else:
+                        num_muts.append(np.random.binomial(2*len(mf), bp[i] * pmut[i]))               
+                if sum(num_muts) != 0:
                     mf,hap_pop = mutation(mf,hap_pop,num_muts)
                 meta_popdict[mpop][npop]["MF_1"] = mf
                 
-                hap_freq.append([i[1]for i in mf])
+                #hap_freq.append([i[1]for i in mf])
                 
     else: #a year has not passed on months, juveniles and MF move to next age class
         for mpop in meta_popdict.keys():        
@@ -352,38 +407,70 @@ def maturation(meta_popdict, hap_pop, month, prev_t):
                 meta_popdict[mpop][npop]["MF_2"] = random.sample(meta_popdict[mpop][npop]["MF_1"],int(round(len(meta_popdict[mpop][npop]["MF_1"])*mort_M)))
 
                 # birth of MF_1
-                mf1 = []                
-                for i in range(1,8):
-                    for j in meta_popdict[mpop][npop]["A_{}".format(i)]:
-                        mf1.append([j]*np.random.poisson(fecund)) 
-                mf = sum(mf1,[])
+      
+                # recombination in new mf
+
+                
+                #makes diploid
+
+
                 
                 # mutation in new MF_1 population         
-                num_muts = np.random.binomial(len(mf), bp * pmut * frac_gen)
-                if num_muts != 0:
-                    mf,hap_pop = mutation(mf,hap_pop,num_muts)
-                meta_popdict[mpop][npop]["MF_1"] = mf
 
-                hap_freq.append([i[1]for i in mf])
+
+                #hap_freq.append([i[1]for i in mf])
 
     #this will calculate for the enitre meta and each inf
-    rzero_freq = sum(rzero_freq,[])
-    hap_freq = sum(hap_freq,[])
+    #rzero_freq = sum(rzero_freq,[])
+    #hap_freq = sum(hap_freq,[])
     
     return meta_popdict, hap_pop, [sum_adult_vil[0],sum_juv_vil[0],sum_mf_vil[0]],{x:rzero_freq.count(x) for x in rzero_freq},{y:hap_freq.count(y) for y in hap_freq}, prev_t     
 
-def mutation(mf,hap_pop,num_muts):
-   '''this is run every time the prob of a mutation is true, updates seq_base'''   
-   #calculate the number of mutations expected
-   mut_mf = [random.randrange(len(mf)) for i in range(num_muts)] #choose random index in mf list
-       #add new sequence to hap_pop
-   for m in mut_mf:                 
-       new_hap = copy.copy(hap_pop[mf[m][1]])
-       new_allele = (max([max(a) for a in hap_pop])) + 1
-       new_hap.append(new_allele)
-       hap_pop.append(new_hap)
-       mf[m][1] = len(hap_pop)-1
-   return mf, hap_pop  
+def mutation(mf,hap_pop,num_muts,bp):
+   '''this is run every time the prob of a mutation is true'''      
+   #flatten list to check for colisions: set([item for sublist in hap_pop["locus1"] for item in sublist])   
+   for locus in range(len(num_muts)): #number of muts
+       muts = 0       
+       while muts < locus: #keep going until all mutations are  assigned
+           mut_mf = random.randrange(0,len(mf)) #choose random index in mf list
+               #add new sequence to hap_pop
+           new_hap = copy.copy(hap_pop["locus" + str(locus)][mf[mut_mf][locus+1]])
+           #random position            
+           new_allele = random.randint(0,bp[locus])
+           new_hap.append(new_allele)
+           hap_pop["locus" + str(locus)].append(new_hap.sort())
+           if len(mf[mut_mf][locus+1]) > 1:
+               mf[mut_mf][locus+1][random.randint(0,1)] = len(hap_pop["locus" + str(locus)])-1 #last entry is new_hap
+           else:
+               mf[mut_mf][locus+1]= len(hap_pop["locus" + str(locus)])-1
+           muts += 1
+   return mf, hap_pop
+
+def recombination(mf,hap_pop,num_recomb):
+       '''this is run every time the prob of a recombination is true'''      
+   for locus in range(len(num_recomb)): #number of muts
+       recomb = 0       
+       while recomb < locus: #keep going until all recombinations are  assigned
+           rec_mf = random.randrange(0,len(mf)) #choose random index in mf list
+               #add new sequence to hap_pop
+           new_recomb = random.randint(0,3)
+           if new_recomb < 2:
+               #first parent; create new hap
+               hap1 = mf[rec_mf][locus+1][0]
+               hap2 = mf[rec_mf][locus+1][1]
+               new_hap = hap1 + hap2
+               hap_pop["locus" + str(locus)].append(new_hap)
+               mf[rec_mf][locus+1][random.randint[0,1]] = len(hap_pop["locus" + str(locus)])-1
+           else:
+               #second parent
+               hap1 = mf[rec_mf][locus+1][0]
+               hap2 = mf[rec_mf][locus+1][1]
+               new_hap = hap1 + hap2
+               mf[rec_mf][locus+1][random.randint[2,3]] = len(hap_pop["locus" + str(locus)])-1
+               
+           recomb += 1                      
+           
+   return mf, hap_pop
    
 def transmission(transmission_mat,mpop,meta_popdict,dispersal):    
     '''this has a continious prob using a gillepsie algorithm to get the waiting time between transmission events'''    
