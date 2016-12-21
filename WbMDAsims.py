@@ -28,9 +28,9 @@ import math
 import subprocess
 import re
 import random
-from sklearn.metrics.pairwise import euclidean_distances
 import copy
 import argparse
+from sklearn.metrics.pairwise import euclidean_distances
 import numpy as np
 
 def get_args():
@@ -72,7 +72,7 @@ def get_args():
     parser.add_argument('-mh', '--mortalityHost', type=float, default=0.014286, help="Host death per year")
     parser.add_argument('-f', '--fecundity', type=int, default=20, help="mean number of MF born to each Adult per month")
     parser.add_argument('-Dd', '--density_dependence', action="store_true", help="use density dependence")
-    #if args.density_dependence:
+    #not used
     parser.add_argument('-gtime', '--generations', type=int, default=0.125, help="generation time in years")
     parser.add_argument('-hostmig', '--host_migration_rates', help="list of host migration rates between villages per month")
     args = parser.parse_args()
