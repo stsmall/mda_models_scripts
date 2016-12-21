@@ -15,7 +15,7 @@ wb_sims(numberGens, prev, hostpopsize, bites_person, hours2bite)
       migration_matrix(villages, initial_migration, initial_distance_m, theta[i], basepairs[i], mutation[i])
     trans_init(prev, hostpopsize, muTrans, sigma, sizeTrans)
   maturation(meta_popdict, month, prev_t, density_dependence, mortalityHost, mortalityAdult, mortalityJuv, mortalityMF, fecundity, basepairs, mutation, recombination)
-    hostdeath(meta_popdict, *mpop, prev_t)
+    hostdeath(meta_popdict, *mpop)
     recombination(*mf, *num_recomb, basepairs)
     mutation(*mf, *num_mut, basepairs)
   transmission(transmission_mat, *mpop, meta_popdict, dispersal)
@@ -67,7 +67,7 @@ def get_args():
     parser.add_argument('-ma','--mortalityAdult',type=float,default=0.8863848717161292,help="adult worms dies at rate 0.01 per month or survive at .99")
     parser.add_argument('-mj','--mortalityJuv',type=float,default=0.865880173963825,help="prob that juv makes it to adult is 0.2 or 0.8177651 per month")
     parser.add_argument('-mf','--mortalityMF',type=float,default=0.90,help="MF die at rate 0.10 per month or survive at 0.90")
-    parser.add_argument('-mh','--mortalityHost',type=float,default=0.14286,help="Host death per year")
+    parser.add_argument('-mh','--mortalityHost',type=float,default=0.014286,help="Host death per year")
     parser.add_argument('-f','--fecundity',type=int,default=20,help="mean number of MF born to each Adult per month")
     parser.add_argument('-Dd','--density_dependence',action="store_true",help="use density dependence")
     #if args.density_dependence:
@@ -184,6 +184,7 @@ def ms_outcall(worm_popsize,villages,initial_migration,initial_distance_m,theta,
                     hap = line.strip()
                     hap_pop["locus"+str(i)].append(filter(lambda a: a != 0, [i*j for i,j in zip([m.start() for m in re.finditer("1", hap)],positions)])) 
     return hap_pop
+    #locus0:[000000010101010];locus1:[]
     
 
 def trans_init(prev,hostpopsize,muTrans,sigma,sizeTrans):
@@ -207,26 +208,21 @@ def trans_init(prev,hostpopsize,muTrans,sigma,sizeTrans):
             ### is it potential for rather than 0 or 1 given success of transmission that it could be exponetial or similar long-tailed distribution
             ### however that would mean change in how transmission occurs since it would not always be a success
         meta_n += 1
-    return transmission_mat, dispersal    
+    return transmission_mat, dispersal
+    #meta_1:pop1:[(x,y),[0,1,1,1,1,1]]    
   
-def worm_burden(prev,hostpopsize,muWormBurden,sizeWormBurden,villages,initial_migration,initial_distance_m,theta,basepairs,mutation,recombination,time2Ancestral,thetaAncestral,thetaRegional,time_join12,time_join23,time_join34,muTrans,sizeTrans,sigma):
+def worm_burden(infhost,muWormBurden,sizeWormBurden,theta,basepairs,mutation,recombination,time2Ancestral,thetaAncestral,thetaRegional,time_join12,time_join23,time_join34,villages,initial_migration,initial_distance_m,muTrans,sizeTrans,sigma):
     '''
     worm_burden calls all the previous functions to create meta_popdict. 
     meta_popdict has the age/stage structure as well as the haplotypes for each locus.
     transmission_mat gives the corresponding locations of the infected hosts
-    prev: (list, float) percent of hosts infected
-    hostpopsize:(list, int) number of possible hosts (human population)
+    infhost:(list, int) number of possible hosts (human population)
     muWormBurden: (list,int) avg_burden, average number of adult female worms in infections;
     sizeWormBurden:(list,int) dispersion, size parameter for negative binomial distribution   
-    '''
-    # number of adult worms per infection    
-    num_inf = []
-    for i,j in zip(prev,hostpopsize):
-        num_inf.append(round(i*j))
-        
+    '''     
     # worm burden (number of adult worms) per host    
     pop_init=[]
-    for mu,size,numworms in zip(muWormBurden,sizeWormBurden,num_inf):
+    for mu,size,numworms in zip(muWormBurden,sizeWormBurden,infhost):
         wb_burden = np.random.negative_binomial(mu,mu/float(mu+size),numworms) # number of successes, prob of success (size/size+mu),number of values to return
         pop_init.append(np.array(wb_burden).tolist())
     
@@ -259,14 +255,15 @@ def worm_burden(prev,hostpopsize,muWormBurden,sizeWormBurden,villages,initial_mi
             pop += 1 #advances the pop counter
         meta_n += 1 #advances the meta counter
         pop = 1 #resets pop counter for new meta populations aka village
-    transmission_mat,dispersal=trans_init(prev,hostpopsize,muTrans,sigma,sizeTrans)
+    transmission_mat,dispersal=trans_init(infhost,muTrans,sigma,sizeTrans)
     return meta_popdict,transmission_mat,dispersal
+    #meta_1:pop1:[rand,[locus0],[locus1],[locusN]]
 
 ############################################
 ##Begin simulation functions
 ############################################    
    
-def maturation(mpop,meta_popdict,time_month,infhost,mf_mpopavg,density_dependence,mortalityHost,mortalityAdult,mortalityJuv,mortalityMF,fecundity,basepairs,mutation,recombination):
+def maturation(mpop,meta_popdict,time_month,density_dependence,mortalityHost,mortalityAdult,mortalityJuv,mortalityMF,fecundity,basepairs,mutation,recombination):
     '''life cycle stage, including births/deaths of worms
     meta_popdict: (dict) perform functions on dictionary containing vill,host,worm and genotypes
     time_month: (int) what month is it 1 ... 12
@@ -280,13 +277,11 @@ def maturation(mpop,meta_popdict,time_month,infhost,mf_mpopavg,density_dependenc
     '''
     mpop = "meta_" + str(mpop+1)
     mf_sum = []    
-    infhost_t = 0
     #since this month to month 
     if time_month%12 is 0: #this denotes 1 year has passed so adults mature to next age class 
+       if random.uniform(0,1) < mortalityHost:
+            meta_popdict = hostdeath(meta_popdict, mpop)      
        for npop in meta_popdict[mpop].keys(): #infected hosts as pops within villages
-           if random.uniform(0,1) < mortalityHost:
-               meta_popdict = hostdeath(meta_popdict, mpop)      
-           
            #count individuals in each class for density dependent calculations
            adult_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['A_1','A_2','A_3','A_4','A_5','A_6','A_7','A_8']}
            juv_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['J_1','J_2','J_3','J_4','J_5','J_6','J_7','J_8','J_9','J_10','J_11','J_12']}
@@ -297,9 +292,8 @@ def maturation(mpop,meta_popdict,time_month,infhost,mf_mpopavg,density_dependenc
            mf_sum.append(sum_mf)
            
            if (sum_adult == 0) and (sum_juv == 0) and (sum_mf == 0):
-               infhost_t += 0
-           else:
-               infhost_t += 1
+               meta_popdict[mpop][npop] = {}
+               break
 
            if density_dependence: # density dependent mortality 
                Km = 100  #carrying capacity
@@ -406,9 +400,8 @@ def maturation(mpop,meta_popdict,time_month,infhost,mf_mpopavg,density_dependenc
            mf_sum.append(sum_mf)
 
            if (sum_adult == 0) and (sum_juv == 0) and (sum_mf == 0):
-               infhost_t += 0
-           else:
-               infhost_t += 1
+               meta_popdict[mpop][npop] = {}
+               break
                       
        if density_dependence: # density dependent mortality 
            Km = 100  #carrying capacity
@@ -495,7 +488,7 @@ def maturation(mpop,meta_popdict,time_month,infhost,mf_mpopavg,density_dependenc
                mf = mutation(mf,num_muts,basepairs)
            meta_popdict[mpop][npop]["MF_1"] = mf
             
-    return meta_popdict, infhost_t, sum(mf_sum)    
+    return meta_popdict, len(meta_popdict[mpop].keys()), sum(mf_sum)    
 
 def hostdeath(meta_popdict, mpop):
     '''when a host dies/cures all the MF/Wb disappear from the dict'''
@@ -620,7 +613,7 @@ def new_infection(transmission_mat,mpop,dpop,newpop,dispersal):
     transmission_mat[mpop][newpop][1].append(1)   
     return transmission_mat
     
-def wb_sims(numberGens,prev,hostpopsize,bites_person,hours2bite,muWormBurden,sizeWormBurden,villages,density_dependence,initial_migration,initial_distance_m,theta,basepairs,mutation,recombination,time2Ancestral,thetaAncestral,thetaRegional,time_join12,time_join23,time_join34,muTrans,sizeTrans,sigma,mortalityHost,mortalityAdult,mortalityJuv,mortalityMF,fecundity):
+def wb_sims(numberGens,prev,hostpopsize,villages,bites_person,hours2bite,muWormBurden,sizeWormBurden,theta,basepairs,mutation,recombination,time2Ancestral,thetaAncestral,thetaRegional,time_join12,time_join23,time_join34,initial_migration,initial_distance_m,muTrans,sizeTrans,sigma,density_dependence,mortalityHost,mortalityAdult,mortalityJuv,mortalityMF,fecundity):
     '''this will call other functions to intialize, then functions from the life cycle
     numberGens:(int) how long to run the simulation
     burnin:(int) generations after which data is recorded
@@ -641,14 +634,14 @@ def wb_sims(numberGens,prev,hostpopsize,bites_person,hours2bite,muWormBurden,siz
              r2: 0.055 (+- 0.004)
              T: 0
     '''
-    #initialize
-    meta_popdict, transmission_mat, dispersal = worm_burden(prev,hostpopsize,muWormBurden,sizeWormBurden,villages,initial_migration,initial_distance_m,theta,basepairs,mutation,recombination,time2Ancestral,thetaAncestral,thetaRegional,time_join12,time_join23,time_join34,muTrans,sizeTrans,sigma)  
     #set counters
     time_month = 0 #begin time
     sim_time = numberGens #gens to pass
-    infhost = [i*j for i,j in zip(prev,hostpopsize)] #staring prevalance
+    infhost = [round(i*j) for i,j in zip(prev,hostpopsize)] #staring prevalance
     prev_t = prev
     mf_mpopavg = [0] * villages #0s for MF
+    #initialize
+    meta_popdict, transmission_mat, dispersal = worm_burden(infhost,muWormBurden,sizeWormBurden, villages,initial_migration,initial_distance_m,theta,basepairs,mutation,recombination,time2Ancestral,thetaAncestral,thetaRegional,time_join12,time_join23,time_join34,muTrans,sizeTrans,sigma)  
     while time_month <= sim_time:
         for mpop in range(villages):
              #maturation
@@ -680,5 +673,3 @@ def wb_sims(numberGens,prev,hostpopsize,bites_person,hours2bite,muWormBurden,siz
    #rate of transmission: rate_ib * number_L3 * reinjected to new host; number_L3 = 4.395(1-exp^-(.055(m))/4.395)^2; leave with bite = .414; reinjected = .32; m=(sum[donor["MF"]]/235)/50    
    #(sum[allMFstages]/235)/50 number of MF in 20ul of blood 235ml is 5% of total body blood and there are 50*20ul in 1 ML
     '''
-
-
