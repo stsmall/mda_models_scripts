@@ -10,6 +10,7 @@ For multiple villages time is in discrete units
 @author: stsmall
 """
 #install anaconda
+#import msprime
 import numpy as np
 from math import pi, exp, sqrt
 import subprocess, re, random
@@ -141,7 +142,7 @@ class wbinit:
         t23 = self.time23
         t34 = self.time34
         if len(worm_popsize) == 1: #1 village
-            mscmd = "ms {} 1 -t {} -eN {} {} > temp_file".format(worm_popsize[0],theta[0],ta,float(theta_anc/theta[0]))        
+            mscmd = "scrm {} 1 -t {} -eN {} {} ".format(worm_popsize[0],theta[0],ta,float(theta_anc/theta[0]))        
         else: #set up for 2 villages
             num_subpops = len(worm_popsize) #-I num_pops
             total_inds = sum(worm_popsize) # how many
@@ -149,25 +150,24 @@ class wbinit:
             #t = 0.05 #2000gens/4*N0  #merge time   
             #-ej the villages split at 2000 gens in the past which is 2000 years
             if len(worm_popsize) == 2:        
-                mscmd = "ms {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -ma {} -ej {} 1 2 -eN {} {} > temp_file".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],self.migration_matrix(len(worm_popsize)),t12,ta,theta_anc)       
+                mscmd = "scrm {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -ma {} -ej {} 1 2 -eN {} {}".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],self.migration_matrix(len(worm_popsize)),t12,ta,theta_anc)       
             #after the split the pops are half the size of ancestral and share migrants at rate -ma
             #pop continues to go back until ancestral time    
             elif len(worm_popsize)==3:
-                mscmd = "ms {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -ma {} -ej {} 1 2 -ej {} 2 3 -eN {} 1 > temp_file".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],float(theta[2])/theta[0],self.migration_matrix(len(worm_popsize)),t12,t23,ta,theta_anc)       
+                mscmd = "scrm {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -ma {} -ej {} 1 2 -ej {} 2 3 -eN {} 1".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],float(theta[2])/theta[0],self.migration_matrix(len(worm_popsize)),t12,t23,ta,theta_anc)       
             elif len(worm_popsize)==4:
-                mscmd = "ms {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -n4 {} -ma {} -ej {} 1 2 -ej {} 2 3 -ej {} 3 4 -eN {} 1> temp_file".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],float(theta[2])/theta[0],float(theta[3])/theta[0],self.migration_matrix(len(worm_popsize)),t12,t23,t34,ta,theta_anc)       
+                mscmd = "scrm {} 1 -t {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -n4 {} -ma {} -ej {} 1 2 -ej {} 2 3 -ej {} 3 4 -eN {} 1".format(total_inds,theta[0],num_subpops,sub_pop,1,float(theta[1])/theta[0],float(theta[2])/theta[0],float(theta[3])/theta[0],self.migration_matrix(len(worm_popsize)),t12,t23,t34,ta,theta_anc)       
         print mscmd
-        proc = subprocess.Popen(mscmd, shell=True)
+        proc = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
         proc.wait()
     
-        #parses ms output    
-        hap_pop = []  
-        with open("temp_file",'r') as ms:
-            for line in ms:
-                if line.startswith("positions"):             
-                    for line in ms:            
-                        hap = line.rstrip("\n")                    
-                        hap_pop.append([m.start() for m in re.finditer("1", hap)])    
+        #parses ms output from stdout; works only for 1 locus  
+        hap_pop = [] #list intialization for recording haplotypes   
+        for line in iter(proc.stdout.readline,''):
+            if line.startswith("positions"):
+                for line in iter(proc.stdout.readline,''):
+                    hap = line.rstrip("\n")                    
+                    hap_pop.append([m.start() for m in re.finditer("1", hap)])    
         return hap_pop
         
     def trans_init(self):
