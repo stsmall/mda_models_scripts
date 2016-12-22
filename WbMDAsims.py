@@ -34,6 +34,9 @@ from sklearn.metrics.pairwise import euclidean_distances
 import numpy as np
 import time
 
+#meta_popdict, transmission_mat, dispersal, hap_pop = worm_burden([10,10], [5,5], [50,5], [[1,1],[2,2]], [1000,2000], [7.6E-8, 2.9E-9],  [0, 2.9E-9], 1800, 344, 23, 240, 240, 240, 2, 0.0001, [1000], 100, 1, 2)
+#meta_popdict, X, Y = maturation(1, meta_popdict, 10, True, .90, .90, .90, .90, 20, [1000, 2000], [7.6E-8, 2.9E-9],  [0.0, 2.9E-9])
+
 def get_args():
     '''asdfasdf'''
     parser = argparse.ArgumentParser()
@@ -292,6 +295,7 @@ def maturation(mpop, meta_popdict, time_month, density_dependence, mortalityHost
     fecundity:(int) average number of MF produced per adult per month
     '''
     mpop = "meta_" + str(mpop+1)
+    print mpop
     mf_sum = []
     #since this month to month
     if time_month%12 is 0: #this denotes 1 year has passed so adults mature to next age class
@@ -299,17 +303,14 @@ def maturation(mpop, meta_popdict, time_month, density_dependence, mortalityHost
             meta_popdict = hostdeath(meta_popdict, mpop)
         for npop in meta_popdict[mpop].keys(): #infected hosts as pops within villages
             #count individuals in each class for density dependent calculations
-            adult_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['A_1', 'A_2', 'A_3', 'A_4', 'A_5', 'A_6', 'A_7', 'A_8']}
-            juv_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['J_1', 'J_2', 'J_3', 'J_4', 'J_5', 'J_6', 'J_7', 'J_8', 'J_9', 'J_10', 'J_11', 'J_12']}
-            mf_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['MF_1', 'MF_2', 'MF_3', 'MF_4', 'MF_5', 'MF_6', 'MF_7', 'MF_8', 'MF_9', 'MF_10', 'MF_11', 'MF_12']}
-            sum_adult = sum(adult_dd.values())
-            sum_juv = sum(juv_dd.values())
-            sum_mf = sum(mf_dd.values())
+            sum_adult = sum([len(meta_popdict[mpop][npop][item]) for item in ['A_1', 'A_2', 'A_3', 'A_4', 'A_5', 'A_6', 'A_7', 'A_8']])
+            sum_juv = sum([len(meta_popdict[mpop][npop][item]) for item in ['J_1', 'J_2', 'J_3', 'J_4', 'J_5', 'J_6', 'J_7', 'J_8', 'J_9', 'J_10', 'J_11', 'J_12']])
+            sum_mf = sum([len(meta_popdict[mpop][npop][item]) for item in ['MF_1', 'MF_2', 'MF_3', 'MF_4', 'MF_5', 'MF_6', 'MF_7', 'MF_8', 'MF_9', 'MF_10', 'MF_11', 'MF_12']])
             mf_sum.append(sum_mf)
 
             if (sum_adult == 0) and (sum_juv == 0) and (sum_mf == 0):
                 meta_popdict[mpop][npop] = {}
-                break
+                #break
 
             if density_dependence: # density dependent mortality
                 Km = 100  #carrying capacity
@@ -371,14 +372,19 @@ def maturation(mpop, meta_popdict, time_month, density_dependence, mortalityHost
                 for ad in meta_popdict[mpop][npop]["A_{}".format(i)]:
                     births = np.random.poisson(fecund)
                     n = 0
+                    age_class = random.randint(1,8)
                     while n < births:
                         newmf1 = copy.copy(ad)
-                        wb_parent2 = meta_popdict[mpop][npop]["A_{}".format(random.randint(1, 8))] #random adult
+                        wb_parent2 = meta_popdict[mpop][npop]["A_{}".format(age_class)][random.randint(0,len(meta_popdict[mpop][npop]["A_{}".format(age_class)]))] #random adult
+                        while len(wb_parent2) is 0:
+                             age_class = random.randint(1,8)  
+                             meta_popdict[mpop][npop]["A_{}".format(age_class)][random.randint(0,len(meta_popdict[mpop][npop]["A_{}".format(age_class)]))] #random adult
                         for p in range(2, len(newmf1)):
                             newmf1[p] = newmf1[p] + wb_parent2[p]
                         mf1.append(newmf1)
                         n += 1
-            mf = sum(mf1, [])
+            mf = mf1
+           #mf = sum(mf1, [])
 
            # recombination in new mf
             num_recomb = []
@@ -402,22 +408,21 @@ def maturation(mpop, meta_popdict, time_month, density_dependence, mortalityHost
                     num_muts.append(np.random.binomial(2*len(mf), basepairs[i] * mutation[i]))
             if sum(num_muts) != 0:
                 mf = mutation_fx(mf, num_muts, basepairs)
+            
             meta_popdict[mpop][npop]["MF_1"] = mf
 
     else: #a year has not passed on months, juveniles and MF move to next age class
         for npop in meta_popdict[mpop].keys(): #inf
+            print npop
             #count individuals in each class for density dependent calculations
-            adult_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['A_1', 'A_2', 'A_3', 'A_4', 'A_5', 'A_6', 'A_7', 'A_8']}
-            juv_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['J_1', 'J_2', 'J_3', 'J_4', 'J_5', 'J_6', 'J_7', 'J_8', 'J_9', 'J_10', 'J_11', 'J_12']}
-            mf_dd = {key: sum(len(dct[key]) for dct in meta_popdict[mpop][npop].values()) for key in ['MF_1', 'MF_2', 'MF_3', 'MF_4', 'MF_5', 'MF_6', 'MF_7', 'MF_8', 'MF_9', 'MF_10', 'MF_11', 'MF_12']}
-            sum_adult = sum(adult_dd.values())
-            sum_juv = sum(juv_dd.values())
-            sum_mf = sum(mf_dd.values())
+            sum_adult = sum([len(meta_popdict[mpop][npop][item]) for item in ['A_1', 'A_2', 'A_3', 'A_4', 'A_5', 'A_6', 'A_7', 'A_8']])
+            sum_juv = sum([len(meta_popdict[mpop][npop][item]) for item in ['J_1', 'J_2', 'J_3', 'J_4', 'J_5', 'J_6', 'J_7', 'J_8', 'J_9', 'J_10', 'J_11', 'J_12']])
+            sum_mf = sum([len(meta_popdict[mpop][npop][item]) for item in ['MF_1', 'MF_2', 'MF_3', 'MF_4', 'MF_5', 'MF_6', 'MF_7', 'MF_8', 'MF_9', 'MF_10', 'MF_11', 'MF_12']])
             mf_sum.append(sum_mf)
-
+            
             if (sum_adult == 0) and (sum_juv == 0) and (sum_mf == 0):
                 meta_popdict[mpop][npop] = {}
-                break
+                #break
 
             if density_dependence: # density dependent mortality
                 Km = 100  #carrying capacity
@@ -434,77 +439,84 @@ def maturation(mpop, meta_popdict, time_month, density_dependence, mortalityHost
                 mort_M = mortalityMF #month
                 fecund = fecundity #fecundity per month
 
-                #temp for J_12 > A_1
-                tempA1 = random.sample(meta_popdict[mpop][npop]["J_12"], int(round(len(meta_popdict[mpop][npop]["J_12"])*mort_J)))
-                for subl in tempA1:
-                    subl[0] += 1
-                #first year adults
-                meta_popdict[mpop][npop]["A_1"].append(tempA1)
-                # juvenilles
-                meta_popdict[mpop][npop]["J_12"] = random.sample(meta_popdict[mpop][npop]["J_11"], int(round(len(meta_popdict[mpop][npop]["J_11"])*mort_J)))
-                meta_popdict[mpop][npop]["J_11"] = random.sample(meta_popdict[mpop][npop]["J_10"], int(round(len(meta_popdict[mpop][npop]["J_10"])*mort_J)))
-                meta_popdict[mpop][npop]["J_10"] = random.sample(meta_popdict[mpop][npop]["J_9"], int(round(len(meta_popdict[mpop][npop]["J_9"])*mort_J)))
-                meta_popdict[mpop][npop]["J_9"] = random.sample(meta_popdict[mpop][npop]["J_8"], int(round(len(meta_popdict[mpop][npop]["J_8"])*mort_J)))
-                meta_popdict[mpop][npop]["J_8"] = random.sample(meta_popdict[mpop][npop]["J_7"], int(round(len(meta_popdict[mpop][npop]["J_7"])*mort_J)))
-                meta_popdict[mpop][npop]["J_7"] = random.sample(meta_popdict[mpop][npop]["J_6"], int(round(len(meta_popdict[mpop][npop]["J_6"])*mort_J)))
-                meta_popdict[mpop][npop]["J_6"] = random.sample(meta_popdict[mpop][npop]["J_5"], int(round(len(meta_popdict[mpop][npop]["J_5"])*mort_J)))
-                meta_popdict[mpop][npop]["J_5"] = random.sample(meta_popdict[mpop][npop]["J_4"], int(round(len(meta_popdict[mpop][npop]["J_4"])*mort_J)))
-                meta_popdict[mpop][npop]["J_4"] = random.sample(meta_popdict[mpop][npop]["J_3"], int(round(len(meta_popdict[mpop][npop]["J_3"])*mort_J)))
-                meta_popdict[mpop][npop]["J_3"] = random.sample(meta_popdict[mpop][npop]["J_2"], int(round(len(meta_popdict[mpop][npop]["J_2"])*mort_J)))
-                meta_popdict[mpop][npop]["J_2"] = random.sample(meta_popdict[mpop][npop]["J_1"], int(round(len(meta_popdict[mpop][npop]["J_1"])*mort_J)))
-                # microfilaria
-                meta_popdict[mpop][npop]["MF_12"] = random.sample(meta_popdict[mpop][npop]["MF_11"], int(round(len(meta_popdict[mpop][npop]["MF_11"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_11"] = random.sample(meta_popdict[mpop][npop]["MF_10"], int(round(len(meta_popdict[mpop][npop]["MF_10"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_10"] = random.sample(meta_popdict[mpop][npop]["MF_9"], int(round(len(meta_popdict[mpop][npop]["MF_9"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_9"] = random.sample(meta_popdict[mpop][npop]["MF_8"], int(round(len(meta_popdict[mpop][npop]["MF_8"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_8"] = random.sample(meta_popdict[mpop][npop]["MF_7"], int(round(len(meta_popdict[mpop][npop]["MF_7"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_7"] = random.sample(meta_popdict[mpop][npop]["MF_6"], int(round(len(meta_popdict[mpop][npop]["MF_6"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_6"] = random.sample(meta_popdict[mpop][npop]["MF_5"], int(round(len(meta_popdict[mpop][npop]["MF_5"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_5"] = random.sample(meta_popdict[mpop][npop]["MF_4"], int(round(len(meta_popdict[mpop][npop]["MF_4"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_4"] = random.sample(meta_popdict[mpop][npop]["MF_3"], int(round(len(meta_popdict[mpop][npop]["MF_3"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_3"] = random.sample(meta_popdict[mpop][npop]["MF_2"], int(round(len(meta_popdict[mpop][npop]["MF_2"])*mort_M)))
-                meta_popdict[mpop][npop]["MF_2"] = random.sample(meta_popdict[mpop][npop]["MF_1"], int(round(len(meta_popdict[mpop][npop]["MF_1"])*mort_M)))
+           #temp for J_12 > A_1
+            #tempA1 = random.sample(meta_popdict[mpop][npop]["J_12"], int(round(len(meta_popdict[mpop][npop]["J_12"])*mort_J)))
+            #for subl in tempA1:
+            #    subl[0] += 1
+            #first year adults
+            #meta_popdict[mpop][npop]["A_1"].append(tempA1)
+            # juvenilles
+            meta_popdict[mpop][npop]["J_12"] = random.sample(meta_popdict[mpop][npop]["J_11"], int(round(len(meta_popdict[mpop][npop]["J_11"])*mort_J)))
+            meta_popdict[mpop][npop]["J_11"] = random.sample(meta_popdict[mpop][npop]["J_10"], int(round(len(meta_popdict[mpop][npop]["J_10"])*mort_J)))
+            meta_popdict[mpop][npop]["J_10"] = random.sample(meta_popdict[mpop][npop]["J_9"], int(round(len(meta_popdict[mpop][npop]["J_9"])*mort_J)))
+            meta_popdict[mpop][npop]["J_9"] = random.sample(meta_popdict[mpop][npop]["J_8"], int(round(len(meta_popdict[mpop][npop]["J_8"])*mort_J)))
+            meta_popdict[mpop][npop]["J_8"] = random.sample(meta_popdict[mpop][npop]["J_7"], int(round(len(meta_popdict[mpop][npop]["J_7"])*mort_J)))
+            meta_popdict[mpop][npop]["J_7"] = random.sample(meta_popdict[mpop][npop]["J_6"], int(round(len(meta_popdict[mpop][npop]["J_6"])*mort_J)))
+            meta_popdict[mpop][npop]["J_6"] = random.sample(meta_popdict[mpop][npop]["J_5"], int(round(len(meta_popdict[mpop][npop]["J_5"])*mort_J)))
+            meta_popdict[mpop][npop]["J_5"] = random.sample(meta_popdict[mpop][npop]["J_4"], int(round(len(meta_popdict[mpop][npop]["J_4"])*mort_J)))
+            meta_popdict[mpop][npop]["J_4"] = random.sample(meta_popdict[mpop][npop]["J_3"], int(round(len(meta_popdict[mpop][npop]["J_3"])*mort_J)))
+            meta_popdict[mpop][npop]["J_3"] = random.sample(meta_popdict[mpop][npop]["J_2"], int(round(len(meta_popdict[mpop][npop]["J_2"])*mort_J)))
+            meta_popdict[mpop][npop]["J_2"] = random.sample(meta_popdict[mpop][npop]["J_1"], int(round(len(meta_popdict[mpop][npop]["J_1"])*mort_J)))
+            # microfilaria
+            meta_popdict[mpop][npop]["MF_12"] = random.sample(meta_popdict[mpop][npop]["MF_11"], int(round(len(meta_popdict[mpop][npop]["MF_11"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_11"] = random.sample(meta_popdict[mpop][npop]["MF_10"], int(round(len(meta_popdict[mpop][npop]["MF_10"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_10"] = random.sample(meta_popdict[mpop][npop]["MF_9"], int(round(len(meta_popdict[mpop][npop]["MF_9"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_9"] = random.sample(meta_popdict[mpop][npop]["MF_8"], int(round(len(meta_popdict[mpop][npop]["MF_8"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_8"] = random.sample(meta_popdict[mpop][npop]["MF_7"], int(round(len(meta_popdict[mpop][npop]["MF_7"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_7"] = random.sample(meta_popdict[mpop][npop]["MF_6"], int(round(len(meta_popdict[mpop][npop]["MF_6"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_6"] = random.sample(meta_popdict[mpop][npop]["MF_5"], int(round(len(meta_popdict[mpop][npop]["MF_5"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_5"] = random.sample(meta_popdict[mpop][npop]["MF_4"], int(round(len(meta_popdict[mpop][npop]["MF_4"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_4"] = random.sample(meta_popdict[mpop][npop]["MF_3"], int(round(len(meta_popdict[mpop][npop]["MF_3"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_3"] = random.sample(meta_popdict[mpop][npop]["MF_2"], int(round(len(meta_popdict[mpop][npop]["MF_2"])*mort_M)))
+            meta_popdict[mpop][npop]["MF_2"] = random.sample(meta_popdict[mpop][npop]["MF_1"], int(round(len(meta_popdict[mpop][npop]["MF_1"])*mort_M)))
+            
+            print "pass"
+           # birth of MF_1
+            mf1 = []
+            for i in range(1, 8):
+                for ad in meta_popdict[mpop][npop]["A_{}".format(i)]:
+                    births = np.random.poisson(fecund)
+                    n = 0
+                    while n < births:
+                        newmf1 = copy.copy(ad)
+                        age_class = random.randint(1,8)
+                        wb_parent2 = meta_popdict[mpop][npop]["A_{}".format(age_class)][random.randint(0,len(meta_popdict[mpop][npop]["A_{}".format(age_class)]))] #random adult
+                        print age_class, wb_parent2
+                        while len(wb_parent2) is 0:
+                             age_class = random.randint(1,8)
+                             wb_parent2 = meta_popdict[mpop][npop]["A_{}".format(age_class)][random.randint(0,len(meta_popdict[mpop][npop]["A_{}".format(age_class)]))] #random adult
+                        for p in range(2, len(newmf1)):
+                            newmf1[p] = newmf1[p] + wb_parent2[p]
+                        mf1.append(newmf1)
+                        n += 1
+           #mf = sum(mf1, [])
+            mf = mf1
+            print mf
+           # recombination in new mf
+            num_recomb = []
+            for i, bp in enumerate(basepairs):
+                num_recomb.append(np.random.binomial(2*len(mf), (bp-1) * recombination[i]))
+            if sum(num_recomb) != 0:
+                mf = recombination_fx(mf, num_recomb, basepairs)
 
-                # birth of MF_1
-                mf1 = []
-                for i in range(1, 8):
-                    for ad in meta_popdict[mpop][npop]["A_{}".format(i)]:
-                        births = np.random.poisson(fecund)
-                        n = 0
-                        while n < births:
-                            newmf1 = copy.copy(ad)
-                            wb_parent2 = meta_popdict[mpop][npop]["A_{}".format(random.randint(1, 8))] #random adult
-                            for p in range(2, len(newmf1)):
-                                newmf1[p] = newmf1[p] + wb_parent2[p]
-                            mf1.append(newmf1)
-                            n += 1
-                mf = sum(mf1, [])
+           #makes diploid
+            for m in mf:
+                for item in m:
+                    if len(item) == 4:
+                        item = [item[random.randint(0, 1)], item[random.randint(2, 3)]]
 
-                # recombination in new mf
-                num_recomb = []
-                for i, bp in enumerate(basepairs):
-                    num_recomb.append(np.random.binomial(2*len(mf), (bp-1) * recombination[i]))
-                if sum(num_recomb) != 0:
-                    mf = recombination_fx(mf, num_recomb, basepairs)
+           #mutation in new mf
+            num_muts = []
+            for i in range(0, len(basepairs)):
+                if recombination[i] == 0:
+                    num_muts.append(np.random.binomial(len(mf), basepairs[i] * mutation[i]))
+                else:
+                    num_muts.append(np.random.binomial(2*len(mf), basepairs[i] * mutation[i]))
+            if sum(num_muts) != 0:
+                mf = mutation_fx(mf, num_muts, basepairs)
+            meta_popdict[mpop][npop]["MF_1"] = mf
 
-                #makes diploid
-                for m in mf:
-                    for item in m:
-                        if len(item) == 4:
-                            item = [item[random.randint(0, 1)], item[random.randint(2, 3)]]
-
-                #mutation in new mf
-                num_muts = []
-                for i in range(0, len(basepairs)):
-                    if recombination[i] == 0:
-                        num_muts.append(np.random.binomial(len(mf), basepairs[i] * mutation[i]))
-                    else:
-                        num_muts.append(np.random.binomial(2*len(mf), basepairs[i] * mutation[i]))
-                if sum(num_muts) != 0:
-                    mf = mutation_fx(mf, num_muts, basepairs)
-                meta_popdict[mpop][npop]["MF_1"] = mf
-
-    return meta_popdict, len(meta_popdict[mpop].keys()), sum(mf_sum)
+    return mf, meta_popdict, len(meta_popdict[mpop].keys()), sum(mf_sum)
 
 def hostdeath(meta_popdict, mpop):
     '''when a host dies/cures all the MF/Wb disappear from the dict'''
