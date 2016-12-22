@@ -32,6 +32,7 @@ import copy
 import argparse
 from sklearn.metrics.pairwise import euclidean_distances
 import numpy as np
+import time
 
 def get_args():
     '''asdfasdf'''
@@ -41,7 +42,7 @@ def get_args():
     parser.add_argument('-im', '--initial_migration', type=float, default=.0001, help="migration rate between villages/metapopulations in the model.This is strictly for initial conditions and can be changed for the forward-in-time portion")
     parser.add_argument('-idm', '--initial_distance_m', type=list, help="initial_distance_m is list [1000] such that distance_m[0] is between 1 & 2")
     parser.add_argument('-v', '--villages', type=int, default=1, help="sets the intial number of villages.")
-    parser.add_argument('-t', '--theta', type=list, required=True, help="theta value of worm populations in 1st village, should be for the entire length of the locus")
+    parser.add_argument('-t', '--theta', type=list, required=True, help="observed theta value of worm populations for each locus in format [[meta1_locus1,meta2_locus1],[meta1_locus2, meta2_locus2]]")
     parser.add_argument('-bp', '--basepairs', type=list, default=13000, help="length in basepairs of each locus")
     parser.add_argument('-u', '--mutation', type=list, default=7.6E-8, help="expected as list, mutation rate per bp per generation for each locus")
     #ms_outcall
@@ -100,7 +101,10 @@ def migration_matrix(villages, initial_migration, initial_distance_m, theta, bas
     initial_migration:(float) migration for ms/scrm as the fraction of subpopulation i which is made up of migrants from subpopulation j each generation
     initial_distance_m:(list,float) distance between villages in meters
     '''
-    ne = 4 * basepairs * theta / mutation
+    print "starting migration_matrix"
+    t0 = time.clock()
+    
+    ne = theta / (4*mutation*basepairs)
     if villages > 4: #cant figure out how to pythonically increase the villages without just using loops
         raise ValueError("only handles 4 villages ATM")
     elif villages < 4:
@@ -125,14 +129,15 @@ def migration_matrix(villages, initial_migration, initial_distance_m, theta, bas
             m5 = 4*ne*mig[4]
             m6 = 4*ne*mig[5]
             return "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(0, m1, m2, m3, m1, 0, m4, m5, m2, m4, 0, m6, m3, m5, m6, 0)
-
+    print time.clock()-t0
+    
 def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m, theta, basepairs, mutation, recombination, time2Ancestral, thetaAncestral, thetaRegional, time_join12, time_join23, time_join34):
     '''external call to ms (Hudson 2000) or scrm. Calls the function migration_matrix() if using more than 1 village.
     This function will then read in the stdout from ms/scrm.The location of segsites are assigned a random number then scaled
     by the length of the desired sequence in basepairs.
     worm_popsize:(list,int) how many worms to simulate
     villages:(int) number of villages/metapopulations
-    theta:(list,float) list of theta values for each locus
+    theta:(list,float) list of theta values for each locus. With more than 1 village it is list of lists [[locus1_meta1,locus1_meta2],[locus2_meta1,locus2_meta2]]
     basepairs:(list,int) list of basepairs (lengths) for each locus
     mutation:(list,float) mutation rate for each locus as probability per base per generation
     recombination:(list,float) recombination rate for each locus as probability per base per generation
@@ -143,17 +148,20 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m, th
     time_join23:(int) time in generations for joining/splitting pop 2 into 3
     time_join34:(int) time in generations for joining/splitting pop 3 into 4
     '''
+    print "starting scrm..."
+    t0=time.clock()
+
     num_loci = len(theta) #counts number of loci
     thetaN0 = [t[0] for t in theta] #theta for first population, all other thetas are scaled from this value
-    rho = ([(b-1)*r*t/m for b, r, t, m in zip(basepairs, recombination, thetaN0, mutation)]) #population recombination rate
-    tA = ([b*(a/(t/m)) for b, a, t, m in zip(basepairs, time2Ancestral, thetaN0, mutation)]) #time to the ancestral population
-    t12 = ([b*(a/(t/m)) for b, a, t, m in zip(basepairs, time_join12, thetaN0, mutation)]) # time to join 1 & 2
-    t23 = ([b*(a/(t/m)) for b, a, t, m in zip(basepairs, time_join23, thetaN0, mutation)]) # time to join 2 & 3
-    t34 = ([b*(a/(t/m)) for b, a, t, m in zip(basepairs, time_join34, thetaN0, mutation)])  # time to join 3 & 4
+    rho = [t*(r/u) for t, r, u in zip(thetaN0, recombination, mutation)] #population recombination rate
+    tA = [b*(time2Ancestral/(t/m)) for b, t, m in zip(basepairs, thetaN0, mutation)] #time to the ancestral population
+    t12 = [b*(time_join12/(t/m)) for b, t, m in zip(basepairs, thetaN0, mutation)] # time to join 1 & 2
+    t23 = [b*(time_join23/(t/m)) for b, t, m in zip(basepairs, thetaN0, mutation)] # time to join 2 & 3
+    t34 = [b*(time_join34/(t/m)) for b, t, m in zip(basepairs, thetaN0, mutation)]  # time to join 3 & 4
     hap_pop = defaultdict(list) #list intialization for recording haplotypes
 
-    for i in range(0, num_loci):
-        if rho[i] is 0:
+    for loc in range(0, num_loci):
+        if rho[loc] is 0:
             ploidy = 1
         else:
             ploidy = 2
@@ -163,31 +171,29 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m, th
 
         #create ms/scrm command
         if villages == 1: #set up for just 1 village, doesnot call migration_matrix
-            mscmd = "scrm {} 1 -t {} -r {} {} -G {} -eG {} 0.0 -eN {} {} -SC abs -p {}".format(total_inds, thetaN0[i], rho[i], basepairs[i]-1, (-1/tA[i])*math.log(thetaRegional), tA[i], tA[i], thetaAncestral, 12)
+            mscmd = "scrm {} 1 -t {} -r {} {} -G {} -eG {} 0.0 -SC abs -p {}".format(total_inds, thetaN0[loc], rho[loc], basepairs[loc]-1, (-1/tA[loc])*math.log(thetaRegional), tA[loc], 12)
         else: #ms setup for >1 villages
             num_subpops = len(worm_popsize) #-I num_pops
             sub_pop = " ".join(map(str, worm_popsize))#-I X i j ...
             if villages == 2:
-                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} {} -n 1 {} -n 2 {} -ej {} 1 2 -G {} -eG {} 0.0 -eN {} {} -SC abs -p {}".format(total_inds, theta[i], rho[i], basepairs[i]-1, num_subpops, sub_pop, migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[i], basepairs[i], mutation[i]), 1, float(thetaN0[i])/theta[i][1], t12[i], (-1/tA[i])*math.log(thetaRegional), tA[i], tA[i], thetaAncestral, 12)
+                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} {} -n 1 {} -n 2 {} -ej {} 1 2 -G {} -eG {} 0.0 -SC abs -p {}".format(total_inds, thetaN0[loc], rho[loc], basepairs[loc]-1, num_subpops, sub_pop, migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[loc], basepairs[loc], mutation[loc]), 1, float(thetaN0[loc])/theta[loc][1], t12[loc], (-1/tA[loc])*math.log(thetaRegional), tA[loc], 12)
             elif villages == 3:
-                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -ma {} -ej {} 1 2 -ej {} 2 3 -G {} -eG {} 0.0 -eN {} {} -SC abs -p {}".format(total_inds, theta[i], rho[i], basepairs[i]-1, num_subpops, sub_pop, 1, float(thetaN0[i])/theta[i][1], float(thetaN0[i])/theta[i][2], migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[i], basepairs[i], mutation[i]), t12[i], t23[i], (-1/tA[i])*math.log(thetaRegional), tA[i], tA[i], thetaAncestral, 12)
+                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -ma {} -ej {} 1 2 -ej {} 2 3 -G {} -eG {} 0.0 -SC abs -p {}".format(total_inds, thetaN0[loc], rho[loc], basepairs[loc]-1, num_subpops, sub_pop, 1, float(thetaN0[loc])/theta[loc][1], float(thetaN0[loc])/theta[loc][2], migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[loc], basepairs[loc], mutation[loc]), t12[loc], t23[loc], (-1/tA[loc])*math.log(thetaRegional), tA[loc], 12)
             elif villages == 4:
-                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -n4 {} -ma {} -ej {} 1 2 -ej {} 2 3 -ej {} 3 4 -G {} -eG {} 0.0 -eN {} {} -SC abs -p {}".format(total_inds, theta[i], rho[i], basepairs[i]-1, num_subpops, sub_pop, 1, float(thetaN0[i])/theta[i][1], float(thetaN0[i])/theta[i][2], float(thetaN0[i])/theta[i][3], migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[i], basepairs[i], mutation[i]), t12[i], t23[i], t34[i], (-1/tA[i])*math.log(thetaRegional), tA[i], tA[i], thetaAncestral, 12)
+                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -n4 {} -ma {} -ej {} 1 2 -ej {} 2 3 -ej {} 3 4 -G {} -eG {} 0.0 -SC abs -p {}".format(total_inds, thetaN0[loc], rho[loc], basepairs[loc]-1, num_subpops, sub_pop, 1, float(thetaN0[loc])/theta[loc][1], float(thetaN0[loc])/theta[loc][2], float(thetaN0[loc])/theta[loc][3], migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[loc], basepairs[loc], mutation[loc]), t12[loc], t23[loc], t34[loc], (-1/tA[loc])*math.log(thetaRegional), tA[loc], 12)
 
-        #print mscmd
+        print mscmd
         proc = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
-        proc.wait()
-
         #parses ms output from stdout
         for line in iter(proc.stdout.readline, ''):
             if line.startswith("positions"):
-                positions = [round(i) for i in map(int, line.strip().split()[1:])]
+                positions = [round(i) for i in map(float, line.strip().split()[1:])]
                 for line in iter(proc.stdout.readline, ''):
                     hap = line.strip()
-                    hap_pop["locus"+str(i)].append(filter(lambda a: a != 0, [i*j for i, j in zip([m.start() for m in re.finditer("1", hap)], positions)]))
+                    hap_pop["locus"+str(loc)].append([positions[j] for j in [m.start() for m in re.finditer("1", hap)]])  
+    print time.clock()-t0 
     return hap_pop
-    #locus0:[000000010101010];locus1:[]
-
+    #{'locus0':[14.0, 26.0],[5.0, 7.0]]}
 
 def trans_init(infhost, muTrans, sigma, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -195,23 +201,26 @@ def trans_init(infhost, muTrans, sigma, sizeTrans):
     sizeTrans:(float) parameter of neg binomial
     sigma:(float) parameter for calculating dispersal distance
     '''
+    print "starting trans_init"
+    t0 = time.clock()
     #set dispersal parameters
     dispersal = 4*math.pi*sigma**2
     meta_n = 1 #this set first village
     transmission_mat = AutoVivification() #creates dictionary   ### this might not be necessary if we leave as matrix type
 
-    for i in infhost:
-        x1 = np.random.negative_binomial(sizeTrans, sizeTrans/float((sizeTrans+muTrans)), i) # number of successes, prob of success (size/size+mu),number of values to return
-        x2 = np.random.negative_binomial(sizeTrans, sizeTrans/float((sizeTrans+muTrans)), i) # number of successes, prob of success (size/size+mu),number of values to return
+    for h in infhost:
+        x1 = np.random.negative_binomial(sizeTrans, sizeTrans/float((sizeTrans+muTrans)), h) # number of successes, prob of success (size/size+mu),number of values to return
+        x2 = np.random.negative_binomial(sizeTrans, sizeTrans/float((sizeTrans+muTrans)), h) # number of successes, prob of success (size/size+mu),number of values to return
         X = np.vstack((x1, x2)).T #transposes
         dist = euclidean_distances(X, X) #from sklearn to calculate euclidian distances
-        for pop in range(0, infhost):
+        for pop in range(h):
             transmission_mat["meta_{}".format(meta_n)]["pop_{}".format(pop+1)] = ["{},{}".format(x1[pop], x2[pop]), [1 if item < dispersal else 0 for item in dist[pop, :]]]
             ### is it potential for rather than 0 or 1 given success of transmission that it could be exponetial or similar long-tailed distribution
             ### however that would mean change in how transmission occurs since it would not always be a success
         meta_n += 1
+    print time.clock()-t0
     return transmission_mat, dispersal
-    #meta_1:pop1:[(x,y),[0,1,1,1,1,1]]
+    #{'meta_1': {'pop_1': ['x,y',[0,1,1,1,1,1]],'pop_2': ['x,y',[0,1,1,1,0,0]]}}
 
 def worm_burden(infhost, muWormBurden, sizeWormBurden, theta, basepairs, mutation, recombination, time2Ancestral, thetaAncestral, thetaRegional, time_join12, time_join23, time_join34, villages, initial_migration, initial_distance_m, muTrans, sizeTrans, sigma):
     '''
@@ -222,6 +231,9 @@ def worm_burden(infhost, muWormBurden, sizeWormBurden, theta, basepairs, mutatio
     muWormBurden: (list,int) avg_burden, average number of adult female worms in infections;
     sizeWormBurden:(list,int) dispersion, size parameter for negative binomial distribution
     '''
+    print "starting worm_burden"
+    t0 = time.clock()
+    
     # worm burden (number of adult worms) per host
     pop_init = []
     for mu, size, numworms in zip(muWormBurden, sizeWormBurden, infhost):
@@ -249,7 +261,7 @@ def worm_burden(infhost, muWormBurden, sizeWormBurden, theta, basepairs, mutatio
             while j < hostpop:
                 haplotypes = [np.random.uniform(), [hap_pop["locus0"][k]]] #initializes info for each worm [rand_num,[],[,],[,],[,],[,]]
                 for i in range(1, locus):
-                    haplotypes.append(hap_pop["locus"+str(i)][kd], hap_pop["locus"+str(i)][kd+1])
+                    haplotypes.append([hap_pop["locus"+str(i)][kd], hap_pop["locus"+str(i)][kd+1]])
                 meta_popdict["meta_" + str(meta_n)]["pop_" + str(pop)]["A_1"].append(haplotypes)
                 j += 1 #counts the A1 in pop_init
                 k += 1 #counts the haps in hap_pop[]
@@ -258,8 +270,10 @@ def worm_burden(infhost, muWormBurden, sizeWormBurden, theta, basepairs, mutatio
         meta_n += 1 #advances the meta counter
         pop = 1 #resets pop counter for new meta populations aka village
     transmission_mat, dispersal = trans_init(infhost, muTrans, sigma, sizeTrans)
-    return meta_popdict, transmission_mat, dispersal
+    print time.clock()-t0 
+    return meta_popdict, transmission_mat, dispersal, hap_pop
     #meta_1:pop1:[rand,[locus0],[locus1],[locusN]]
+    #{'meta_1': {'pop_1': {'A_1': [rand, [[L1_hap]], [[L2_hap1], [L2_hap2]], [[L3_hap1], [L3_hap2]]], [rand, [L1_hap], [L2_hap1, L2_hap2], [L3_hap1, L3_hap2]]
 
 ############################################
 ##Begin simulation functions
@@ -560,7 +574,7 @@ def recombination_fx(mf, num_recomb, basepairs):
             recomb += 1
     return mf
 
-def transmission(mpop, transmission_mat, meta_popdict, dispersal, L3trans, hostpopsize):
+def transmission_fx(mpop, transmission_mat, meta_popdict, dispersal, L3trans, hostpopsize):
     '''transmission function for worms between hosts
     L3trans:(int) number of successful transmission events
     mpop:(int) current metapopulation
@@ -657,7 +671,7 @@ def wb_sims(numberGens, prev, hostpopsize, villages, bites_person, hours2bite, m
                 L3trans = round(infbites*(4.395*(1-math.exp(-(0.055*(mf_blood))/4.395))**2) * (0.414*0.32)) #proportion of L3 that leave mosquito is 0.414 and prop that enter host after leaving mosquito is 0.32
             else:
                 L3trans = np.random.binomial(infbites, (0.414*0.32)) #prob of infected bite that picks up MF which then mature to L3 and spread to another host
-            meta_popdict, transmission_mat = transmission(mpop, transmission_mat, meta_popdict, dispersal, L3trans, hostpopsize[mpop])
+            meta_popdict, transmission_mat = transmission_fx(mpop, transmission_mat, meta_popdict, dispersal, L3trans, hostpopsize[mpop])
             prev_t[mpop] = infhost[mpop]/hostpopsize[mpop]
         time_month += 1
 
