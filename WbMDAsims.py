@@ -195,7 +195,7 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m, th
     return hap_pop
     #{'locus0':[14.0, 26.0],[5.0, 7.0]]}
 
-def trans_init(infhost, muTrans, sigma, sizeTrans):
+def transmission_init(infhost, muTrans, sigma, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
     muTrans:(float) parameter of neg binomial
     sizeTrans:(float) parameter of neg binomial
@@ -269,7 +269,7 @@ def worm_burden(infhost, muWormBurden, sizeWormBurden, theta, basepairs, mutatio
             pop += 1 #advances the pop counter
         meta_n += 1 #advances the meta counter
         pop = 1 #resets pop counter for new meta populations aka village
-    transmission_mat, dispersal = trans_init(infhost, muTrans, sigma, sizeTrans)
+    transmission_mat, dispersal = transmission_init(infhost, muTrans, sigma, sizeTrans)
     print time.clock()-t0 
     return meta_popdict, transmission_mat, dispersal, hap_pop
     #meta_1:pop1:[rand,[locus0],[locus1],[locusN]]
