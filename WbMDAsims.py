@@ -30,8 +30,9 @@ import argparse
 from sklearn.metrics.pairwise import euclidean_distances
 import numpy as np
 import time
+from Ipython import embed
 
-from funcs import ms_outcall
+from funcs import ms_outcall, recombination_fx
 
 #meta_popdict, transmission_mat, dispersal, hap_pop = worm_burden([10,10], [5,5], [50,5], [[1,1],[2,2]], [1000,2000], [7.6E-8, 2.9E-9],  [0, 2.9E-9], 1800, 344, 23, 240, 240, 240, 2, 0.0001, [1000], 100, 1, 2)
 #meta_popdict, X, Y = maturation(1, meta_popdict, 10, True, .90, .90, .90, .90, 20, [1000, 2000], [7.6E-8, 2.9E-9],  [0.0, 2.9E-9])
@@ -42,20 +43,36 @@ def get_args():
     ## initialize
     #migration_matrix
     parser.add_argument('-im', '--initial_migration', type=float, default=.0001, 
-            help="migration rate between villages/metapopulations in the model.This is strictly for initial conditions and can be changed for the forward-in-time portion")
-    parser.add_argument('-idm', '--initial_distance_m', type=list, help="initial_distance_m is list [1000] such that distance_m[0] is between 1 & 2")
-    parser.add_argument('-v', '--villages', type=int, default=1, help="sets the intial number of villages.")
-    parser.add_argument('-t', '--theta', type=list, required=True, help="observed theta value of worm populations for each locus in format [[meta1_locus1,meta2_locus1],[meta1_locus2, meta2_locus2]]")
-    parser.add_argument('-bp', '--basepairs', type=list, default=13000, help="length in basepairs of each locus")
-    parser.add_argument('-u', '--mutation', type=list, default=7.6E-8, help="expected as list, mutation rate per bp per generation for each locus")
+            help=("migration rate between villages/metapopulations in the" 
+            "model.This is strictly for initial conditions and can be" 
+            "changed for the forward-in-time portion"))
+    parser.add_argument('-idm', '--initial_distance_m', type=list, 
+            help="initial_distance_m is list [1000] such that distance_m[0] is between 1 & 2")
+    parser.add_argument('-v', '--villages', type=int, default=1, 
+            help="sets the intial number of villages.")
+    parser.add_argument('-t', '--theta', type=list, required=True, 
+            help=("observed theta value of worm populations for" 
+            "each locus in format [[meta1_locus1,meta2_locus1],"
+            "[meta1_locus2, meta2_locus2]]"))
+    parser.add_argument('-bp', '--basepairs', type=list, default=13000, 
+            help="length in basepairs of each locus")
+    parser.add_argument('-u', '--mutation', type=list, default=7.6E-8, 
+            help="expected as list, mutation rate per bp per generation for each locus")
     #ms_outcall
-    parser.add_argument('-t12', '--time_join12', type=int, default=240, help="generations until time of joining for pop1 and pop2")
-    parser.add_argument('-t23', '--time_join23', type=int, default=240, help="generations until time of joining for pop2 and pop3")
-    parser.add_argument('-t34', '--time_join34', type=int, default=240, help="generations until time of joining for pop3 and pop4")
-    parser.add_argument('-t2a', '--time2Ancestral', type=int, default=1800, help="generations until ancestral population for PNG is 1800 generations for Africa/Haiti 500 generations")
-    parser.add_argument('-at', '--thetaAncestral', type=int, default=344, help="ancestral theta before")
-    parser.add_argument('-ar', '--thetaRegional', type=int, default=23, help="regional theta")
-    parser.add_argument('-r', '--recombination', type=list, default=0, help="recombination for each locus, if 0 assumes haploid is 1")
+    parser.add_argument('-t12', '--time_join12', type=int, default=240, 
+            help="generations until time of joining for pop1 and pop2")
+    parser.add_argument('-t23', '--time_join23', type=int, default=240, 
+            help="generations until time of joining for pop2 and pop3")
+    parser.add_argument('-t34', '--time_join34', type=int, default=240, 
+            help="generations until time of joining for pop3 and pop4")
+    parser.add_argument('-t2a', '--time2Ancestral', type=int, default=1800, 
+            help="generations until ancestral population for PNG is 1800 generations for Africa/Haiti 500 generations")
+    parser.add_argument('-at', '--thetaAncestral', type=int, default=344, 
+            help="ancestral theta before")
+    parser.add_argument('-ar', '--thetaRegional', type=int, default=23, 
+            help="regional theta")
+    parser.add_argument('-r', '--recombination', type=list, default=0, 
+            help="recombination for each locus, if 0 assumes haploid is 1")
     #trans_init
     parser.add_argument('-mt', '--muTrans', type=int, default=100, help="mu for neg bino in transmission, distances between hosts")
     parser.add_argument('-st', '--sizeTrans', type=int, default=1, help="size for neg bino in transmission, distance between hosts")
@@ -457,42 +474,6 @@ def mutation_fx(mf, num_muts, basepairs):
             muts += 1
     return mf
 
-def recombination_fx(mf, num_recomb, basepairs):
-    '''this is run every time the prob of a recombination is true
-       num_recomb:(list,int) number of recombination events observed
-       mf:(list) list of mf from adults
-       '''
-    for i, bp in enumerate(basepairs): #number of muts
-        recomb = 0
-        while recomb < num_recomb[i]: #keep going until all recombinations are  assigned
-            rec_mf = random.randrange(0, len(mf)) #choose random index in mf lis
-            new_recomb = random.randint(0, 3)
-            if new_recomb < 2: #first parent
-                hap1 = mf[rec_mf][i+1][0]
-                hap2 = mf[rec_mf][i+1][1]
-                crossover_pos = random.randint(0, bp)
-                hap1.sort()
-                hap2.sort()
-                hap1_co = next(l[0] for l in enumerate(hap1) if l[1] > crossover_pos)
-                hap2_co = next(l[0] for l in enumerate(hap2) if l[1] > crossover_pos)
-                hap1_new = hap1[0:hap1_co] + hap2[hap2_co:]
-                hap2_new = hap2[0:hap2_co] + hap1[hap1_co:]
-                mf[rec_mf][i+1][0] = hap1_new
-                mf[rec_mf][i+1][1] = hap2_new
-            else:#second parent
-                hap3 = mf[rec_mf][i+1][2]
-                hap4 = mf[rec_mf][i+1][3]
-                crossover_pos = random.randint(0, bp)
-                hap3.sort()
-                hap4.sort()
-                hap3_co = next(l[0] for l in enumerate(hap3) if l[1] > crossover_pos)
-                hap4_co = next(l[0] for l in enumerate(hap4) if l[1] > crossover_pos)
-                hap3_new = hap1[0:hap3_co] + hap2[hap4_co:]
-                hap4_new = hap2[0:hap4_co] + hap1[hap3_co:]
-                mf[rec_mf][i+1][2] = hap3_new
-                mf[rec_mf][i+1][3] = hap4_new
-            recomb += 1
-    return mf
 
 def transmission_fx(mpop, transmission_mat, meta_popdict, dispersal, L3trans, hostpopsize):
     '''transmission function for worms between hosts
@@ -610,3 +591,4 @@ def wb_sims(numberGens, prev, hostpopsize, villages, bites_person, hours2bite, m
    #rate of transmission: rate_ib * number_L3 * reinjected to new host; number_L3 = 4.395(1-exp^-(.055(m))/4.395)^2; leave with bite = .414; reinjected = .32; m=(sum[donor["MF"]]/235)/50
    #(sum[allMFstages]/235)/50 number of MF in 20ul of blood 235ml is 5% of total body blood and there are 50*20ul in 1 ML
     '''
+embed()

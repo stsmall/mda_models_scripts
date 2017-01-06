@@ -4,15 +4,17 @@ import subprocess
 from collections import defaultdict
 import re
 import numpy as np
+import random
 
 
-def migration_matrix(villages, initial_migration, initial_distance_m, theta, basepairs, mutation):
+def migration_matrix(villages, initial_migration, initial_distance_m, theta, 
+        basepairs, mutation):
     '''Creates a string that represents a migration matrix between
     metapopulations.
 
-    Format specified by ms (hudson 2000). Uses euclidian distances. The value of 2Nm
-    is weighted by the distance from the next population as an exponential random variable.
-    The highest this can be is 2Nm/1
+    Format specified by ms (hudson 2000). Uses euclidian distances. The value 
+    of 2Nm is weighted by the distance from the next population as an 
+    exponential random variable.  The highest this can be is 2Nm/1
 
     Parameters
     ----------
@@ -26,7 +28,7 @@ def migration_matrix(villages, initial_migration, initial_distance_m, theta, bas
 
     Returns
     -------
-    Migration matrix : 
+    Migration matrix: string
         migration matrix for scrm
     '''
 
@@ -129,6 +131,7 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m,
     t34 = [b*(time_join34/(t/m)) for b, t, m in zip(basepairs, thetaN0, mutation)]
     #list intialization for recording haplotypes
     hap_pop = defaultdict(list) 
+    time_join = [t12, t23, t34]
 
     for loc in range(0, num_loci):
         if rho[loc] is 0:
@@ -151,35 +154,29 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m,
                      "-G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
                      " {sig_digits}")
         
-        migration_matrix(villages, initial_migration, initial_distance_m, 
-                thetaN0[loc], basepairs[loc], mutation[loc])
-        ####################
-        for village_ix in range(villages):
-            scrm_base += '-n {} {}'.format(village_ix, 
-                    migration_matrix(villages, initial_migration,
-                        initial_distance_m, thetaN0[loc], basepairs[loc],
-                        mutation[loc]))
-            scrm_base + '-ej {0} 1 2'.format(t12[loc])
-        #######################
         if villages == 1: 
             mscmd = scrm_base.format(**ms_params)
         else: #ms setup for >1 villages
             num_subpops = len(worm_popsize) #-I num_pops
             sub_pop = " ".join(map(str, worm_popsize))#-I X i j ...
+            mscmd = scrm_base
+            for village_ix in range(villages):
+                mm = migration_matrix(villages, initial_migration,
+                    initial_distance_m, thetaN0[loc], basepairs[loc],
+                    mutation[loc])
+                if village_ix == 0: 
+                    present_pop = 1
+                else: 
+                    present_pop = float(thetaN0[loc])/theta[loc][village_ix]
+                    mscmd += '-ej {0} {1} {2}'.format(time_join[village_ix-1][loc], 
+                            village_ix + 1, village_ix + 2)
+                mscmd += '-n {} {} '.format(village_ix, present_pop) 
             if villages == 2:
-                mscmd = ("scrm {} 1 -t {} -r {} {} -I {} {} {} -n 1 {}" 
-                "-n 2 {} -ej {} 1 2 -G {} -eG {} 0.0 -SC abs -p {}").format(
-                        total_inds, thetaN0[loc], rho[loc], basepairs[loc]-1, 
-                        num_subpops, sub_pop, migration_matrix(villages, 
-                            initial_migration, initial_distance_m, thetaN0[loc], 
-                            basepairs[loc], mutation[loc]), 1, 
-                        float(thetaN0[loc])/theta[loc][1], t12[loc], 
-                        (-1/tA[loc])*math.log(thetaRegional), tA[loc], 12)
-            elif villages == 3:
-                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -ma {} -ej {} 1 2 -ej {} 2 3 -G {} -eG {} 0.0 -SC abs -p {}".format(total_inds, thetaN0[loc], rho[loc], basepairs[loc]-1, num_subpops, sub_pop, 1, float(thetaN0[loc])/theta[loc][1], float(thetaN0[loc])/theta[loc][2], migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[loc], basepairs[loc], mutation[loc]), t12[loc], t23[loc], (-1/tA[loc])*math.log(thetaRegional), tA[loc], 12)
-            elif villages == 4:
-                mscmd = "scrm {} 1 -t {} -r {} {} -I {} {} -n 1 {} -n 2 {} -n 3 {} -n4 {} -ma {} -ej {} 1 2 -ej {} 2 3 -ej {} 3 4 -G {} -eG {} 0.0 -SC abs -p {}".format(total_inds, thetaN0[loc], rho[loc], basepairs[loc]-1, num_subpops, sub_pop, 1, float(thetaN0[loc])/theta[loc][1], float(thetaN0[loc])/theta[loc][2], float(thetaN0[loc])/theta[loc][3], migration_matrix(villages, initial_migration, initial_distance_m, thetaN0[loc], basepairs[loc], mutation[loc]), t12[loc], t23[loc], t34[loc], (-1/tA[loc])*math.log(thetaRegional), tA[loc], 12)
-
+                # Island model
+                mscmd += '-I {} {} {} '.format(num_subpops, sub_pop, mm)
+            else:
+                mscmd += 'I {} {} '.format(num_subpops, sub_pop)
+                mscmd += '-ma {} '.format(mm)
         print(mscmd)
         proc = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
         #parses ms output from stdout
@@ -193,3 +190,49 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m,
     print(time.clock()-t0)
     return hap_pop
     #{'locus0':[14.0, 26.0],[5.0, 7.0]]}
+
+
+def recombination_fx(mf, num_recomb, basepairs):
+    """this is run every time the prob of a recombination is true
+
+    Parameters
+    ----------
+    mf: list
+        list of mf from adults
+    num_recomb: list of ints
+        number of recombination events observed
+
+    Returns
+    -------
+    """
+    for i, bp in enumerate(basepairs): #number of muts
+        recomb = 0
+        while recomb < num_recomb[i]: #keep going until all recombinations are  assigned
+            rec_mf = random.randrange(0, len(mf)) #choose random index in mf lis
+            new_recomb = random.randint(0, 3)
+            if new_recomb < 2: #first parent
+                hap1 = mf[rec_mf][i+1][0]
+                hap2 = mf[rec_mf][i+1][1]
+                crossover_pos = random.randint(0, bp)
+                hap1.sort()
+                hap2.sort()
+                hap1_co = next(l[0] for l in enumerate(hap1) if l[1] > crossover_pos)
+                hap2_co = next(l[0] for l in enumerate(hap2) if l[1] > crossover_pos)
+                hap1_new = hap1[0:hap1_co] + hap2[hap2_co:]
+                hap2_new = hap2[0:hap2_co] + hap1[hap1_co:]
+                mf[rec_mf][i+1][0] = hap1_new
+                mf[rec_mf][i+1][1] = hap2_new
+            else:#second parent
+                hap3 = mf[rec_mf][i+1][2]
+                hap4 = mf[rec_mf][i+1][3]
+                crossover_pos = random.randint(0, bp)
+                hap3.sort()
+                hap4.sort()
+                hap3_co = next(l[0] for l in enumerate(hap3) if l[1] > crossover_pos)
+                hap4_co = next(l[0] for l in enumerate(hap4) if l[1] > crossover_pos)
+                hap3_new = hap1[0:hap3_co] + hap2[hap4_co:]
+                hap4_new = hap2[0:hap4_co] + hap1[hap3_co:]
+                mf[rec_mf][i+1][2] = hap3_new
+                mf[rec_mf][i+1][3] = hap4_new
+            recomb += 1
+    return mf
