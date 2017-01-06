@@ -1,0 +1,24 @@
+#python specific
+
+*.pyc
+
+## Generic files to ignore
+*~
+*.lock
+*.DS_Store
+*.swp
+*.swo
+*.out
+*.c
+*.o
+*.so
+*.ipynb
+*.coverage
+*.nfs*
+
+config.cfg
+
+/build
+/doc/build
+/dist
+
