@@ -361,6 +361,7 @@ def wb_sims(numberGens, prev, hostpopsize, villages, bites_person, hours2bite, m
             meta_popdict, inf, mfsum = maturation(mpop, meta_popdict, time_month, infhost[mpop], density_dependence, mortalityHost, mortalityAdult, mortalityJuv, mortalityMF, fecundity, basepairs, mutation, recombination) #update matrices
             infhost[mpop] = inf
             mf_mpopavg[mpop] = mfsum
+
             #transmission
             totalbitesvillage = bites_person[mpop] * hours2bite[mpop] * 30 * hostpopsize[mpop] #20 bites per person per hour * 6 hours (atnight) * 30 days * hostpopsize
             infbites = np.random.binomial(totalbitesvillage, (prev_t[mpop]*0.37)) #prob of bite on infected person picking up MF. prob of 0.37 from Gambhir paper
@@ -369,6 +370,7 @@ def wb_sims(numberGens, prev, hostpopsize, villages, bites_person, hours2bite, m
                 L3trans = round(infbites*(4.395*(1-math.exp(-(0.055*(mf_blood))/4.395))**2) * (0.414*0.32)) #proportion of L3 that leave mosquito is 0.414 and prop that enter host after leaving mosquito is 0.32
             else:
                 L3trans = np.random.binomial(infbites, (0.414*0.32)) #prob of infected bite that picks up MF which then mature to L3 and spread to another host
+
             meta_popdict, transmission_mat = transmission_fx(mpop, transmission_mat, meta_popdict, dispersal, L3trans, hostpopsize[mpop])
             prev_t[mpop] = infhost[mpop]/hostpopsize[mpop]
         time_month += 1
