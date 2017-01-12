@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 10 19:35:00 2017
 
-@author: stsmall
-"""
+import numpy as np
 
-d
+def dfe_fx(gamma_alpha=1, gamma_beta=4):
+     '''function to determine the fitness effect of a new mutation
+     Parameters
+     --------
+     gamma_alpha
+     gamma_beta
+     
+     Returns
+     ------
+     fitness value as float
+     '''
+     
+     return np.random.gamma(gamma_alpha,gamma_beta)
+     
