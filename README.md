@@ -11,7 +11,8 @@ Simulation to generate genetic sequence data for specific life history of Wucher
 * hostpopsize
 
 ####Parasite
-
+* survival
+* fecundity
 
 ####Genetics
 * selection
