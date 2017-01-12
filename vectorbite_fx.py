@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 11 08:49:38 2017
 
-@author: stsmall
-"""
 import numpy as np
 import math
+
 def vectorbite_fx(villages=2, 
                   bitespperson=[20, 20], 
                   hours2bite=[8, 8], 
                   hostpopsize=[100, 150], 
                   prev_t=[0.3, 0.2], 
                   densitydep=True, 
-                  villavgMF=[65, 90]):
+                  villavgMF=[65, 90], 
+                  bednets=[False, True], 
+                  bnstart=[0, 12], 
+                  bnstop=[0, 24], 
+                  bncoverage=[0, 0.50], 
+                  month=6):
     '''counts the number of successful infectious mosquito bites
 
     Parameters
@@ -34,12 +36,19 @@ def vectorbite_fx(villages=2,
     ------
     transL3
     
-    ---'''
-                  
+    ---'''           
     for rate in range(villages):
-        # 30 days per month    
-        totalbites_village = (bitespperson[rate] * hours2bite[rate] * 30
-            * hostpopsize[rate])
+        # 30 days per month
+        if bednets:
+             if month > bnstart[rate] and month < bnstop[rate]:
+                  totalbites_village = ((1 - bncoverage[rate]) * bitespperson[rate] * hours2bite[rate] * 30 
+                                        * hostpopsize[rate])
+             else:
+                  totalbites_village = (bitespperson[rate] * hours2bite[rate] * 30 
+                                        * hostpopsize[rate])
+        else:
+             totalbites_village = (bitespperson[rate] * hours2bite[rate] * 30 
+                                   * hostpopsize[rate])
         # 0.37 is prob of bite on infected host picking up MF    
         infbites = np.random.binomial(totalbites_village, (prev_t[rate] * 0.37))
         if densitydep: #values for anopheles from CITE
@@ -57,3 +66,10 @@ def vectorbite_fx(villages=2,
             transL3 = np.random.binomial(infbites, (0.414 * 0.32))
     
     return transL3
+
+    
+if __name__ == '__main__':
+    vectorbite_fx(villages=2, bitespperson=[20, 20], hours2bite=[8, 8], 
+                  hostpopsize=[100, 150], prev_t=[0.3, 0.2], densitydep=True, 
+                  villageavgMF=[65, 90], bednets=[False, True], bnstart=[0, 12], 
+                  bnstop=[0, 24], bncoverage=[0, 0.50], month=6)
