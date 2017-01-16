@@ -7,10 +7,10 @@ import numpy as np
 import pandas
 from scipy.stats import weibull_min
 
-def survival_host(dfHost, agebound=[5,80]):
+def survival_host(dfHost):
     '''Host can die, the death of a host signifies the entire loss of a worm 
-    population. Host ages are choosen using actuary tables, host deaths are 
-    probabilities based on cumulative survival rates. Deaths are evaluated per year
+    population. Host ages are choosen using age distributions.Age of death is
+    calculated from actuary tables with addition or random variable
     This function SHOULD be referenced from the parasite survival functions inside 
     the condition if 'month%12 is 0:'
     
@@ -19,23 +19,20 @@ def survival_host(dfHost, agebound=[5,80]):
     dfHost: df
         dataframe to be updated if host dies
     agebound: int,list
-        list of youngest and oldest ages allowed
-    fertHost: int
-        estimate of fertility for new age
-    
+        list of youngest and oldest ages allowed   
     Returns
     -------
     dfHost
     '''
-    young, old = 5, 80 #age bounds
-    survCum = dfHost.apply(dfHost.age, 2, function(x) weibull_min.cdf(young,old))
-    survHost = np.random.random(len(dfHost.age)) #array of random numbers
-    killHost = which(survHost <= survCum)    #compare random numbers to survival
-    dfHost.drop(dfHost[[killHost]])   #remove entire row from df if dies    
-    
-    ###fertHost=5
-    #this should ideally go with new infection since that is when a new host is selected
-    #newHost = np.random.geometric(mean, young, old) #age of new host
+    ##if a host dies its idx and all associated rows need to be removed from all dfs
+    #dfAdult, dfMF, dfJuv, dfHost
+    if dfHost.age[] >= dfHost.agedeath:
+         dfHost.drop[[]]
+         
+    #add 1 year to all ages
+    dfHost.age += 1     
+         
+    return dfHost
     
 def survival_basefx(month=1, 
                     surv_Juv=0.866, 
