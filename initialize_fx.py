@@ -3,6 +3,8 @@ import subprocess
 from collections import defaultdict
 import re
 import numpy as np
+import pandas as pd
+import random
 
 
 def migration_matrix(villages, initial_migration, initial_distance_m, theta,
@@ -61,11 +63,23 @@ def migration_matrix(villages, initial_migration, initial_distance_m, theta,
                 0, m1, m2, m3, m1, 0, m4, m5, m2, m4, 0, m6, m3, m5, m6, 0)
 
 
-def parse_ms_output():
+def parse_ms_output(msout):
     """Parse output from ms or scrm.
+    Parameters
+    ---------
+    msout: iterator,file
+         stdout from scrm
+         
+    Returns
+    ------
+    dfAdult_gt
+         column in order to be added to dfAdult
     """
-    pass
-
+    dfAdult_gt = pd.DataFrame({
+                                'locus0' : [],
+                                'locus1' : [],
+                                })
+    return dfAdult_gt
 
 def ms_outcall(
         worm_popsize,
@@ -112,7 +126,47 @@ def ms_outcall(
 
     Returns
     -------
+    dfAdult: as dataframe with data from scrm
+    dfJuv: as empty df
+    dfMF:as empty df
     '''
+    dfAdult = pd.DataFrame({
+                           'village' : int,
+                           'hostidx' : int,
+                           'age' : int,
+                           'sex' :  "M",
+                           'R0net' : rand,
+                           'fec': int,
+                           'loc0gt' : [],
+                           'loc1gt' : [[], []],
+                           'selF' : float,
+                           'selS' : float
+                           })
+    dfJuv = pd.DataFrame({
+                           'village' : int,
+                           'hostidx' : int,
+                           'age' : int,
+                           'sex' :  "M",
+                           'R0net' : rand,
+                           'fec': int,
+                           'loc0gt' : [],
+                           'loc1gt' : [[], []],
+                           'selF' : float,
+                           'selS' : float
+                           })
+    dfMF = pd.DataFrame({
+                           'village' : int,
+                           'hostidx' : int,
+                           'age' : int,
+                           'sex' :  "M",
+                           'R0net' : rand,
+                           'fec': int,
+                           'loc0gt' : [],
+                           'loc1gt' : [[], []],
+                           'selF' : float,
+                           'selS' : float
+                           })
+
     num_loci = len(theta)
     # theta for first population, all other thetas are scaled from this value
     thetaN0 = [t[0] for t in theta]
@@ -194,23 +248,152 @@ def ms_outcall(
                  mscmd = scrm_base.format(**ms_params)     
         
         print(mscmd)
-        proc = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
-
-        # parses ms output from stdout
-        for line in iter(proc.stdout.readline, ''):
+        msout = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
+        
+        #parse_ms_output(msout)        # parses ms output from stdout
+        
+        for line in iter(msout.stdout.readline, ''):
             if line.startswith("positions"):
                 positions = [
                     round(i) for i in map(
                         float,
                         line.strip().split()[
                             1:])]
-                for line in iter(proc.stdout.readline, ''):
+                for line in iter(msout.stdout.readline, ''):
                     hap = line.strip()
                     ti = [positions[j] for j in [m.start() 
                         for m in re.finditer("1", hap)]]
                     hap_pop["locus" + str(loc)].append(ti)
-    return hap_pop
+    
+    return dfAdult, dfMF, dfJuv
     #{'locus0':[14.0, 26.0],[5.0, 7.0]]}
+    
+  
+def host_fx(villages=2, infhost=[10, 30], muTrans=100, sigma=10, sizeTrans=1):
+    '''Creates a transmission matrix for locations of infected hosts
+
+    Parameters
+    ----------
+    infhost: list
+         number of infected hosts at intial time. prev*hostpopsize
+    muTrans:float 
+        parameter of neg binomial
+    sizeTrans:float 
+        parameter of neg binomial
+    sigma:float
+        dispersal distance in meters
+
+    Returns
+    -------
+    dfHost: dataframe
+        polar coordinate positions for pops
+    dispersal: float
+    '''
+    dfHost = pd.DataFrame({
+                      'village' : 1,
+                      'hostidx' : "v1h1",
+                      'sex' : "M",
+                      'age' : 12,
+                      'agedeath' : 67,
+                      'pos' : [x,y],
+                      'MDA' : 0,
+                      })
+    
+    ## hostidx
+    dfHost.hostidx = "v" + str(dfHost.village) + "h" + str(h) #some sort of host counter 
+
+    ## sex
+    dfHost.sex = random.choice("MF")
+    
+    ##age
+    
+    #age distribution     
+    zero_10 = 0.24 #12%
+    eleven_20 = 0.46 #11%
+    twentyone_30 = 0.64 #9%
+    thirtyone_40 = 0.78 #7%
+    fourtyone_50 = 0.88 #5%
+    fiftyone_60 = 0.94 #3%
+    sixtyone_70 = 0.98 #2%       
+    
+    #assign age
+    agerand = np.random.random()
+    if agerand <= zero_10:
+         age = np.random.randint(1,10)
+    if agerand > zero_10 and agerand <= eleven_20:
+         age = np.random.randint(11,20)
+    if agerand > eleven_20 and agerand <= twentyone_30:
+         age = np.random.randint(21,30)
+    if agerand > twentyone_30 and agerand <= thirtyone_40:
+         age = np.random.randint(31,40)
+    if agerand > fourtyone_50 and agerand <= fiftyone_60:
+         age = np.random.randint(41,50)
+    if agerand > fiftyone_60 and agerand <= sixtyone_70:
+         age = np.random.randint(51,60)
+    if agerand > sixtyone_70:
+         age = np.random.randint(61,70)
+    
+    dfHost.age = age     
+    
+    ##assign death
+    #dictionary from actuarial tables
+    deathdict = {}
+    with open("actuarial.tbl",'r') as tbl:
+         for line in tbl:
+              line = line.strip()
+              deathdict["{}".format(line.split()[0])] = int(line.split()[1]) #fill dfHostDeath
+    
+    #when do they die
+    dfHost.agedeath = deathdict[str(age)] + np.random.normal(0,6)
+
+    ##calculate position in village         
+    pos = np.random.negative_binomial(sizeTrans,
+            sizeTrans/float((sizeTrans+muTrans), (infhost, 2)))
+    dfHost.pos[0] = pos[0]
+    dfHost.pos[1] = pos[1]
+    
+    ##in polar
+    #radius = np.sqrt(pos[0]**2 + pos[1]**2)
+    #angle = np.arctan2(pos[1], pos[0])
+    #dfHost.angle = angle
+    #dfHost.radius = radius
+    #x_cart = radius * np.cos(angle)
+    #y_cart = radius * np.sin(angle)
+    
+    ##test of coordinates, with cirlce for dispersal distance
+#    import pylab as pl
+#    import matplotlib.pyplot as plt
+#    ax = pl.subplot(111, polar=True)
+#    ax.scatter(angle, radius)
+#    circle = pl.Circle((pos[0][0], pos[0][1]), 2*sigma, transform=ax.transData._b, color="red", alpha=0.4)
+#    ax.add_artist(circle)
+    
+    return dfHost
+     
+def Sel_fx(positions, seloption):
+     '''initializes the distribution of fitness effects for each mutation
+     
+     Parameters
+     ---------
+     positions: list
+          list from ms_outcall, the the line "positions" in the scrm/ms output
+     seloption: int
+          0 is no selection
+          1 is no historic seleciton
+          2 is historic selection
+     Returns
+     ------
+     dfSel
+     '''
+     #draw from distribution of fitness effect for each mutation
+     dfSel = pd.DataFrame({
+                           'locus' : int,
+                           'position' : int,
+                           'selF' : float,
+                           'selS' : float,
+                           'freqInt' : float})
+     
+     return dfSel
 
 if __name__ == '__main__':
 #2villages
