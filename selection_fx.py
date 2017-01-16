@@ -1,18 +1,47 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import pandas as pd
 
-def dfe_fx(gamma_alpha=1, gamma_beta=4):
-     '''function to determine the fitness effect of a new mutation
+def phenotype_fx(dfSel, df):
+     '''sums fitness of phenotype by net value of mutation fitness
      Parameters
      --------
-     gamma_alpha
-     gamma_beta
+     dfSel: df
+          dataframe of positions with phenotype contribution
+     df: df
+          dataframe of MF, since this is the only time new mutations happen
+          once this is calculated it just copies to dfJuv and dfAdult
      
      Returns
      ------
-     fitness value as float
+     df, the dataframe input with the selF and selS columns totalled 
      '''
      
-     return np.random.gamma(gamma_alpha,gamma_beta)
+     return df
+     
+def DFE_fx(positions, seloption):
+     '''initializes the distribution of fitness effects for each mutation
+     
+     Parameters
+     ---------
+     positions: list
+          list from ms_outcall, the the line "positions" in the scrm/ms output
+     seloption: int
+          0 is no selection
+          1 is no historic seleciton
+          2 is historic selection
+     Returns
+     ------
+     dfSel
+     '''
+     #draw from distribution of fitness effect for each mutation
+     dfSel = pd.DataFrame({
+                           'locus' : int,
+                           'position' : int,
+                           'selF' : float,
+                           'selS' : float,
+                           'freqInt' : float})
+     
+     return dfSel
      
