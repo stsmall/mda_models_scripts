@@ -3,6 +3,12 @@ import subprocess
 import numpy as np
 import pandas as pd
 import random
+
+from IPython import embed
+import ipdb 
+
+
+random.seed(2000)
    
 def agehost_fx(sex):
     '''calculate age of host and age of death
@@ -10,6 +16,7 @@ def agehost_fx(sex):
     ---------
     sex: str
          male or female
+
     Returns
     ------
     age: int
@@ -28,18 +35,20 @@ def agehost_fx(sex):
     agerand = np.random.random()
     if agerand <= zero_10:
          age = np.random.randint(1,10)
-    if agerand > zero_10 and agerand <= eleven_20:
+    elif agerand > zero_10 and agerand <= eleven_20:
          age = np.random.randint(11,20)
-    if agerand > eleven_20 and agerand <= twentyone_30:
+    elif agerand > eleven_20 and agerand <= twentyone_30:
          age = np.random.randint(21,30)
-    if agerand > twentyone_30 and agerand <= thirtyone_40:
+    elif agerand > twentyone_30 and agerand <= thirtyone_40:
          age = np.random.randint(31,40)
-    if agerand > fourtyone_50 and agerand <= fiftyone_60:
+    elif agerand > thirtyone_40 and agerand <= fourtyone_50:
          age = np.random.randint(41,50)
-    if agerand > fiftyone_60 and agerand <= sixtyone_70:
+    elif agerand > fourtyone_50 and agerand <= fiftyone_60:
          age = np.random.randint(51,60)
-    if agerand > sixtyone_70:
+    elif agerand > fiftyone_60 and agerand <= sixtyone_70:
          age = np.random.randint(61,70)
+    elif agerand > sixtyone_70:
+         age = np.random.randint(71,80)
     
     #dictionary from actuarial tables
     
@@ -47,7 +56,8 @@ def agehost_fx(sex):
     with open("act.tbl",'r') as tbl:
          for line in tbl:
               line = line.strip()
-              deathdict["{}".format(line.split()[0])] = line.split()[1:]
+              deathdict["{}".format(line.split()[0])] = list(map(float,
+                  line.split()[1:]))
     
     #when do they die
     death = deathdict[str(age)][int(sex)] + np.random.normal(0,6)
@@ -71,19 +81,6 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     Returns
     -------
     dfHost: dataframe
-        polar coordinate positions for pops
-    dispersal: float
-    '''
-    dfHost = pd.DataFrame({
-                      'village' : [],
-                      'hostidx' : [],
-                      'sex' : [],
-                      'age' : [],
-                      'agedeath' : [],
-                      'coordinates' : [],
-                      'MDA' : [],
-                      })
-      
     #fill dfHost
     for vill in range(villages):
          #list of host positions
@@ -106,7 +103,34 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
               #position
               temp_host.append(coordinates[host])
               #add host to dfHost               
-              dfHost[host] = temp_host     
+              dfHost.loc[host] = temp_host     
+        polar coordinate positions for pops
+    dispersal: float
+    '''
+    assert villages == len(infhost)
+    coordinates = []
+    host_idx = []
+    for vill in range(villages):
+         #list of host positions
+         coordinates.extend(np.random.negative_binomial(sizeTrans, sizeTrans 
+                              / float((sizeTrans+muTrans)), (infhost[vill],
+                                  2)))
+         for host in range(infhost[vill]):
+             host_idx.append("v" + str(vill) + "h" + str(host))
+    sex = [random.choice("01") for i in range(sum(infhost))]
+    age_death  = [agehost_fx(i) for i in sex]
+
+    dfHost = pd.DataFrame({
+                      'village' : np.repeat(range(villages), infhost),
+                      'hostidx' : host_idx,
+                      'sex' : sex,
+                      'age' : [i[0] for i in age_death],
+                      'agedeath' : [i[1] for i in age_death],
+                      'coordinates' : coordinates,
+                      'MDA' : np.zeros(sum(infhost)),
+                      })
+    dfHost = dfHost.loc[:, ['village', 'hostidx', 'sex',
+            'age', 'agedeath', 'coordinates', 'MDA']]
               
     return dfHost
     
@@ -537,6 +561,8 @@ def wbsims_init(villages, villpopulation, prevalence, muTrans, sizeTrans, muWorm
      
 if __name__ == '__main__':
      #2 villages
+     embed()
      wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, 5, 50, 2, 0.0001, [1000], 
                                [[5, 5], [10, 10]], [13000, 200000], 
                                [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240)    
+     
