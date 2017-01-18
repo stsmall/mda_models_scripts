@@ -5,11 +5,8 @@ import pandas as pd
 import random
 
 from IPython import embed
-import ipdb 
-
 
 random.seed(2000)
-   
 def agehost_fx(sex):
     '''calculate age of host and age of death
     Parameters
@@ -67,45 +64,21 @@ def agehost_fx(sex):
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
        default_test : host_fx(2, [100, 300], 100, 1)
+
     Parameters
     ----------
-    infhost: list
+    infhost: list of pop. sizes
          number of infected hosts at intial time. prev*hostpopsize
-    muTrans:float 
+    muTrans: float 
         parameter of neg binomial
-    sizeTrans:float 
+    sizeTrans: float 
         parameter of neg binomial
-    sigma:float
+    sigma: float
         dispersal distance in meters
 
     Returns
     -------
     dfHost: dataframe
-    #fill dfHost
-    for vill in range(villages):
-         #list of host positions
-         coordinates = np.random.negative_binomial(sizeTrans, sizeTrans 
-                              / float((sizeTrans+muTrans)), (infhost[vill], 2))
-         for host in range(infhost[vill]):
-              temp_host = []
-              #village     
-              temp_host.append(vill)
-              #hostidx
-              temp_host.append("v" + str(vill) + "h" + str(host))
-              #sex; 0 is male, 1 is female
-              sex = random.choice("01")
-              temp_host.append(sex)
-              #age
-              age, death = agehost_fx(sex)
-              temp_host.append(age)
-              #agedeath
-              temp_host.append(death)
-              #position
-              temp_host.append(coordinates[host])
-              #add host to dfHost               
-              dfHost.loc[host] = temp_host     
-        polar coordinate positions for pops
-    dispersal: float
     '''
     assert villages == len(infhost)
     coordinates = []
@@ -559,6 +532,7 @@ def wbsims_init(villages, villpopulation, prevalence, muTrans, sizeTrans, muWorm
                                time_join)
      return dfAdult, dfHost, dfSel  
      
+
 if __name__ == '__main__':
      #2 villages
      embed()
