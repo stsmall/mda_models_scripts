@@ -3,13 +3,17 @@ import subprocess
 import numpy as np
 import pandas as pd
 import random
-   
+
+from IPython import embed
+
+random.seed(2000)
 def agehost_fx(sex):
     '''calculate age of host and age of death
     Parameters
     ---------
     sex: str
          male or female
+
     Returns
     ------
     age: int
@@ -28,18 +32,20 @@ def agehost_fx(sex):
     agerand = np.random.random()
     if agerand <= zero_10:
          age = np.random.randint(1,10)
-    if agerand > zero_10 and agerand <= eleven_20:
+    elif agerand > zero_10 and agerand <= eleven_20:
          age = np.random.randint(11,20)
-    if agerand > eleven_20 and agerand <= twentyone_30:
+    elif agerand > eleven_20 and agerand <= twentyone_30:
          age = np.random.randint(21,30)
-    if agerand > twentyone_30 and agerand <= thirtyone_40:
+    elif agerand > twentyone_30 and agerand <= thirtyone_40:
          age = np.random.randint(31,40)
-    if agerand > fourtyone_50 and agerand <= fiftyone_60:
+    elif agerand > thirtyone_40 and agerand <= fourtyone_50:
          age = np.random.randint(41,50)
-    if agerand > fiftyone_60 and agerand <= sixtyone_70:
+    elif agerand > fourtyone_50 and agerand <= fiftyone_60:
          age = np.random.randint(51,60)
-    if agerand > sixtyone_70:
+    elif agerand > fiftyone_60 and agerand <= sixtyone_70:
          age = np.random.randint(61,70)
+    elif agerand > sixtyone_70:
+         age = np.random.randint(71,80)
     
     #dictionary from actuarial tables
     
@@ -47,7 +53,8 @@ def agehost_fx(sex):
     with open("act.tbl",'r') as tbl:
          for line in tbl:
               line = line.strip()
-              deathdict["{}".format(line.split()[0])] = line.split()[1:]
+              deathdict["{}".format(line.split()[0])] = list(map(float,
+                  line.split()[1:]))
     
     #when do they die
     death = deathdict[str(age)][int(sex)] + np.random.normal(0,6)
@@ -57,56 +64,46 @@ def agehost_fx(sex):
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
        default_test : host_fx(2, [100, 300], 100, 1)
+
     Parameters
     ----------
-    infhost: list
+    infhost: list of pop. sizes
          number of infected hosts at intial time. prev*hostpopsize
-    muTrans:float 
+    muTrans: float 
         parameter of neg binomial
-    sizeTrans:float 
+    sizeTrans: float 
         parameter of neg binomial
-    sigma:float
+    sigma: float
         dispersal distance in meters
 
     Returns
     -------
     dfHost: dataframe
-        polar coordinate positions for pops
-    dispersal: float
     '''
-    dfHost = pd.DataFrame({
-                      'village' : [],
-                      'hostidx' : [],
-                      'sex' : [],
-                      'age' : [],
-                      'agedeath' : [],
-                      'coordinates' : [],
-                      'MDA' : [],
-                      })
-      
-    #fill dfHost
+    assert villages == len(infhost)
+    coordinates = []
+    host_idx = []
     for vill in range(villages):
          #list of host positions
-         coordinates = np.random.negative_binomial(sizeTrans, sizeTrans 
-                              / float((sizeTrans+muTrans)), (infhost[vill], 2))
+         coordinates.extend(np.random.negative_binomial(sizeTrans, sizeTrans 
+                              / float((sizeTrans+muTrans)), (infhost[vill],
+                                  2)))
          for host in range(infhost[vill]):
-              temp_host = []
-              #village     
-              temp_host.append(vill)
-              #hostidx
-              temp_host.append("v" + str(vill) + "h" + str(host))
-              #sex; 0 is male, 1 is female
-              sex = random.choice("01")
-              temp_host.append(sex)
-              #age
-              age, death = agehost_fx(sex)
-              temp_host.append(age)
-              #agedeath
-              temp_host.append(death)
-              #position
-              temp_host.append(coordinates[host])
-              #add host to dfHost               
-              dfHost[host] = temp_host     
+             host_idx.append("v" + str(vill) + "h" + str(host))
+    sex = [random.choice("01") for i in range(sum(infhost))]
+    age_death  = [agehost_fx(i) for i in sex]
+
+    dfHost = pd.DataFrame({
+                      'village' : np.repeat(range(villages), infhost),
+                      'hostidx' : host_idx,
+                      'sex' : sex,
+                      'age' : [i[0] for i in age_death],
+                      'agedeath' : [i[1] for i in age_death],
+                      'coordinates' : coordinates,
+                      'MDA' : np.zeros(sum(infhost)),
+                      })
+    dfHost = dfHost.loc[:, ['village', 'hostidx', 'sex',
+            'age', 'agedeath', 'coordinates', 'MDA']]
               
     return dfHost
     
@@ -535,8 +532,11 @@ def wbsims_init(villages, villpopulation, prevalence, muTrans, sizeTrans, muWorm
                                time_join)
      return dfAdult, dfHost, dfSel  
      
+
 if __name__ == '__main__':
      #2 villages
+     embed()
      wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, 5, 50, 2, 0.0001, [1000], 
                                [[5, 5], [10, 10]], [13000, 200000], 
                                [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240)    
+     
