@@ -3,18 +3,18 @@
 import numpy as np
 import math
 
-def vectorbite_fx(villages=2, 
-                  bitespperson=[20, 20], 
-                  hours2bite=[8, 8], 
-                  hostpopsize=[100, 150], 
-                  prev_t=[0.3, 0.2], 
-                  densitydep=True, 
-                  villavgMF=[65, 90], 
-                  bednets=[False, True], 
-                  bnstart=[0, 12], 
-                  bnstop=[0, 24], 
-                  bncoverage=[0, 0.50], 
-                  month=6):
+def vectorbite_fx(villages, 
+                  bitespperson, 
+                  hours2bite, 
+                  hostpopsize, 
+                  prev_t, 
+                  densitydep, 
+                  villavgMF, 
+                  bednets, 
+                  bnstart, 
+                  bnstop, 
+                  bncoverage, 
+                  month):
     '''counts the number of successful infectious mosquito bites
 
     Parameters
@@ -69,7 +69,5 @@ def vectorbite_fx(villages=2,
 
     
 if __name__ == '__main__':
-    vectorbite_fx(villages=2, bitespperson=[20, 20], hours2bite=[8, 8], 
-                  hostpopsize=[100, 150], prev_t=[0.3, 0.2], densitydep=True, 
-                  villageavgMF=[65, 90], bednets=[False, True], bnstart=[0, 12], 
-                  bnstop=[0, 24], bncoverage=[0, 0.50], month=6)
+    vectorbite_fx(2, [20, 20], [8, 8], [100, 150], [0.3, 0.2], True, [65, 90], 
+                  [False, True], [0, 12], [0, 24], [0, 0.50], 6)

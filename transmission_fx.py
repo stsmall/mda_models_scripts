@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.metrics import pairwise_distances
 from random import randrange  
 from math import sqrt
+
 def transmission_fx(L3trans=100, sigma=50, dfMF, dfJuv, dfHost):
     '''transmission events resolved as either reinfection or new infection
     Parameters
@@ -40,7 +41,7 @@ def transmission_fx(L3trans=100, sigma=50, dfMF, dfJuv, dfHost):
     
     if np.random.random() < prob_newinfection:     
          #create new host, drawing values for age, agedeath, location. where location
-         dfHost, newhostidx = new_infection_fx(mindist=1, dispersal, dfMF.idx[dontatingMF], dfHost)
+         dfHost, newhostidx = new_infection_fx(1, dispersal, dfMF.idx[dontatingMF], dfHost)
          mftrans = dfMF[donatingMF]
          mftrans.hostidx = newhostidx
          dfJuv.append(mvtrans)
@@ -55,7 +56,7 @@ def transmission_fx(L3trans=100, sigma=50, dfMF, dfJuv, dfHost):
          
     return dfHost, dfJuv
 
-def new_infection_fx(mindist=1, dispersal, donatingidx, dfHost):
+def new_infection_fx(mindist, dispersal, donatingidx, dfHost):
     '''a transmission event infecting a naive host
 
     Parameters
@@ -102,3 +103,5 @@ def new_infection_fx(mindist=1, dispersal, donatingidx, dfHost):
     
     return dfHost, newhostidx
     
+if __name__ == '__main__':
+    transmission_fx(100, sigma=50, dfMF, dfJuv, dfHost)   
