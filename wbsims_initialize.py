@@ -499,7 +499,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
           dfAdult["fitS"] = fitS          
           return dfAdult, dfSel
      else:
-          return dfAdult, posSel
+          return dfAdult
 
 def wbsims_init(villages, villpopulation, prevalence, muTrans, sizeTrans, muWormBurden, 
                 sizeWormBurden, locus, initial_migration, initial_distance_m, theta,
