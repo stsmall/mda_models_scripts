@@ -55,7 +55,7 @@ def agehost_fx(sex):
                   line.split()[1:]))
     
     #when do they die
-    death = deathdict[str(age)][int(sex)] + np.random.normal(0,6)
+    death = deathdict[str(age)][int(sex)] + np.random.normal(0,6) + age
          
     return age, round(death)
     
@@ -186,6 +186,12 @@ def parse_ms_output(msout, ploidy):
               if line.startswith("positions"):
                    ##collisions can result here when theta is high
                    pos = np.round(np.array(line.strip().split()[1:], dtype=np.float64))
+                   prev = 0
+                   for idx, item in enumerate(pos, start=0):
+                        while prev >= item:
+                             item += 1
+                        pos[idx] = item
+                        prev = pos[idx]  
                    for line in iter(msout.stdout.readline, ''):
                         hap = np.array(list(line.strip()), dtype=int)
                         gt = hap * pos
@@ -198,6 +204,12 @@ def parse_ms_output(msout, ploidy):
               if line.startswith("positions"):
                    ##collisions can result here when theta is high
                    pos = np.round(np.array(line.strip().split()[1:], dtype=np.float64))
+                   prev = 0
+                   for idx, item in enumerate(pos, start=0):
+                        while prev >= item:
+                             item += 1
+                        pos[idx] = item
+                        prev = pos[idx]
                    for line in iter(msout.stdout.readline, ''):
                         hap = np.array(list(line.strip()), dtype=int)
                         gt = hap * pos
