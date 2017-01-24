@@ -1,25 +1,34 @@
+import numpy as np
 import random
+import pandas as pd
 
-
-def recombination_fx(mf, num_recomb, basepairs):
-    """this is run every time the prob of a recombination is true
+def recombination_fx(locus, dfAdult, dfAdult_mf, recombination_rate, basepairs):
+    """calculate number of recombination events and rearranges haplotypes
 
     Parameters
-    ----------
-    mf: list
-        list of mf from adults
-    num_recomb: list of ints
-        number of recombination events observed
-    basepairs:
+    ---------
+    locus: int
+         number of loci
+    dfAdult_mf : pandas dataframe
+          dataframe containing new larval parasites
+    dfAdult : pd df
+          dataframe containing reproducing adults      
+    recombination_rate : float, list
+          recombination rate for each locus 
+    basepairs : int, list
+          length of each locus in basepairs 
 
     Returns
     -------
+    dfAdult_mf : pd df
+    
     """
-    for i, bp in enumerate(basepairs):
-        recomb = 0
-        while recomb < num_recomb[i]:  
-            # choose random index in mf lis
-            rec_mf = random.randrange(0, len(mf))
+    
+    #how many recomb events
+    XX
+    
+    
+    
             new_recomb = random.randint(0, 3)
             if new_recomb < 2:  # first parent
                 hap1 = mf[rec_mf][i + 1][0]
@@ -49,5 +58,4 @@ def recombination_fx(mf, num_recomb, basepairs):
                 hap4_new = hap2[0:hap4_co] + hap1[hap3_co:]
                 mf[rec_mf][i + 1][2] = hap3_new
                 mf[rec_mf][i + 1][3] = hap4_new
-            recomb += 1
-    return mf
+

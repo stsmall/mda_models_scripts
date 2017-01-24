@@ -6,34 +6,7 @@ Created on Tue Jan 10 12:19:29 2017
 import numpy as np
 import pandas
 from scipy.stats import weibull_min
-
-def survival_host(dfHost):
-    '''Host can die, the death of a host signifies the entire loss of a worm 
-    population. Host ages are choosen using age distributions.Age of death is
-    calculated from actuary tables with addition or random variable
-    This function SHOULD be referenced from the parasite survival functions inside 
-    the condition if 'month%12 is 0:'
-    
-    Parameters
-    ---------
-    dfHost: df
-        dataframe to be updated if host dies
-    agebound: int,list
-        list of youngest and oldest ages allowed   
-    Returns
-    -------
-    dfHost
-    '''
-    ##if a host dies its idx and all associated rows need to be removed from all dfs
-    #dfAdult, dfMF, dfJuv, dfHost
-    if dfHost.age[] >= dfHost.agedeath:
-         dfHost.drop[[]]
-         
-    #add 1 year to all ages
-    dfHost.age += 1     
-         
-    return dfHost
-    
+   
 def survival_basefx(month=1, 
                     surv_Juv=0.866, 
                     shapeMF=3.3, 
@@ -42,7 +15,8 @@ def survival_basefx(month=1,
                     scaleAdult=8, 
                     dfMF,
                     dfAdult, 
-                    dfJuv):
+                    dfJuv, 
+                    dfHost):
                         
     '''base survival function
     Parameters
@@ -65,31 +39,64 @@ def survival_basefx(month=1,
     dfMF
     dfAdult
     dfJuv
+    dfHost
     
     '''
-    ##Juv is exponential 0.866   
-    survjuv = np.random.random(len(dfJuv.age)) #array of random numbers
-    killjuv = which(survjuv >= surv_Juv)    #compare random numbers to survival
-    dfJuv.drop(dfJuv[[killjuv]])   #remove entire row from df if dies
-    
-    ##MF is weibull cdf
-    survmf = np.random.random(len(dfMF.age)) #array of random numbers    
-    surv_MF = apply(dfMF.age, 2, function(x) weibull_min.cdf(dfMF.age,shapeMF,
-                    loc=0,scale=scaleMF)) #random number from weibull
-    killmf = which(survmf <= surv_MF)     #compare random numbers
-    dfMF.drop(dfMF[[killmf]]) #remove rows of MF
-
-    #adult worms are only evaluated per year
+    #adult worms and hosts are only evaluated per year
     if month%12 == 0:
-        #Adult is weibull cdf
-        survadult = np.random.random(len(dfAdult.age)) #array of random numbers    
-        surv_Adult = apply(dfAdult.age, 2, function(x) weibull_min.cdf(dfAdult.age,
-                           shapeAdult,loc=0,scale=scaleAdult)) #weibull
-        killadult = which(survadult <= surv_Adult)  #compare
-        dfAdult.drop(dfAdult[[killadult]])        #remove row
-
-    return dfMF, dfJuv, dfAdult
+        #Adult survival is based on weibull cdf
+        surv_adultrand = np.random.random(len(dfAdult))    
+        surv_adultfxage = weibull_min.cdf(dfAdult.age, shapeAdult,loc=0,scale=scaleAdult)
+        surviveAdult = np.where(surv_adultrand <= (1 - surv_adultfxage))
+        dfAdult = dfAdult.iloc[surviveAdult]
+        dfAdult.age = dfAdult.age + 1 #2 - 21
         
+        ##host survival is from act table
+        dfHost = dfHost[dfHost.age < dfHost.agedeath]
+        #remove all worms with dead host.hostidx from all dataframes
+        dfAdult = dfAdult.loc[dfAdult["hostidx"].isin(dfHost.hostidx)]
+        dfJuv = dfJuv.loc[dfJuv["hostidx"].isin(dfHost.hostidx)]
+        dfMF = dfMF.loc[dfMF["hostidx"].isin(dfHost.hostidx)]
+        #add 1 year to all ages of hosts
+        dfHost.age = dfHost.age + 1 
+        
+    ##Juv is exponential 0.866; surv_Juv
+    #dont include age 0 which just moved from transmission fx
+    surv_juvrand = np.random.random(len(dfJuv.age > 0))
+    surviveJuv = np.where(surv_juvrand <= surv_Juv)
+    dfJuv = dfJuv.iloc[surviveJuv]
+    dfJuv.age = dfJuv.age + 1 # 1 - 13
+
+    ##MF is weibull cdf
+    surv_mfrand = np.random.random(len(dfMF))    
+    surv_mffxage = weibull_min.cdf(dfMF.age,shapeMF,loc=0,scale=scaleMF)
+    surviveMF = np.where(surv_mfrand <= (1 - surv_mffxage))
+    dfMF = dfMF.iloc[surviveMF]
+    dfMF.age = dfMF.age + 1 #2 - 12
+    dfMF = dfMF[dfMF.age < 13] #hard cutoff at 12 months
+
+    ##move Juv age 13 to adult age 1
+    dfJuv_new = dfJuv[dfJuv.age > 13]
+    #reset age to adult   
+    dfJuv_new.age = 1
+    #record R0net statistic
+#####R0net_statout = np.mean(np.unique(dfJuv_new.R0net, return_counts=True)[1])
+    #increase R0net for next gen
+    dfJuv_new.R0net = dfJuv_new.R0net + 1
+    #append to adults
+    dfAdult = dfAdult.append(dfJuv_new, ignore_index=True)
+    #remove Juv age 13 from dfJuv
+    dfJuv = dfJuv[dfJuv.age <= 12]
+     
+    ##call to fecundity fx to deepcopy adult to dfMF age 1
+    #fecundity calls mutation/recombination
+    dfAdult_mf = fecundity_fx(dfAdult, fecund)
+    dfAdult_mf.age = 1
+    dfAdult_mf.fec = 0
+    dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
+    dfMF = dfMf.append(dfAdult_mf, ignore_index=True)     
+
+    return dfAdult, dfHost, dfJuv, dfMF if month%12 == 0 else dfJuv, dfMF      
         
 def survival_mdafx(month=1, 
                    macrocide=0.05, 
