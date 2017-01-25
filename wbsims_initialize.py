@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import random
 
-random.seed(2000)
 def agehost_fx(sex):
     '''calculate age of host and age of death
     Parameters
