@@ -1,0 +1,34 @@
+#notes
+
+'''
+unused gillespie algorithm for continuous transmission:
+   random_t = np.random.uniform(0,1,len(rates)) #vector of random variables
+   wait_t = -(np.log(random_t))/rates #wait time to next event
+   event_t = np.argmin(wait_t) #which event has the shortest wait time
+   time =+ wait_t[event_t] #update time
+   rate of bite is: 20 bites per person per month * hostpopsize / 720 = bites/hour; rate_b = (20.00*hostpopsize[0])/720
+   rate of bites that have MF: rate of bite * prev * prob pickup MF; rate_ib = rate_b * len(meta_popdict.keys()) * 0.37
+   rate of transmission: rate_ib * number_L3 * reinjected to new host; number_L3 = 4.395(1-exp^-(.055(m))/4.395)^2; leave with bite = .414; reinjected = .32; m=(sum[donor["MF"]]/235)/50
+   (sum[allMFstages]/235)/50 number of MF in 20ul of blood 235ml is 5% of total body blood and there are 50*20ul in 1 ML
+    
+Density dependece for transmission explanation:
+   Nmf/50 is number in 20ul blood
+   culex: L3 = Ks1(1-exp^-(r1*m/Ks1))
+   anopheles: L3 = Ks2(1-exp^-(r2(m-T))/Ks2)^2
+   where L3 is the number of L3 produced; m is the number of MF per 20ul, r1 is the rate of development with more MF ingested
+   Ks1 is the max limiting value of L3 developing.T is the threshold density where above this the MF get a facilitation effect.
+   values from gambhir michael 2008:
+        Ks1: 4.406 (+- 0.362)
+        r1: 0.019 (+- .058)
+        Ks2: 4.395 (+- 0.332)
+        r2: 0.055 (+- 0.004)
+        T: 0
+def densitydep_fx(carrycap=100,):
+      Km = 100  #carrying capacity
+      bm = 1.0/Km #Km is carrying capacity
+      Sm = 0.99 #maximum survival
+      am = (Sm*bm)/math.exp(-1)
+      mort_A = am * sum_adult * math.exp(-bm * sum_adult) #Ricker fx
+      mort_J = am * sum_juv * math.exp(-bm * sum_juv) #Ricker fx
+      mort_M = am * sum_mf * math.exp(-bm * sum_mf) #Ricker fx
+'''   
