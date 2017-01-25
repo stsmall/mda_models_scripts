@@ -96,7 +96,7 @@ def survival_basefx(month=1,
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
     dfMF = dfMf.append(dfAdult_mf, ignore_index=True)     
 
-    return dfAdult, dfHost, dfJuv, dfMF if month%12 == 0 else dfJuv, dfMF      
+    return dfAdult, dfHost, dfJuv, dfMF if month%12 == 0 else dfJuv, dfMF
         
 def survival_mdafx(month=1, 
                    macrocide=0.05, 
