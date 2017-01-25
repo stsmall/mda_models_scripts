@@ -56,7 +56,7 @@ def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
                         newsite = np.random.randint(1,basepairs[loc])
                         position.append(newsite)
                         newhap = np.append(dfAdult_mf.iloc[randmf].locus, newsite)
-                        dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + random.choice("12"), newhap) 
+                        dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + random.choice("12"), newhap.sort()) 
                         muts += 1
                         
     dfMuts = pd.DataFrame({
