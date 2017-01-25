@@ -33,13 +33,8 @@ def fecundity_basefx(fecund, dfAdult):
     dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m 
                * dfAdult.loc[dfAdult.age >= 6,"age"] + b)
     
-    #actual reproduction just copies adult info from dfAdult to dfAdult_mf
-    dfAdult_mf = pd.DataFrame({})
-    for index, row in dfAdult[dfAdult.sex == "F"].iterrows():
-         dfAdult_mf = dfAdult_mf.append([row] * dfAdult.loc[index,"fec"], ignore_index=True)
-    
-    ##mutation and recombination
-    dfAdult_mf = recombination_fx(locus, dfAdult, dfAdult_mf, recombination_rate, basepairs)
+    #sex, recombination, mutation
+    dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
     dfAdult_mf, dfMuts = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
     
     if selection:
