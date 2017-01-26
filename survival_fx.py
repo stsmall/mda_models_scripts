@@ -7,16 +7,18 @@ import numpy as np
 import pandas
 from scipy.stats import weibull_min
    
-def survival_basefx(month=1, 
-                    surv_Juv=0.866, 
-                    shapeMF=3.3, 
-                    scaleMF=10, 
-                    shapeAdult=3.8, 
-                    scaleAdult=8, 
+def survival_basefx(month, 
+                    surv_Juv, 
+                    shapeMF, 
+                    scaleMF,
+                    shapeAdult, 
+                    scaleAdult,
+                    fecund,
                     dfMF,
                     dfAdult, 
                     dfJuv, 
                     dfHost):
+   #(1, 0.866, 3.3, 10, 3.8, 8, dfMF, dfAdult, dfJuv, dfHost)  
                         
     '''base survival function
     Parameters
@@ -76,11 +78,10 @@ def survival_basefx(month=1,
     dfMF = dfMF[dfMF.age < 13] #hard cutoff at 12 months
 
     ##move Juv age 13 to adult age 1
-    dfJuv_new = dfJuv[dfJuv.age > 13]
+    #dfJuv_new = pd.DataFrame({})
+    dfJuv_new = dfJuv[dfJuv.age > 12]
     #reset age to adult   
     dfJuv_new.age = 1
-    #record R0net statistic
-#####R0net_statout = np.mean(np.unique(dfJuv_new.R0net, return_counts=True)[1])
     #increase R0net for next gen
     dfJuv_new.R0net = dfJuv_new.R0net + 1
     #append to adults
@@ -90,14 +91,15 @@ def survival_basefx(month=1,
      
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecundity_fx(dfAdult, fecund)
+    dfAdult_mf = fecundity_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs)
     dfAdult_mf.age = 1
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
     dfMF = dfMf.append(dfAdult_mf, ignore_index=True)     
 
     return dfAdult, dfHost, dfJuv, dfMF if month%12 == 0 else dfJuv, dfMF
-        
+
+########above this works        
 def survival_mdafx(month=1, 
                    macrocide=0.05, 
                    microcide=0.90,
