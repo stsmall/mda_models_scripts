@@ -110,6 +110,13 @@ def wb_sims(numberGens, burnin, config_file):
     -------
     
     '''
+    #load needed actuarial table from file
+    deathdict = {}
+    with open("act.tbl",'r') as tbl:
+         for line in tbl:
+              line = line.strip()
+              deathdict["{}".format(line.split()[0])] = list(map(float,
+                  line.split()[1:]))
     #initialize
     dfAdult, dfHost, dfSel = wbsims_initialize()
     #set counters
