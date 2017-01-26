@@ -26,7 +26,7 @@ def recombination_fx(locus, dfAdult, dfAdult_mf, recombination_rate, basepairs):
     dfAdult_mf = pd.DataFrame({})
     
     for index, row in dfAdult[dfAdult.sex == "F"].iterrows(): #for each female
-         male = dfAdult[dfAdult.sex == "M"].sample(1) #choose a random male
+         male = dfAdult.loc[(dfAdult["sex"] == "M") & (dfAdult["hostidx"] == row.hostidx)]
          mf = 0
          while mf < dfAdult.loc[index, "fec"]:
               for loc in range(locus):
