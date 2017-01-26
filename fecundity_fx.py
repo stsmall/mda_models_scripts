@@ -4,8 +4,9 @@ import numpy as np
 import pandas
 from scipy.stats import weibull_min
 
-def fecundity_basefx(fecund, dfAdult):
-    '''base fecundity function, simpliest scenario
+def fecundity_basefx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs):
+    #(20, dfAdult, 2, [7.6E-8, 2.9E-9], [0, 2.9E-9], [13000, 200000])
+     '''base fecundity function, simpliest scenario
     conditions: mda=False, selection=F
     
     Parameters
@@ -22,25 +23,29 @@ def fecundity_basefx(fecund, dfAdult):
     dfAdult_mf : df
          deep copy of adult genotypes
     
-    '''
-    #all locations where age is less than 6
-    dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(fecund, 
+    TO DO: track the rate of decline for fecundity, should be linear
+     
+     '''
+     #all locations where age is less than 6
+     dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(fecund, 
                len(dfAdult[dfAdult.age < 6]))         
-    #linear function defining decline in fecundity with age
-    m = float(0 - fecund) / (21 - 6)
-    b = 0 - m * 21
-    #assign fecundity value based on age function     
-    dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m 
+     #linear function defining decline in fecundity with age
+     m = float(0 - fecund) / (21 - 6)
+     b = 0 - m * 21
+     #assign fecundity value based on age function     
+     dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m 
                * dfAdult.loc[dfAdult.age >= 6,"age"] + b)
+
+     #sex, recombination, mutation
+     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
+     dfAdult_mf, dfMuts = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
     
-    #sex, recombination, mutation
-    dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
-    dfAdult_mf, dfMuts = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
-    
-    if selection:
+     if selection:
          dfAdult_mf, dfSel = DFE_fx(dfAdult_mf, dfMuts, dfSel)
     
-    return dfAdult_mf, dfSel if selection is True else dfAdult_mf
+     return dfAdult_mf, dfSel if selection is True else dfAdult_mf
+
+####above code works
 
 def fecundity_mdafx(fecund=20, 
                     sterile_p=0.35, 
