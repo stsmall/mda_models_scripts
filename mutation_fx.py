@@ -30,41 +30,45 @@ def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
     mutations : int, list
          list of positions of new mutations
     '''
-    position = []
+    positions = []
     muts_counter = []      
     for loc in range(locus):
          if recombination_rate[loc] == 0:
               num_muts = np.random.binomial(len(dfAdult_mf), basepairs[loc] * mutation_rate[loc])
+              #print num_muts
               muts_counter.append(num_muts)
               muts = 0     
               if num_muts != 0:
                    while muts < num_muts:
                         randmf = np.random.randint(0,len(dfAdult_mf))
                         newsite = np.random.randint(1,basepairs[loc])
-                        position.append(newsite)
-                        newhap = np.append(dfAdult_mf.iloc[randmf].locus, newsite)
+                        positions.append(newsite)
+                        newhap = np.append(dfAdult_mf.iloc[randmf]["locus_" + str(loc)], newsite)
                         dfAdult_mf.set_value(randmf, "locus_" + str(loc), newhap) 
                         muts += 1
           
          else:
               num_muts = np.random.binomial(2 * len(dfAdult_mf), basepairs[loc] * mutation_rate[loc])
+              #print num_muts
               muts_counter.append(num_muts)
               muts = 0     
               if num_muts != 0:
                    while muts < num_muts:
                         randmf = np.random.randint(0,len(dfAdult_mf))
                         newsite = np.random.randint(1,basepairs[loc])
-                        position.append(newsite)
-                        newhap = np.append(dfAdult_mf.iloc[randmf].locus, newsite)
-                        dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + random.choice("12"), newhap.sort()) 
+                        positions.append(newsite)
+                        randhap = random.choice("12")
+                        newhap = np.append(dfAdult_mf.iloc[randmf]["locus_" + str(loc) + "_h" + randhap], newsite)
+                        dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + randhap, newhap.sort()) 
                         muts += 1
-                        
+    #print positions
+    #print muts_counter                    
     dfMuts = pd.DataFrame({
                            "locus" : np.repeat(range(locus), muts_counter),
-                           "position" : position,
-                           "selF" : 0,
-                           "selS" : 0,
-                           "freqInit" : 0
+                           "position" : positions,
+                           "selF" :  np.zeros(len(positions)),
+                           "selS" :  np.zeros(len(positions)),
+                           "freqInit" :  np.zeros(len(positions))
                            })
     return dfAdult_mf, dfMuts                    
                         
