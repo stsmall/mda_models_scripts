@@ -1,11 +1,33 @@
-# Wb simulation models
+# Wb simulation model
 Simulation to generate genetic sequence data for specific life history of Wuchereria bancrofti.
 
-##Documentation
-###options
+# Documentation
+## options [^1]
 
-###functions
-####wbsims_initialize.py
+#### Host Demography
+##### villages
+##### host population size
+##### prevalence
+##### host migration rates
+
+#### Vector
+##### biting rates
+##### biting times
+
+#### Genetic
+##### number of loci
+##### length of loci
+##### mutation and recombination rates
+##### selection
+
+#### Intervention
+##### mass drug administration MDA
+##### bed nets
+
+[^1]: full options list availabe in docstrings
+
+### Function tree
+#### wbsims_initialize.py
 * wbsims_init
  * agehost_fx
  * host_fx
@@ -16,7 +38,7 @@ Simulation to generate genetic sequence data for specific life history of Wucher
  * fit_fx
  * wormdf_fx
 
-####wbsims_run.py
+#### wbsims_run.py
 * wb_sims
   * transmission.py
     * hostmigration_fx
