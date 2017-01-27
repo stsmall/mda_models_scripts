@@ -18,9 +18,7 @@ Anaconda will install all dependencies as well as scrm (e.g., conda install -c b
 * [scikit-allel](https://scikit-allel.readthedocs.io/en/latest/)
 
 ## Options
-All options can be set, but the most relevant are listed below.  
-*wbsims.cfg* provides default options for most parameters.  
-*full options list available in docstrings*
+All options can be set via either config file or command line. The most relevant options are listed below. Full options are available in the config file **wbsims.cfg**. I wouldnt recommend altering any default options other than what is listed below (since this is what we tested) and do so at your own risk.  
 
 #### Host Demography
 * villages: number of villages to simulate
