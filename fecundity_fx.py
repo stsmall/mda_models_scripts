@@ -82,11 +82,15 @@ def fecundity_mdafx(fecund=20,
     dfAdult
     dfMF
     '''
+    #by host or by village?
     if clear_count == 1: #permanent sterility
-        sterile = np.random.random(1,len(dfAdult.age))
+        sterile = np.random.random(0,len(dfAdult))
         if sterile <= sterile_p:
              #permanently sterilized adults
              dfAdult.fec[[sterile]] = 0
+                        
+        surviveAdult = np.where(surv_adultrand <= (1 - surv_adultfxage))
+        dfAdult = dfAdult.iloc[surviveAdult]
              
     elif clear_count < clear_time: #Drugs cause temporary sterility over clear_time
         #linear function defining fecundity during drug clearance
