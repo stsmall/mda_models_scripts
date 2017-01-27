@@ -17,8 +17,10 @@ Anaconda will install all dependencies as well as scrm (e.g., conda install -c b
 * scipy, numpy, sklearn, pandas, matplotlib
 * [scikit-allel](https://scikit-allel.readthedocs.io/en/latest/)
 
-## options
-full options list available in docstrings
+## Options
+All options can be set, but the most relevant are listed below.  
+*wbsims.cfg* provides default options for most parameters.  
+*full options list available in docstrings*
 
 #### Host Demography
 * villages: number of villages to simulate
