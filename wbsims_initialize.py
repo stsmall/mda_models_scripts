@@ -368,7 +368,7 @@ def sel_fx(locus, positions):
      selF =[]
      selS =[]
      positions = [item for sublist in positions for item in sublist]
-     #below functs assume the list is nested 
+     #below functs assume the list of positions contains mutliple loci
      if isinstance(positions[0], list):
           numpos = [len(i) for i in positions]
           for loc in range(locus):
@@ -390,7 +390,7 @@ def sel_fx(locus, positions):
                                 'freqInt' : np.zeros(sum(numpos))})     
           dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
                  'selS', 'freqInit']]
-     else: #list is not nested
+     else: #list only contains a single locus
           numpos = len(positions)        
           for pos in positions:
                if random.choice("SF") is "F":
@@ -521,7 +521,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      else:
           return dfAdult
 
-def wbsims_init(villages, villpopulation, prevalence, muTrans, sizeTrans, muWormBurden, 
+def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurden, 
                 sizeWormBurden, locus, initial_migration, initial_distance_m, theta,
                 basepairs, mutation, recombination, time2Ancestral, thetaRegional,
                 time_join, selection):
@@ -545,9 +545,9 @@ def wbsims_init(villages, villpopulation, prevalence, muTrans, sizeTrans, muWorm
      dfSel :df 
           initialized df for selection
      '''
-     villpopulation = np.array(villpopulation)
+     hostpopsize = np.array(hostpopsize)
      prevalence = np.array(prevalence)
-     infhost = np.round(villpopulation * prevalence).astype(np.int64)
+     infhost = np.round(hostpopsize * prevalence).astype(np.int64)
      #construct dfHost
      dfHost = host_fx(villages, infhost, muTrans, sizeTrans)
      # dfHost = host_fx(2, [10,10], 100, 1)
@@ -567,16 +567,18 @@ def wbsims_init(villages, villpopulation, prevalence, muTrans, sizeTrans, muWorm
      
      #dfAdult, dfSel = wormdf_fx(2, [10,10], 5, 50, 2, 0.0001, [1000], [[5,5],[10,10]], [13000,200000], 
      #                            [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, True)
+     dfJuv = pd.DataFrame({})
+     dfMF = pd.DataFrame({})
      if selection:
-          return dfAdult, dfHost, dfSel  
+          return dfAdult, dfHost, dfSel, dfJuv, dfMF  
      else:
-          return dfAdult, dfHost
+          return dfAdult, dfHost, dfJuv, dfMF
 
 if __name__ == '__main__':
      #2 villages with selection
-     dfAdult, dfHost, dfSel = wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, [5, 5], [50, 50], 2, 0.0001, [1000], 
-                               [[5, 5], [1, 1]], [13000, 200000], 
-                               [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, True)    
+     #dfAdult, dfHost, dfSel = wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, [5, 5], [50, 50], 2, 0.0001, [1000], 
+     #                          [[5, 5], [1, 1]], [13000, 200000], 
+     #                          [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, True)    
      #2 villages without selection
      dfAdult, dfHost = wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, [5, 5], [50, 50], 2, 0.0001, [1000], 
                                [[5, 5], [1, 1]], [13000, 200000], 

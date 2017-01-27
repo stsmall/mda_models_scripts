@@ -47,7 +47,7 @@ def fecundity_basefx(fecund, dfAdult, locus, mutation_rate, recombination_rate, 
      dfAdult_mf, dfMuts = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
     
      if selection:
-         dfAdult_mf, dfSel = DFE_fx(dfAdult_mf, dfMuts, dfSel)
+         dfAdult_mf, dfSel = selection_fx(dfAdult_mf, dfMuts, dfSel, locus)
     
      return dfAdult_mf, dfSel if selection is True else dfAdult_mf
 

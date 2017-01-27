@@ -10,7 +10,7 @@ import numpy as np
 import pandas
 from scipy.stats import weibull_min
    
-def survival_basefx(month, 
+def survivalbase_fx(month, 
                     surv_Juv, 
                     shapeMF, 
                     scaleMF,

@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-    FiGS Copyright (C) 2017 Scott T. Small
-    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
-    This is free software, and you are welcome to redistribute it
-    under certain conditions; type `show c' for details.
+Created on Thu Jan 12 17:59:27 2017
+
+@author: scott
 """
 import numpy as np
 import random
@@ -37,13 +36,13 @@ def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
          if recombination_rate[loc] == 0:
               num_muts = np.random.binomial(len(dfAdult_mf), basepairs[loc] * mutation_rate[loc])
               #print num_muts
-              muts_counter.append(num_muts)
+              #muts_counter.append(num_muts)
               muts = 0     
               if num_muts != 0:
                    while muts < num_muts:
                         randmf = np.random.randint(0,len(dfAdult_mf))
                         newsite = np.random.randint(1,basepairs[loc])
-                        positions.append(newsite)
+                        #positions.append(newsite)
                         newhap = np.append(dfAdult_mf.iloc[randmf]["locus_" + str(loc)], newsite)
                         dfAdult_mf.set_value(randmf, "locus_" + str(loc), newhap) 
                         muts += 1
@@ -63,9 +62,10 @@ def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
                         dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + randhap, newhap.sort()) 
                         muts += 1
     #print positions
-    #print muts_counter                    
+    #print muts_counter
+###TO DO: for exon type selection, need to filter this before to only include those positions                    
     dfMuts = pd.DataFrame({
-                           "locus" : np.repeat(range(locus), muts_counter),
+                           "locus" : np.repeat(range(1, locus), muts_counter),
                            "position" : positions,
                            "selF" :  np.zeros(len(positions)),
                            "selS" :  np.zeros(len(positions)),
