@@ -8,7 +8,7 @@ There are currently no available simulation models that generate population gene
 [Small, ST, *et al.,* **(2016)**](http://onlinelibrary.wiley.com/doi/10.1111/mec.13574/full): 1st published population genomics in *W. bancrofti*  
 
 **Current Assembly**  
-[wormbase](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index): Whole Genome Assembly from Small 2016     
+[wormbase](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index): Whole Genome Assembly from *Small 2016*     
 
 # Documentation
 ## Dependencies
