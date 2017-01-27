@@ -1,13 +1,14 @@
 # Filarial worm genetic simulation model
 There are currently no available simulation models that generate population genetic data for filarial worms. Population genetic data can be used to infer specific life history characterisitcs of filarial worm populations and track the response and progress of elimination efforts. This model tracks genotypes under a forward-in-time simulation for the specfic life history of *W. bancrofti* to identify sutaible population genetic summary statistics for evaluating elimination. Although written specifically for *W. bancrofti*, it is probably tunable to other filarial worms.
 
-**Relevant publications**: 
+**Relevant publications**:   
 1st published mitochondrial genome for *W. bancrofti* [Ramesh A, *et al.,* **(2012)**](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3725818/)  
-population genetics of *W. bancrofti* from Papua New Guinea [Small, ST, *et al.,* **2013**](http://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0002308)   review of genetic diversity in *W. bancrofti* [Small, ST, *et al.,* ** 2014**](http://europepmc.org/articles/pmc4257870)
+population genetics of *W. bancrofti* from Papua New Guinea [Small, ST, *et al.,* **2013**](http://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0002308)  
+review of genetic diversity in *W. bancrofti* [Small, ST, *et al.,* ** 2014**](http://europepmc.org/articles/pmc4257870)  
 1st published population genomics in *W. bancrofti* [Small, ST, *et al.,* **2016**](http://onlinelibrary.wiley.com/doi/10.1111/mec.13574/full)  
 
-**Current Assembly**
-Whole Genome Assembly from Small 2016 [wormbase](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index)  
+**Current Assembly**  
+Whole Genome Assembly from Small 2016 [wormbase](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index)    
 
 # Documentation
 ## options
