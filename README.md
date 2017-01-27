@@ -2,15 +2,21 @@
 There are currently no available simulation models that generate population genetic data for filarial worms. Population genetic data can be used to infer specific life history characterisitcs of filarial worm populations and track the response and progress of elimination efforts. This model tracks genotypes under a forward-in-time simulation for the specfic life history of *W. bancrofti* to identify sutaible population genetic summary statistics for evaluating elimination. Although written specifically for *W. bancrofti*, it is probably tunable to other filarial worms.
 
 **Relevant publications**:   
-[Ramesh A, *et al.,* **(2012)**](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3725818/) : 1st published mitochondrial genome for *W. bancrofti*  
-[Small, ST, *et al.,* **(2013)**](http://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0002308) : population genetics of *W. bancrofti* from Papua New Guinea  
-[Small, ST, *et al.,* **(2014)**](http://europepmc.org/articles/pmc4257870) : review of techniques for studying genetic diversity in *W. bancrofti*  
-[Small, ST, *et al.,* **(2016)**](http://onlinelibrary.wiley.com/doi/10.1111/mec.13574/full) : 1st published population genomics in *W. bancrofti*  
+[Ramesh A, *et al.,* **(2012)**](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3725818/): 1st published mitochondrial genome for *W. bancrofti*  
+[Small, ST, *et al.,* **(2013)**](http://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0002308): population genetics of *W. bancrofti* from Papua New Guinea  
+[Small, ST, *et al.,* **(2014)**](http://europepmc.org/articles/pmc4257870): review of techniques for studying genetic diversity in *W. bancrofti*  
+[Small, ST, *et al.,* **(2016)**](http://onlinelibrary.wiley.com/doi/10.1111/mec.13574/full): 1st published population genomics in *W. bancrofti*  
 
 **Current Assembly**  
-Whole Genome Assembly from Small 2016 [wormbase](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index)    
+[wormbase](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index): Whole Genome Assembly from Small 2016     
 
 # Documentation
+## Dependencies
+Anaconda will install all dependencies as well as scrm (e.g., conda install -c bioconda scrm)  
+* [scrm](https://scrm.github.io/)
+* scipy, numpy, sklearn, pandas, matplotlib
+* [scikit-allel](https://scikit-allel.readthedocs.io/en/latest/)
+
 ## options
 full options list available in docstrings
 
