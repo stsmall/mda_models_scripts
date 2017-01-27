@@ -43,37 +43,38 @@ def recombination_fx(locus, dfAdult, dfAdult_mf, recombination_rate, basepairs):
                              row["locus_" + str(loc) + "_h1"] = row["locus_" + str(loc) + "_h" + random.choice("12")]     
                              #male contribution
                              row["locus_" + str(loc) + "_h2"] = male["locus_" + str(loc) + "_h" + random.choice("12")]                                                    
-########################
                         else:
                              r = 0
                              #randomly choose male or female
                              sex_xing = random.choice("MF")
                              #while loop to account for multiple recombination events
-                             h1m = male["locus_" + str(loc) + "_h1"]
-                             h2m = male["locus_" + str(loc) + "_h2"]
-                             h1f = row["locus_" + str(loc) + "_h1"]
-                             h2f = row["locus_" + str(loc) + "_h2"]
+                             h1m = np.concatenate(male["locus_" + str(loc) + "_h1"].values)
+                             h2m = np.concatenate(male["locus_" + str(loc) + "_h2"].values)
+                             h1f = np.concatenate(row["locus_" + str(loc) + "_h1"].values)
+                             h2f = np.concatenate(row["locus_" + str(loc) + "_h2"].values)
                              if sex_xing is "M":
                                   while r < num_recomb:
                                        crossover_pos = random.randint(0, basepairs[loc])
-                                       hap1_co = next(l[0] for l in enumerate(
-                                                 h1m) if l[1] > crossover_pos)
-                                       hap2_co = next(l[0] for l in enumerate(
-                                                 h2m) if l[1] > crossover_pos)
-                                       h1m_new = h1m[0:hap1_co] + h2m[hap2_co:] 
-                                       h2m_new = h2m[0:hap2_co] + h1m[hap1_co:]
+                                       try:
+                                            hap1_co = np.where(h1m > crossover_pos)[0][-1]
+                                            hap2_co = np.where(h2m > crossover_pos)[0][-1]
+                                       except IndexError:
+                                            break
+                                       h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:] 
+                                       h2m_new = h2m[0:hap2_co + 1] + h1m[hap1_co:]
                                        h1m = h1m_new
                                        h2m = h2m_new
                                        r += 1
                              elif sex_xing is "F":
                                   while r < num_recomb:
                                        crossover_pos = random.randint(0, basepairs[loc])
-                                       hap1_co = next(l[0] for l in enumerate(
-                                                 h1f) if l[1] > crossover_pos)
-                                       hap2_co = next(l[0] for l in enumerate(
-                                                 h2f) if l[1] > crossover_pos)
-                                       h1f_new = h1f[0:hap1_co] + h2f[hap2_co:] 
-                                       h2f_new = h2f[0:hap2_co] + h1f[hap1_co:]
+                                       try:
+                                            hap1_co = np.where(h1f> crossover_pos)[0][-1]
+                                            hap2_co = np.where(h2f > crossover_pos)[0][-1]
+                                       except IndexError:
+                                            break
+                                       h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:] 
+                                       h2f_new = h2f[0:hap2_co + 1] + h1f[hap1_co:]
                                        h1f = h1f_new
                                        h2f = h2f_new
                                        r += 1
