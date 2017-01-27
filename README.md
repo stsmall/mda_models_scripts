@@ -1,4 +1,4 @@
-# Filarial worm genetic simulation model *(FiGS)*
+# Filarial worm Genetic Simulations *(FiGS)*
 There are currently no available simulation models that generate population genetic data for filarial worms. Population genetic data can be used to infer specific life history characterisitcs of filarial worm populations and track the response and progress of elimination efforts. FiGS is a forward-in-time simulation written in python to generate genetic data under the specfic life history of *W. bancrofti*. FiGS is currently being used to identify sutaible population genetic summary statistics for evaluating elimination progression. Although written specifically for *W. bancrofti*, it is probably tunable to other filarial worms by altering the historical demographic parameters in the coalescent functions.
 
 **Relevant publications**:   
@@ -80,7 +80,8 @@ full options list available in docstrings
     * record_demo_fx
     * record_popgen_fx
       * gt2scikit_fx
-        * scikit-allel
+        * scikit-allel  
+        
 # License        
     Filarial worm genetic simulations, FiGS
     Copyright (C) 2017  Scott T. Small
