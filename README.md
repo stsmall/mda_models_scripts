@@ -1,9 +1,13 @@
-# Wb simulation model
-There are currently no available simulation models that generate population genetic data for filarial worms. Population genetic data can be used to infer specific life history characterisitcs of filarial worm populations and track the response and progress of elimination effort. This model tracks genotypes under a forward-in-time simulation for the specfic life history of W. bancrofti to identify sutaible population genetic summary statistics for evaluating elimination. Although written specifically for W. bancrofti, it is probably tunable to other filarial worms.
+# Filarial worm genetic simulation model
+There are currently no available simulation models that generate population genetic data for filarial worms. Population genetic data can be used to infer specific life history characterisitcs of filarial worm populations and track the response and progress of elimination effort. This model tracks genotypes under a forward-in-time simulation for the specfic life history of *W. bancrofti* to identify sutaible population genetic summary statistics for evaluating elimination. Although written specifically for *W. bancrofti*, it is probably tunable to other filarial worms.
 
+[Ramesh A, et al. 2012](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3725818/)  
 [Small, ST, et al. 2013](http://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0002308)  
 [Small, ST, et al. 2014](http://europepmc.org/articles/pmc4257870)  
-[Small, ST, et al. 2015](http://onlinelibrary.wiley.com/doi/10.1111/mec.13574/full)  
+[Small, ST, et al. 2016](http://onlinelibrary.wiley.com/doi/10.1111/mec.13574/full)  
+
+[Whole Genome Assembly](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index)  
+
 
 # Documentation
 ## options
