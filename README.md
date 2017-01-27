@@ -45,7 +45,7 @@ full options list available in docstrings
 * population genetic: summary statistics from pylibseq
 * genetic data: output all or sample as vcf
 
-### Function tree
+# Functions tree
 #### wbsims_initialize.py
 * wbsims_init
  * agehost_fx
