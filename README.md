@@ -2,29 +2,33 @@
 Simulation to generate genetic sequence data for specific life history of Wuchereria bancrofti.
 
 # Documentation
-## options [^1]
+## options
+full options list available in docstrings
 
 #### Host Demography
-##### villages
-##### host population size
-##### prevalence
-##### host migration rates
+* villages: number of villages to simulate
+* host population size: population of each village
+* prevalence: initial prevalence of W.bancrofti infection
+* host migration rates: movement of hosts between villages
 
 #### Vector
-##### biting rates
-##### biting times
+* biting rates: bites per person per hour
+* biting times: avg exposure to biting
 
 #### Genetic
-##### number of loci
-##### length of loci
-##### mutation and recombination rates
-##### selection
+* number of loci: how many loci to simulate
+* length of loci: how many basepairs. scrm can handle Mb size loci with recombination
+* mutation and recombination rates: locus specific
+* selection:
 
 #### Intervention
-##### mass drug administration MDA
-##### bed nets
+* mass drug administration: MDA
+* bed nets: 
 
-[^1]: full options list availabe in docstrings
+#### Data recording
+* demography: formatted to R dataframe
+* population genetic: summary statistics from pylibseq
+* genetic data: output all or sample as vcf
 
 ### Function tree
 #### wbsims_initialize.py
