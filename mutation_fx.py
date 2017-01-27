@@ -1,9 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jan 12 17:59:27 2017
-
-@author: scott
+    FiGS Copyright (C) 2017 Scott T. Small
+    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; type `show c' for details.
 """
 import numpy as np
 import random

@@ -1,26 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jan 16 2017
-requires: numpy, sklearn, scrm
-Anaconda will install all dependencies as well as scrm
-(e.g., conda install -c bioconda scrm)
-scrm: Paul R. Staab et al ..., Bioinformatics 2015
-https://scrm.github.io/
-
-##PROGRAM STRUCTURE
-wbsims_run.py
-     wbsims_initialize()
-     transmission()
-          vectorbite()
-          transmission()
-          newinfection()
-     survival()
-          fecundity()
-               recombination()
-               mutation()
-                    DFE()
-@author:stsmall
+    FiGS Copyright (C) 2017 Scott T. Small
+    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; type `show c' for details.
 """
 #import python modules
 import random

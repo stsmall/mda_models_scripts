@@ -1,7 +1,10 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jan 10 12:19:29 2017
-@author: stsmall
+    FiGS Copyright (C) 2017 Scott T. Small
+    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; type `show c' for details.
 """
 import numpy as np
 import pandas

@@ -1,3 +1,12 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+    FiGS Copyright (C) 2017 Scott T. Small
+    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; type `show c' for details.
+"""
+
 import math
 import subprocess
 import numpy as np
@@ -105,7 +114,7 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
               
     return dfHost
     
-def migration_matrix(villages, initial_migration, initial_distance_m, theta,
+def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, theta,
                      basepairs, mutation):
     '''Creates a string that represents a migration matrix between
     metapopulations. Migration here is a stepping stone not island model
@@ -165,7 +174,7 @@ def migration_matrix(villages, initial_migration, initial_distance_m, theta,
             return "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(
                 0, m1, m2, m3, m1, 0, m4, m5, m2, m4, 0, m6, m3, m5, m6, 0)
 
-def parse_ms_output(msout, ploidy):
+def parse_coalsims_fx(msout, ploidy):
     """Parse output from ms or scrm.
     Parameters
     ---------
@@ -220,7 +229,7 @@ def parse_ms_output(msout, ploidy):
          return gt_array, gt_array2, pos         
 
                    
-def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m,
+def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
         theta, basepairs, mutation, recombination, time2Ancestral, thetaRegional,
         time_join):
     '''External call to ms (Hudson 2000) or scrm.
@@ -299,7 +308,7 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m,
     else:  # ms setup for >1 villages
         num_subpops = len(worm_popsize)  # -I num_pops        
         sub_pop = " ".join(map(str, worm_popsize))  # -I X i j ...
-        mm = migration_matrix(
+        mm = coalsims_migmat_fx(
            villages,
            initial_migration,
            initial_distance_m,
@@ -337,10 +346,10 @@ def ms_outcall(worm_popsize, villages, initial_migration, initial_distance_m,
     print(mscmd)
     msout = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)          
     if ploidy == 1:
-         gt, mutations = parse_ms_output(msout, ploidy)    
+         gt, mutations = parse_coalsims_fx(msout, ploidy)    
          return gt, mutations
     elif ploidy == 2:
-         gt, gt2, mutations = parse_ms_output(msout, ploidy)
+         gt, gt2, mutations = parse_coalsims_fx(msout, ploidy)
          return gt, gt2, mutations
          
 def sel_fx(locus, positions):
@@ -351,7 +360,7 @@ def sel_fx(locus, positions):
      locus : int
           number of loci
      positions : list
-          list from ms_outcall, the the line "positions" in the scrm/ms output
+          list from coalsims_fx, the the line "positions" in the scrm/ms output
      Returns
      ------
      dfSel
@@ -403,7 +412,7 @@ def sel_fx(locus, positions):
                  'selS', 'freqInit']]  
      return dfSel
      
-def fitness_fx(locus, dfAdult, dfSel):
+def fit_fx(locus, dfAdult, dfSel):
      ''' calculates mean fitness for each individual by summing fitness effects
      from dfSel for each position across all loci
      
@@ -485,18 +494,18 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      posSel = []
      for loc in range(locus):
           if recombination[loc] == 0:
-               gt_array, mutations = ms_outcall(wormpopsize, villages, initial_migration, 
+               gt_array, mutations = coalsims_fx(wormpopsize, villages, initial_migration, 
                                     initial_distance_m, theta[loc], basepairs[loc], mutation[loc], 
                                     recombination[loc], time2Ancestral, thetaRegional, time_join)
-               #gt_array, mutations = ms_outcall([10],1,.0001,[0],[5],13000,7.6E-8,0,1800,23,240)
-               #gt_array, mutations = ms_outcall([10,10],2,.0001,[1000],[5,5],13000,7.6E-8,0,1800,23,240)
+               #gt_array, mutations = coalsims_fx([10],1,.0001,[0],[5],13000,7.6E-8,0,1800,23,240)
+               #gt_array, mutations = coalsims_fx([10,10],2,.0001,[1000],[5,5],13000,7.6E-8,0,1800,23,240)
                dfAdult["locus_" + str(loc)] = gt_array          
           elif recombination[loc] > 0:
-               gt_array, gt_array2, mutations = ms_outcall(wormpopsize, villages, initial_migration, 
+               gt_array, gt_array2, mutations = coalsims_fx(wormpopsize, villages, initial_migration, 
                           initial_distance_m, theta[loc], basepairs[loc], mutation[loc], 
                           recombination[loc], time2Ancestral, thetaRegional, time_join)
-               #gt_array, gt_array2, mutations = ms_outcall([10],1,.0001,[0],[5],13000,7.6E-8,2.9E-9,1800,23,240)
-               #gt_array, gt_array2, mutations = ms_outcall([10,10],2,.0001,[1000],[5,5],13000,7.6E-8,2.9E-9,1800,23,240) 
+               #gt_array, gt_array2, mutations = coalsims_fx([10],1,.0001,[0],[5],13000,7.6E-8,2.9E-9,1800,23,240)
+               #gt_array, gt_array2, mutations = coalsims_fx([10,10],2,.0001,[1000],[5,5],13000,7.6E-8,2.9E-9,1800,23,240) 
                dfAdult["locus_" + str(loc) + "_h1"] = gt_array
                dfAdult["locus_" + str(loc) + "_h2"] = gt_array2
                posSel.append(mutations)                      
@@ -504,7 +513,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      #create dfSel
      if selection:
           dfSel = sel_fx(locus, posSel)
-          fitS, fitF, freq = fitness_fx(locus, dfAdult, dfSel)     
+          fitS, fitF, freq = fit_fx(locus, dfAdult, dfSel)     
           dfSel["freqInit"] = freq                   
           dfAdult["fitF"] = fitF
           dfAdult["fitS"] = fitS          
