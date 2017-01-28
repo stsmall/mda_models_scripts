@@ -36,11 +36,11 @@ All options can be set via either config file or command line. The most relevant
 * number of loci: how many loci to simulate
 * length of loci: how many basepairs. scrm can handle Mb size loci with recombination
 * mutation and recombination rates: locus specific
-* selection:
+* selection: use selection function for resitance
 
 #### Intervention
-* mass drug administration: MDA
-* bed nets: 
+* mass drug administration: simulate with mda
+* bed nets: simulate with bed nets
 
 #### Data recording
 * demography: formatted to R dataframe
@@ -50,7 +50,6 @@ All options can be set via either config file or command line. The most relevant
 # Functions tree
 #### wbsims_initialize.py
 * wbsims_init
- * agehost_fx
  * host_fx
  * coalsims_migmatrix_fx
  * parse_coalsims_fx
@@ -58,27 +57,34 @@ All options can be set via either config file or command line. The most relevant
  * sel_fx
  * fit_fx
  * wormdf_fx
-
+#### agehost.py
+ * agehost_fx
 #### wbsims_run.py
-* wb_sims
-  * transmission.py
-    * hostmigration_fx
-    * vectorbite_fx
-    * agehost_fx
-    * newinfection_fx
-    * transmission_fx
-  * survival.py
-    * survivalbase_fx
-    * fecundity.py
-      * fecunditybase_fx
-        * recombination.py
-          * recombination_fx
-        * mutation.py
-          * mutation_fx
-          * selection.py
-            * selection_fx
-            * fitness_fx
-  * record_data.py
+#### transmission.py
+ * hostmigration_fx
+ * vectorbite_fx
+ * newinfection_fx
+ * transmission_fx
+#### survival.py
+ * survivalbase_fx
+#### survival_mda.py
+ * survivalmda_fx
+ * survivalmda_sel1_fx
+ * survivalmda_sel2_fx
+#### fecundity.py
+ * fecunditybase_fx
+#### fecundity_mda.py
+ * fecunditymda_fx
+ * fecunditymda_sel1_fx
+ * fecunditymda_sel2_fx
+#### recombination.py
+  * recombination_fx
+#### mutation.py
+  * mutation_fx
+#### selection.py
+  * selection_fx
+  * fitness_fx
+#### record_data.py
     * record_demo_fx
     * record_popgen_fx
       * gt2scikit_fx
