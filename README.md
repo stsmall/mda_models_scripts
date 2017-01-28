@@ -49,7 +49,7 @@ All options can be set via either config file or command line. The most relevant
 
 # Functions tree
 #### wbsims_run.py
-#### wbsims_initialize.py  
+#### wbsims_initialize.py
 * wbsims_init
  * host_fx
  * coalsims_migmatrix_fx
@@ -58,16 +58,16 @@ All options can be set via either config file or command line. The most relevant
  * sel_fx
  * fit_fx
  * wormdf_fx  
-#### agehost.py  
+#### agehost.py
  * agehost_fx  
-#### transmission.py  
+#### transmission.py
  * hostmigration_fx
  * vectorbite_fx
  * newinfection_fx
  * transmission_fx  
 #### survival.py
  * survivalbase_fx
-#### survival_mda.py  
+#### survival_mda.py
  * survivalmda_fx
  * survivalmda_sel1_fx
  * survivalmda_sel2_fx  
