@@ -48,6 +48,7 @@ All options can be set via either config file or command line. The most relevant
 * genetic data: output all or sample as vcf
 
 # Functions tree
+#### wbsims_run.py
 #### wbsims_initialize.py  
 * wbsims_init
  * host_fx
@@ -59,7 +60,6 @@ All options can be set via either config file or command line. The most relevant
  * wormdf_fx  
 #### agehost.py  
  * agehost_fx  
-#### wbsims_run.py  
 #### transmission.py  
  * hostmigration_fx
  * vectorbite_fx
