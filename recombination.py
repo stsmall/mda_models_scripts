@@ -10,7 +10,7 @@ import numpy as np
 import random
 import pandas as pd
 
-def recombination_fx(locus, dfAdult, dfAdult_mf, recombination_rate, basepairs):
+def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
     """calculate number of recombination events and rearranges haplotypes
 
     Parameters
@@ -92,11 +92,3 @@ def recombination_fx(locus, dfAdult, dfAdult_mf, recombination_rate, basepairs):
               mf += 1
      
     return dfAdult_mf
-
-#                crossover_pos = random.randint(0, bp)
-#                hap1_co = next(l[0] for l in enumerate(
-#                    hap1) if l[1] > crossover_pos)
-#                hap2_co = next(l[0] for l in enumerate(
-#                    hap2) if l[1] > crossover_pos)
-#                hap1_new = hap1[0:hap1_co] + hap2[hap2_co:]
-#                hap2_new = hap2[0:hap2_co] + hap1[hap1_co:]
