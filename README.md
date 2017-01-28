@@ -48,7 +48,7 @@ All options can be set via either config file or command line. The most relevant
 * genetic data: output all or sample as vcf
 
 # Functions tree
-#### wbsims_initialize.py
+#### wbsims_initialize.py  
 * wbsims_init
  * host_fx
  * coalsims_migmatrix_fx
@@ -56,39 +56,38 @@ All options can be set via either config file or command line. The most relevant
  * coalsims_fx
  * sel_fx
  * fit_fx
- * wormdf_fx
-#### agehost.py
- * agehost_fx
-#### wbsims_run.py
-#### transmission.py
+ * wormdf_fx  
+#### agehost.py  
+ * agehost_fx  
+#### wbsims_run.py  
+#### transmission.py  
  * hostmigration_fx
  * vectorbite_fx
  * newinfection_fx
- * transmission_fx
+ * transmission_fx  
 #### survival.py
  * survivalbase_fx
-#### survival_mda.py
+#### survival_mda.py  
  * survivalmda_fx
  * survivalmda_sel1_fx
- * survivalmda_sel2_fx
+ * survivalmda_sel2_fx  
 #### fecundity.py
- * fecunditybase_fx
+ * fecunditybase_fx  
 #### fecundity_mda.py
  * fecunditymda_fx
  * fecunditymda_sel1_fx
- * fecunditymda_sel2_fx
+ * fecunditymda_sel2_fx  
 #### recombination.py
-  * recombination_fx
+  * recombination_fx  
 #### mutation.py
-  * mutation_fx
+  * mutation_fx  
 #### selection.py
   * selection_fx
-  * fitness_fx
+  * fitness_fx  
 #### record_data.py
-    * record_demo_fx
-    * record_popgen_fx
-      * gt2scikit_fx
-        * scikit-allel  
+  * record_demo_fx
+  * record_popgen_fs
+  * gt2scikit_fx  
         
 # License        
     Filarial worm Genetic Simulations, FiGS
