@@ -8,7 +8,7 @@ Created on Sat Jan 28 12:41:41 2017
 
 ####above code works
 
-def fecundity_mdafx(fecund=20, 
+def fecunditymda_fx(fecund=20, 
                     sterile_p=0.35, 
                     clear_time=6, 
                     clear_count=1, 
@@ -89,7 +89,7 @@ def fecundity_mdafx(fecund=20,
 
     return dfAdult, dfMF 
     
-def fecundity_mdasel1fx(fecund=20, 
+def fecunditymda_sel1_fx(fecund=20, 
                     sterile_p=0.35, 
                     clear_time=6, 
                     clear_count=1, 
@@ -171,7 +171,7 @@ def fecundity_mdasel1fx(fecund=20,
 
     return dfAdult, dfMF 
     
-def fecundity_mdasel2fx(fecund=20, 
+def fecunditymda_sel2_fx(fecund=20, 
                     sterile_p=0.35, 
                     clear_time=6, 
                     clear_count=1, 

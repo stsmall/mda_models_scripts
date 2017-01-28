@@ -7,7 +7,7 @@ Created on Sat Jan 28 12:40:18 2017
 """
 
 ########above this works        
-def survival_mdafx(month=1, 
+def survivalmda_fx(month=1, 
                    macrocide=0.05, 
                    microcide=0.90,
                    juvcide=0.45, 
@@ -90,7 +90,7 @@ def survival_mdafx(month=1,
 
     return dfMF, dfJuv, dfAdult
 
-def survival_sel1fx(month=1, 
+def survivalmda_sel1_fx(month=1, 
                    macrocide=0.05, 
                    microcide=0.90,
                    juvcide=0.45, 
@@ -173,7 +173,7 @@ def survival_sel1fx(month=1,
 
     return dfMF, dfJuv, dfAdult
     
-def survival_sel2fx(month=1, 
+def survivalmda_sel2_fx(month=1, 
                    macrocide=0.05, 
                    microcide=0.90,
                    juvcide=0.45, 
