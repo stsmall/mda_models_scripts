@@ -7,10 +7,10 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-import pandas as pd
 import math
 from sklearn.metrics import pairwise_distances
 import random
+from agehost import agehost_fx
 
 def hostmigration_fx(dfHost):
      ''' allows host to move between villages
@@ -35,7 +35,7 @@ def vectorbite_fx(bitespperson,
                   hours2bite, 
                   hostpopsize,
                   prev_t,
-                  densitydep, 
+                  densityDep, 
                   avgMF, 
                   bednets, 
                   bnstart, 
@@ -85,7 +85,7 @@ def vectorbite_fx(bitespperson,
                               * hostpopsize)
     # 0.37 is prob of bite on infected host picking up MF    
     infbites = np.random.binomial(totalbites, (prev_t * 0.37))
-    if densitydep: #values for anopheles from CITE
+    if densityDep: #values for anopheles from CITE
        #number of MF in 20ul of blood
        #235ml is 5% of total host blood 
        #there are 50 units of 20ul in 1ml
@@ -101,53 +101,7 @@ def vectorbite_fx(bitespperson,
     print int(L3trans)
     return int(L3trans)
 
-def agehost_fx(sex, deathdict):
-    '''calculate age of host and age of death
-    Parameters
-    ---------
-    sex: str
-         male or female
-
-    Returns
-    ------
-    age: int
-         age of host
-    death: int
-         age of death
-    '''
-    print "agehost"
-    zero_10 = 0.24 #12%
-    eleven_20 = 0.46 #11%
-    twentyone_30 = 0.64 #9%
-    thirtyone_40 = 0.78 #7%
-    fourtyone_50 = 0.88 #5%
-    fiftyone_60 = 0.94 #3%
-    sixtyone_70 = 0.98 #2%                     
-    #assign age
-    agerand = np.random.random()
-    if agerand <= zero_10:
-         age = np.random.randint(1,10)
-    elif agerand > zero_10 and agerand <= eleven_20:
-         age = np.random.randint(11,20)
-    elif agerand > eleven_20 and agerand <= twentyone_30:
-         age = np.random.randint(21,30)
-    elif agerand > twentyone_30 and agerand <= thirtyone_40:
-         age = np.random.randint(31,40)
-    elif agerand > thirtyone_40 and agerand <= fourtyone_50:
-         age = np.random.randint(41,50)
-    elif agerand > fourtyone_50 and agerand <= fiftyone_60:
-         age = np.random.randint(51,60)
-    elif agerand > fiftyone_60 and agerand <= sixtyone_70:
-         age = np.random.randint(61,70)
-    elif agerand > sixtyone_70:
-         age = np.random.randint(71,80)
-       
-    #when do they die
-    death = deathdict[str(age)][int(sex)] + np.random.normal(0,6) + age
-         
-    return age, round(death)
-
-def new_infection_fx(dispersal, transMF, disthost, dfHost, deathdict):
+def new_infection_fx(dispersal, transMF, disthost, dfHost):
     '''a transmission event infecting a naive host
     Parameters
     ----------
@@ -196,7 +150,7 @@ def new_infection_fx(dispersal, transMF, disthost, dfHost, deathdict):
     #radnom sex
     sex = random.choice("01")
     #age and agedeath function from wbsims_initialize
-    age, agedeath = agehost_fx(sex, deathdict)
+    age, agedeath = agehost_fx(sex)
     #add to dfHost at bottom
     dfHost.loc[len(dfHost) + 1] = [vill, new_hostidx, sex, age, agedeath, newpts, 0]
     
@@ -252,7 +206,7 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
          avgMF = len(dfMF[dfMF.village == vill])/float(infhost)
          avgMF = 200
          L3trans = vectorbite_fx(bitesPperson[vill], hours2bite[vill], hostpopsize[vill], 
-                                 prev_t, densityDep[vill], avgMF, bednets[vill], 
+                                 prev_t, densityDep, avgMF, bednets[vill], 
                                  bnstart[vill], bnstop[vill], bncoverage[vill], month)    
          if L3trans > len(dfMF[dfMF.village == vill]):
               transMF = dfMF[dfMF.village == vill]     
@@ -293,8 +247,3 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
                    row.age = 0
                    dfJuv = dfJuv.append(row)                          
     return dfHost, dfJuv
-
-if __name__ == '__main__':
-     dfJuv = pd.DataFrame({})
-     dfHost, dfJuv = transmission_fx(2, [200, 200], 50, [20, 20], [8, 8], [True, True], [False, False], 
-                      [12, 12], [36, 36], [0.80, 0.80], 1, dfMF, dfJuv, dfHost, deathdict)
