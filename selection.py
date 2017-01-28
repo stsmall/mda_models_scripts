@@ -7,7 +7,6 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-import pandas as pd
 import random
 
 def selection_fx(dfAdult_mf, dfMuts, dfSel, locus):
