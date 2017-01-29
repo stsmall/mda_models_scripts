@@ -12,25 +12,6 @@ from sklearn.metrics import pairwise_distances
 import random
 from agehost import agehost_fx
 
-def hostmigration_fx(dfHost):
-     ''' allows host to move between villages
-     Parameters
-     ---------
-     dfHost : df
-          df of hosts
-     
-     Returns
-     --------
-     dfHost : df
-     ''' 
-     migrant = np.random.randint(0, len(dfHost))
-     if dfHost.loc[migrant, "village"] < max(dfHost.village):
-          dfHost.loc[migrant, "village"] += 1
-     else:
-          dfHost.loc[migrant, "village"] -= 1                         
-
-     return dfHost
-
 def vectorbite_fx(bitespperson, 
                   hours2bite, 
                   hostpopsize,
