@@ -37,7 +37,7 @@ def wb_sims(numberGens):
     villages = 2
     hostpopsize = [100, 200]
     prevalence = [0.1, 0.3]
-    hostmigrates = 0
+    hostmigrate = 0
     muTrans = 100
     sizeTrans = 1
     muWormBurden = [5, 5]
@@ -98,7 +98,7 @@ def wb_sims(numberGens):
               dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
                                                    scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
                                                    fecund, locus, mutation_rate, recombination_rate, 
-                                                   basepairs, selection, dfSel) 
+                                                   basepairs, selection, dfSel,) 
               month += 1
 
          
@@ -115,7 +115,7 @@ def wb_sims(numberGens):
              dfAdult, dfJuv, dfMF, dfHost = survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
                                                         scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
                                                         fecund, locus, mutation_rate, recombination_rate, 
-                                                        basepairs, selection) 
+                                                        basepairs, selection, hostmigrate) 
              month += 1
 
 if __name__ == '__main__':
