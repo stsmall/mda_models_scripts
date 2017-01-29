@@ -9,12 +9,13 @@
 import numpy as np
 from scipy.stats import weibull_min
 from fecundity import fecundity_fx
+from host_migration import hostmigration_fx
 import random
    
 def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
                     scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
                     fecund, locus, mutation_rate, recombination_rate, 
-                    basepairs, selection):
+                    basepairs, selection, hostmigrate):
    #(1, 0.866, 3.3, 10, 3.8, 8, dfMF, dfAdult, dfJuv, dfHost)  
                         
     '''base survival function
@@ -57,7 +58,8 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
         dfJuv = dfJuv.loc[dfJuv["hostidx"].isin(dfHost.hostidx)]
         dfMF = dfMF.loc[dfMF["hostidx"].isin(dfHost.hostidx)]
         #add 1 year to all ages of hosts
-        dfHost.age = dfHost.age + 1 
+        dfHost.age = dfHost.age + 1
+        dfHost = hostmigration_fx(dfHost, hostmigrate)
         
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
