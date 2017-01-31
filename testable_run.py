@@ -98,7 +98,7 @@ def wb_sims(numberGens):
               dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
                                                    scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
                                                    fecund, locus, mutation_rate, recombination_rate, 
-                                                   basepairs, selection, dfSel,) 
+                                                   basepairs, selection, dfSel) 
               month += 1
 
          

@@ -8,7 +8,7 @@
 """
 import numpy as np
 from scipy.stats import weibull_min
-from fecundity import fecundity_basefx
+from fecundity import fecunditybase_fx
 from host_migration import hostmigration_fx
 import random
    
@@ -90,7 +90,7 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
      
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecundity_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs)
+    dfAdult_mf = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs)
     dfAdult_mf.age = 1
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]

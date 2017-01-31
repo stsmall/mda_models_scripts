@@ -142,7 +142,7 @@ def new_infection_fx(dispersal, transMF, disthost, dfHost):
     return dfHost, new_hostidx
 
 def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, densityDep, bednets,
-                    bnstart, bnstop, bncoverage, month, dfMF, dfJuv, dfHost, deathdict):
+                    bnstart, bnstop, bncoverage, month, dfMF, dfJuv, dfHost):
     '''Transmission events resolved as either reinfection or new infection
 
     Parameters
@@ -221,7 +221,7 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
               if np.random.random() < prob_newinfection:     
                    print("new loop")
                    #new host
-                   dfHost, newidx = new_infection_fx(dispersal, row, disthost, dfHost, deathdict)
+                   dfHost, newidx = new_infection_fx(dispersal, row, disthost, dfHost)
                    row.hostidx = newidx
                    row.age = 0
                    dfJuv = dfJuv.append(row)
