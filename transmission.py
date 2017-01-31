@@ -23,7 +23,8 @@ def vectorbite_fx(bitespperson,
                   bnstop, 
                   bncoverage, 
                   month):
-    '''counts the number of successful infectious mosquito bites
+    '''Counts the number of successful infectious mosquito bites
+
     Parameters
     --------
     bitespperson : int
@@ -53,7 +54,7 @@ def vectorbite_fx(bitespperson,
     L3trans : int
          all new juv are age class 0
     '''
-    print "vectorbite"
+    print("vectorbite")
     if bednets:
         if month > bnstart and month < bnstop:
              totalbites = ((1 - bncoverage) * bitespperson * hours2bite * 30 
@@ -79,11 +80,13 @@ def vectorbite_fx(bitespperson,
        # 0.414 is proportion of  L3 that leave mosquito per bite 
        # 0.32 proportion of L3 that make it into the host
        L3trans = np.random.binomial(infbites, (0.414 * 0.32))
-    print int(L3trans)
-    return int(L3trans)
+    print(int(L3trans))
+    return(int(L3trans))
+
 
 def new_infection_fx(dispersal, transMF, disthost, dfHost):
-    '''a transmission event infecting a naive host
+    '''A transmission event infecting a naive host
+
     Parameters
     ----------
     mindist : int
@@ -101,7 +104,7 @@ def new_infection_fx(dispersal, transMF, disthost, dfHost):
     newhostidx: str
           new host index     
     '''
-    print "newfx"
+    print("newfx")
     #how close
     mindist = 5
     #how far
@@ -113,7 +116,7 @@ def new_infection_fx(dispersal, transMF, disthost, dfHost):
 
     while next((True for elem in dfHost['coordinates'].values if np.array_equal(elem, newpts)),False) is True:
          #shift of new points
-         print "loop"
+         print("loop")
          x_new = random.randint( -maxc, maxc )
          y_new = random.randint( -maxc, maxc )
          #test that new shifts are min distance
@@ -121,8 +124,9 @@ def new_infection_fx(dispersal, transMF, disthost, dfHost):
               newhostptX = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][0] + x_new
               newhostptY = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][1] + y_new
               newpts = np.array([newhostptX, newhostptY])
-              print newpts
-    print "outloop"          
+              print(newpts)
+                      #[12, 12], [36, 36], 1, dfMF, dfJuv, dfHost, deathdict) 
+    print("outloop")          
     #copy village
     vill = transMF.village
     #new host index
@@ -139,9 +143,8 @@ def new_infection_fx(dispersal, transMF, disthost, dfHost):
 
 def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, densityDep, bednets,
                     bnstart, bnstop, bncoverage, month, dfMF, dfJuv, dfHost, deathdict):
-     #transmission_fx(2, [200, 200], 50, [20, 20], [8, 8], [True, True], [False, False], 
-                      #[12, 12], [36, 36], 1, dfMF, dfJuv, dfHost, deathdict) 
-    '''transmission events resolved as either reinfection or new infection
+    '''Transmission events resolved as either reinfection or new infection
+
     Parameters
     --------
     villages : int
@@ -168,10 +171,13 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
         current time, month 
     dfHost: df
          chooses the donating and accepting hosts for transmission
-    dfMF: df
+    dfMF : df
          donating MF genotype to transmit
-    dfJuv: df
+    dfJuv : df
          donated MF move to Juvenille age class
+    deathdict : dictionary
+         :TODO add description
+         ???????
     Returns
     ------
     dfJuv : df
@@ -179,7 +185,7 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
     dfHost : df
          in the case of newinfection, new host
     '''
-    print "transmission"
+    print("transmission")
     dispersal = 2 * sigma
     for vill in range(villages):
          prev_t = len(dfHost[dfHost.village == vill]) / float(hostpopsize[vill])
@@ -211,9 +217,9 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
               else: #everyone is already infected
                    prob_newinfection = 0
               
-              print prob_newinfection, row, index 
+              print(prob_newinfection, row, index) 
               if np.random.random() < prob_newinfection:     
-                   print "new loop"
+                   print("new loop")
                    #new host
                    dfHost, newidx = new_infection_fx(dispersal, row, disthost, dfHost, deathdict)
                    row.hostidx = newidx
@@ -222,7 +228,7 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
                    #need to update distMat to include new host
                    distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates)) 
               else: #reinfection
-                   print "reinfect loop"
+                   print("reinfect loop")
                    rehost = dfHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
                    row.hostidx = rehost.hostidx
                    row.age = 0

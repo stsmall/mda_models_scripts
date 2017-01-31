@@ -37,7 +37,7 @@ def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
          try:
               male = dfAdult.loc[(dfAdult["sex"] == "M") & (dfAdult["hostidx"] == row.hostidx)].sample(1)
          except ValueError:
-              print "no males, no sex"
+              print("no males, no sex")
               break
          mf = 0
          while mf < dfAdult.loc[index, "fec"]:
@@ -46,7 +46,7 @@ def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
                         pass
                    else:                                         
                         num_recomb = np.random.poisson(recombination_rate[loc] * basepairs[loc] * 2)
-                        print num_recomb
+                        print(num_recomb)
                         if num_recomb == 0:
                              row["locus_" + str(loc) + "_h1"] = row["locus_" + str(loc) + "_h" + random.choice("12")]     
                              #male contribution
