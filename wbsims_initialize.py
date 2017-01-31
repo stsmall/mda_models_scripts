@@ -157,13 +157,14 @@ def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, theta,
             mig.append((initial_migration) / (np.random.exponential(meters)))
         if villages == 2:
             m1 = 4 * ne * mig[0]  # 4Nm
-            return "{}".format(m1)  # mig_matrix is symmetrical and island
+            return("{}".format(m1))  # mig_matrix is symmetrical and island
         elif villages == 3:
             m1 = 4 * ne * mig[0]
             m2 = 4 * ne * mig[1]
             m3 = 4 * ne * mig[2]
-            return "{} {} {} {} {} {} {} {} {}".format(
-                0, m1, m2, m1, 0, m3, m2, m3, 0)  # mig_matrix is symmetrical
+            # mig_matrix is symmetrical
+            return("{} {} {} {} {} {} {} {} {}".format(
+                0, m1, m2, m1, 0, m3, m2, m3, 0))
         elif villages == 4:
             m1 = 4 * ne * mig[0]
             m2 = 4 * ne * mig[1]
@@ -171,8 +172,9 @@ def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, theta,
             m4 = 4 * ne * mig[3]
             m5 = 4 * ne * mig[4]
             m6 = 4 * ne * mig[5]
-            return "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(
-                0, m1, m2, m3, m1, 0, m4, m5, m2, m4, 0, m6, m3, m5, m6, 0)
+            return("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(
+                0, m1, m2, m3, m1, 0, m4, m5, m2, m4, 0, m6, m3, m5, m6, 0))
+
 
 def parse_coalsims_fx(msout, ploidy):
     """Parse output from ms or scrm.
@@ -188,45 +190,50 @@ def parse_coalsims_fx(msout, ploidy):
     gt_array
          columns to be added to dfAdult
     """
+    for line in iter(msout.stdout.readline, ''):
+        line = line.decode('utf-8')
+        if line.startswith("positions"):
+            ##collisions can result here when theta is high
+            pos = np.round(np.array(line.strip().split()[1:], dtype=np.float64))
+            prev = 0
+            for idx, item in enumerate(pos, start=0):
+                while prev >= item:
+                     item += 1
+                pos[idx] = item
+                prev = pos[idx]  
+            break
+        else: pass 
+    #:TODO convert to read directly from memory into arrays
     if ploidy == 1:
-         gt_array = []
-         for line in iter(msout.stdout.readline, ''):
-              if line.startswith("positions"):
-                   ##collisions can result here when theta is high
-                   pos = np.round(np.array(line.strip().split()[1:], dtype=np.float64))
-                   prev = 0
-                   for idx, item in enumerate(pos, start=0):
-                        while prev >= item:
-                             item += 1
-                        pos[idx] = item
-                        prev = pos[idx]  
-                   for line in iter(msout.stdout.readline, ''):
-                        hap = np.array(list(line.strip()), dtype=int)
-                        gt = hap * pos
-                        gt_array.append(gt[gt != 0])
-         return gt_array, pos
+        gt_array = []
+        #:TODO Seriously think about returning the whole genotype array
+        for line in iter(msout.stdout.readline, ''):
+            line = line.decode('utf-8')
+            hap = np.array(list(line.strip()), dtype=int)
+            try:
+                gt = hap * pos
+                gt_array.append(gt[gt != 0])
+            except ValueError:
+                # Last line
+                break
+        print(gt_array)
+        return(gt_array, pos)
     elif ploidy == 2:
-         gt_array = []
-         gt_array2 = []
-         for line in iter(msout.stdout.readline, ''):
-              if line.startswith("positions"):
-                   ##collisions can result here when theta is high
-                   pos = np.round(np.array(line.strip().split()[1:], dtype=np.float64))
-                   prev = 0
-                   for idx, item in enumerate(pos, start=0):
-                        while prev >= item:
-                             item += 1
-                        pos[idx] = item
-                        prev = pos[idx]
-                   for line in iter(msout.stdout.readline, ''):
-                        hap = np.array(list(line.strip()), dtype=int)
-                        gt = hap * pos
-                        gt_array.append(gt[gt != 0])                     
-                        hap2_temp = next(iter(msout.stdout.readline, ''))
-                        hap2 = np.array(list(hap2_temp.strip()), dtype=int)
-                        gt2 = hap2 * pos
-                        gt_array2.append(gt2[gt2 != 0])
-         return gt_array, gt_array2, pos         
+        gt_array = []
+        gt_array2 = []
+        for line in iter(msout.stdout.readline, ''):
+            line = line.decode('utf-8')
+            hap = np.array(list(line.strip()), dtype=int)
+            try:
+                gt = hap * pos
+                gt_array.append(gt[gt != 0])                     
+                hap2_temp = next(iter(msout.stdout.readline, ''))
+                hap2 = np.array(list(hap2_temp.strip()), dtype=int)
+                gt2 = hap2 * pos
+                gt_array2.append(gt2[gt2 != 0])
+            except ValueError:
+                break
+        return(gt_array, gt_array2, pos)
 
                    
 def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
@@ -281,7 +288,6 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     tA = basepairs * (time2Ancestral / (thetaN0 / mutation))
     # time to join villages
     tjoin = basepairs * (time_join / (thetaN0 / mutation))
-    
     #check ploidy for total haplotypes
     if rho == 0:
          ploidy = 1
@@ -299,7 +305,7 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
             'sig_digits': 12,
         }
      
-            #order matters for the command call
+    #order matters for the command call
     if villages == 1:
         scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
                  "-G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
@@ -345,6 +351,8 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
                  mscmd = scrm_base.format(**ms_params)     
     print(mscmd)
     msout = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)          
+    #msout = subprocess.check_output(mscmd.split(" ")).decode('utf-8')
+    #:TODO refactor this, less variation on returns
     if ploidy == 1:
          gt, mutations = parse_coalsims_fx(msout, ploidy)    
          return gt, mutations
@@ -352,79 +360,81 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
          gt, gt2, mutations = parse_coalsims_fx(msout, ploidy)
          return gt, gt2, mutations
          
+
 def sel_fx(locus, positions):
-     '''initializes the distribution of fitness effects for each mutation
+    '''Initializes the distribution of fitness effects for each mutation
+
+    Parameters
+    ---------
+    locus : int
+      number of loci
+    positions : list
+      list from coalsims_fx, the the line "positions" in the scrm/ms output
+    Returns
+    ------
+    dfSel
+    '''
+    selF =[]
+    selS =[]
+    positions = [item for sublist in positions for item in sublist]
+    #below functs assume the list of positions contains mutliple loci
+    if isinstance(positions[0], list):
+        numpos = [len(i) for i in positions]
+        for loc in range(locus):
+           for pos in positions[loc]:
+                if random.choice("SF") is "F":
+                     #shape = 4, mean = 1, scale = mean/shape
+                     #here mean is mean_fitness, wildtype is assumed to be 1
+                     selF.append(np.random.gamma(4, scale=0.25))
+                     selS.append(1)
+                else:
+                     selS.append(np.random.gamma(4, scale=0.25))
+                     selF.append(1)
+        dfSel = pd.DataFrame({
+                            'locus' : np.repeat(range(1, locus), numpos),
+                            'position' : [item for sub in positions for item in sub],
+                            'selF' : selF,
+                            'selS' : selS,
+                            'freqInt' : np.zeros(sum(numpos))})     
+        dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
+             'selS', 'freqInit']]
+    else: #list only contains a single locus
+      numpos = len(positions)        
+      for pos in positions:
+           if random.choice("SF") is "F":
+                #shape = 4, mean = 1, scale = mean/shape
+                #here mean is mean_fitness, wildtype is assumed to be 1
+                selF.append(np.random.gamma(4, scale=0.25))
+                selS.append(1)
+           else:
+                selS.append(np.random.gamma(4, scale=0.25))
+                selF.append(1)
      
-     Parameters
-     ---------
-     locus : int
-          number of loci
-     positions : list
-          list from coalsims_fx, the the line "positions" in the scrm/ms output
-     Returns
-     ------
-     dfSel
-     '''
-     selF =[]
-     selS =[]
-     positions = [item for sublist in positions for item in sublist]
-     #below functs assume the list of positions contains mutliple loci
-     if isinstance(positions[0], list):
-          numpos = [len(i) for i in positions]
-          for loc in range(locus):
-               for pos in positions[loc]:
-                    if random.choice("SF") is "F":
-                         #shape = 4, mean = 1, scale = mean/shape
-                         #here mean is mean_fitness, wildtype is assumed to be 1
-                         selF.append(np.random.gamma(4, scale=0.25))
-                         selS.append(1)
-                    else:
-                         selS.append(np.random.gamma(4, scale=0.25))
-                         selF.append(1)
-         
-          dfSel = pd.DataFrame({
-                                'locus' : np.repeat(range(1, locus), numpos),
-                                'position' : [item for sub in positions for item in sub],
-                                'selF' : selF,
-                                'selS' : selS,
-                                'freqInt' : np.zeros(sum(numpos))})     
-          dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-                 'selS', 'freqInit']]
-     else: #list only contains a single locus
-          numpos = len(positions)        
-          for pos in positions:
-               if random.choice("SF") is "F":
-                    #shape = 4, mean = 1, scale = mean/shape
-                    #here mean is mean_fitness, wildtype is assumed to be 1
-                    selF.append(np.random.gamma(4, scale=0.25))
-                    selS.append(1)
-               else:
-                    selS.append(np.random.gamma(4, scale=0.25))
-                    selF.append(1)
-         
-          dfSel = pd.DataFrame({
-                                'locus' : np.repeat(range(1, locus), numpos),
-                                'position' : [item for item in positions],
-                                'selF' : selF,
-                                'selS' : selS,
-                                'freqInt' : np.zeros(numpos)})     
-          dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-                 'selS', 'freqInit']]  
-     return dfSel
+      dfSel = pd.DataFrame({
+                            'locus' : np.repeat(range(1, locus), numpos),
+                            'position' : [item for item in positions],
+                            'selF' : selF,
+                            'selS' : selS,
+                            'freqInt' : np.zeros(numpos)})     
+      dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
+             'selS', 'freqInit']]  
+    return(dfSel)
+
+
      
 def fit_fx(locus, dfAdult, dfSel):
-     ''' calculates mean fitness for each individual by summing fitness effects
+     ''' Calculates mean fitness for each individual by summing fitness effects
      from dfSel for each position across all loci
      
      Parameters
-     ---------
+     ----------
      dfAdult : df
           data frame of adult worms containing genotype information
      dfSel : df
           data fram of fitness benefit for each allele
      
      Returns
-     ------
+     -------
      fitF : array
           array filling selF column, influencing fecundity
      fitS : array      
@@ -463,7 +473,6 @@ def fit_fx(locus, dfAdult, dfSel):
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
               initial_migration, initial_distance_m, theta, basepairs, mutation, 
               recombination, time2Ancestral, thetaRegional, time_join, selection):
-
      #create parasite burden per host
      popinit = []
      for mu, size, numworms in zip(muWormBurden, sizeWormBurden, infhost):
@@ -520,6 +529,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
           return dfAdult, dfSel
      else:
           return dfAdult
+
 
 def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurden, 
                 sizeWormBurden, locus, initial_migration, initial_distance_m, theta,
