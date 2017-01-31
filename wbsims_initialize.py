@@ -55,9 +55,10 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
                       'agedeath' : [i[1] for i in age_death],
                       'coordinates' : coordinates,
                       'MDA' : np.zeros(sum(infhost)),
+                      'MDA_cum' : np.zeros(sum(infhost))                
                       })
     dfHost = dfHost.loc[:, ['village', 'hostidx', 'sex',
-            'age', 'agedeath', 'coordinates', 'MDA']]
+            'age', 'agedeath', 'coordinates', 'MDA', 'MDA_cum']]
               
     return dfHost
     
@@ -537,6 +538,6 @@ if __name__ == '__main__':
      #                          [[5, 5], [1, 1]], [13000, 200000], 
      #                          [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, True)    
      #2 villages without selection
-     dfAdult, dfHost = wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, [5, 5], [50, 50], 2, 0.0001, [1000], 
+     dfAdult, dfHost, dfJuv, dfMF = wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, [5, 5], [50, 50], 2, 0.0001, [1000], 
                                [[5, 5], [1, 1]], [13000, 200000], 
                                [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, False) 
