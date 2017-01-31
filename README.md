@@ -10,7 +10,7 @@ There are currently no available simulation models that generate population gene
 **Current Assembly**  
 [wormbase](http://parasite.wormbase.org/Wuchereria_bancrofti_prjna275548/Info/Index): Whole Genome Assembly from *Small 2016*     
 
-*special thanks to [Luc E. Coffeng](www.researchgate.net/profile/Luc_Coffeng), [Jeff Hsu](https://github.com/jeffhsu3), [Jim Hester](http://www.jimhester.com/)*
+*special thanks to [Luc E. Coffeng](http://www.researchgate.net/profile/Luc_Coffeng), [Jeff Hsu](https://github.com/jeffhsu3), [Jim Hester](http://www.jimhester.com/)*
 
 # Documentation
 ## Dependencies
