@@ -8,7 +8,9 @@
 """
 import numpy as np
 from scipy.stats import weibull_min
-from fecundity import fecunditymda_fx
+from fecundity_mda import fecunditymda_fx
+from fecundity_mda import fecunditymda_sel1_fx
+from fecundity_mda import fecunditymda_sel2_fx
 from host_migration import hostmigration_fx
 from hostmda import hostmda_fx
 import random
@@ -97,8 +99,6 @@ def survivalmda_fx(month, villages, surv_Juv, shapeMF, scaleMF, shapeAdult,
         dfHost = hostmda_fx(villages, dfHost, mda_coverage)
         ##apply MDA effect to host populations of worms    
         for index, row in dfHost[dfHost.MDA == 1].iterrows():   
-             #instant kill
-             dfMF[dfMF.hostidx == row.hostidx].sample(frac = 1 - mda_micro).index
              #kill MF    
              dfMF.drop(dfMF[dfMF.hostidx == row.hostidx].sample(frac = mda_micro).index, inplace = True)    
              #kill Juv
@@ -155,7 +155,8 @@ def survivalmda_fx(month, villages, surv_Juv, shapeMF, scaleMF, shapeAdult,
      
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecunditymda_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs, clear_count)
+    dfAdult_mf = fecunditymda_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, 
+                                 basepairs, clear_count, mda_sterile, mda_clear, dfHost, villages)
     dfAdult_mf.age = 1
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
@@ -284,7 +285,8 @@ def survivalmda_sel1_fx(month, villages, surv_Juv, shapeMF, scaleMF, shapeAdult,
      
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecunditymda_sel1_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs, clear_count)
+    dfAdult_mf = fecunditymda_sel1_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, 
+                                 basepairs, clear_count, mda_sterile, mda_clear, dfHost, villages)
     dfAdult_mf.age = 1
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
@@ -417,8 +419,8 @@ def survivalmda_sel2_fx(month, villages, surv_Juv, shapeMF, scaleMF, shapeAdult,
      
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecunditymda_sel2_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs, clear_count)
-    dfAdult_mf.age = 1
+    dfAdult_mf = fecunditymda_sel2_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, 
+                                 basepairs, clear_count, mda_sterile, mda_clear, dfHost, villages)
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
     dfMF = dfMF.append(dfAdult_mf, ignore_index=True)     
