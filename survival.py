@@ -8,7 +8,7 @@
 """
 import numpy as np
 from scipy.stats import weibull_min
-from fecundity import fecundity_fx
+from fecundity import fecundity_basefx
 from host_migration import hostmigration_fx
 import random
    

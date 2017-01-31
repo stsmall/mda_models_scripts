@@ -11,6 +11,7 @@ from recombination import recombination_fx
 from mutation import mutation_fx
 from selection import selection_fx
 
+
 def fecundity_basefx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs, selection, dfSel):
     #(20, dfAdult, 2, [7.6E-8, 2.9E-9], [0, 2.9E-9], [13000, 200000])
      '''base fecundity function, simpliest scenario
