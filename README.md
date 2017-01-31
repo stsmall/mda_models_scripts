@@ -61,7 +61,10 @@ All options can be set via either config file or command line. The most relevant
  
 #### agehost.py
  * agehost_fx
- 
+#### host_migration.py
+ * hostmigration_fx
+#### hostmda.py
+ * hostmda_fx
 #### transmission.py
  * hostmigration_fx
  * vectorbite_fx
