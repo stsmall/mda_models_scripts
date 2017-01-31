@@ -1,39 +1,44 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Sat Jan 28 12:40:18 2017
-
-@author: scott
+    FiGS Copyright (C) 2017 Scott T. Small
+    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; type `show c' for details.
 """
-
-########above this works        
-def survivalmda_fx(month=1, 
-                   macrocide=0.05, 
-                   microcide=0.90,
-                   juvcide=0.45, 
-                   clear_count=1, 
-                   surv_Juv=0.866, 
-                   shapeMF=3.3, 
-                   scaleMF=12, 
-                   shapeAdult=3.8, 
-                   scaleAdult=8,
-                   dfMF,
-                   dfAdult,
-                   dfJuv):
- 
+import numpy as np
+from scipy.stats import weibull_min
+from fecundity import fecundity_fx
+from host_migration import hostmigration_fx
+import random
+   
+def survivalmda_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
+                    scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
+                    fecund, locus, mutation_rate, recombination_rate, 
+                    basepairs, selection, hostmigrate, mda, mda_start, mda_num,
+                    mda_freq, mda_coverage, mda_macro, mda_juvicide, mda_micro, 
+                    mda_sterile, mda_clear):
+     
+     
+    mda = [False, False]
+    mda_start = [12, 12]
+    mda_num = [6, 6] #how many mdas
+    mda_freq = 12 #every 12 months
+    mda_coverage = [0.8, 0.7] 
+    mda_macro = 0.05
+    mda_juvicide = 0.45
+    mda_micro = 0.95
+    mda_sterile = 0.35
+    mda_clear = 6
+     
+     
+   #(1, 0.866, 3.3, 10, 3.8, 8, dfMF, dfAdult, dfJuv, dfHost)  
+                        
     '''base survival function
     Parameters
     ---------
     month: int
          time in months of the simulation
-    macrocide: float
-         percent of adults killed by drug
-    microcide: float
-         percent of MF killed by drug
-    juvcide: float
-         percent of juveniile killed by drug; could be 0 or avg micro/macro
-    clear_count: int
-         time since MDA, drug was administered
     surv_Juv: float
          survival prob of juvenille life stage
     shapeMF: float
@@ -44,14 +49,60 @@ def survivalmda_fx(month=1,
          shape parameter for weibull distribution of Adults
     scaleAdult: int
          scale parameter for weibull distribution of MF
-
+    mda : boolean
+         mda in village or not
+    mda_start : list, int
+         time in months that mda began in each village
+    mda_num : list, int
+         how many mdas to simulate
+    mda_freq : int
+         how often
+    mda_coverage : float
+         what percentage of the population get mda
+    mda_macro: float
+         percent of adults killed by drug
+    mda_micro: float
+         percent of MF killed by drug
+    mda_juvcide: float
+         percent of juveniile killed by drug; could be 0 or avg micro/macro
+    mda_sterile : float
+         percent of adult worms perm sterilized
+    mda_clear : int
+         clearance time
+   
     Returns
     -------
     dfMF
     dfAdult
     dfJuv
+    dfHost
     
-    '''
+    '''    
+freq = 12
+mda_start = 12
+mda_clear = 6
+mda_num = 6  
+for month in range(120):
+    if month < mda_start:
+        print "no mda"
+    elif month >= mda_start and month < (mda_start + freq * num + freq):    
+         if month%freq == 0:
+              clear_count = 1
+              print "month %i, clear count is 1" %(month)
+         elif (month - mda_clear)%freq == 0:
+              clear_count = mda_clear
+              print "month %i, clear count is %i" %(month, mda_clear)
+         #else:
+         #     clear_count = (month-mda_clear)%freq - mda_clear + 1
+         #     print "month %i, clear count is %i" %(month, clear_count)
+    elif month > (mda_start + freq * num):    
+        print "mda over"
+        clear_count = 0
+        
+
+    
+    
+    
     
     if clear_count == 1:
         ##MF
