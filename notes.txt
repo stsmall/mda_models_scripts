@@ -19,8 +19,14 @@ reference:
 def densitydep_fx(carrycap=100,):
       Km = 100  #carrying capacity
       bm = 1.0/Km #Km is carrying capacity
-      Sm = 0.99 #maximum survival
+      Sm = 20 #maximum survival
       am = (Sm*bm)/math.exp(-1)
+      for i in range(200):
+             print("%f" %(am * i * math.exp(-(bm) * (i-1.0))))
+             
+             
+             
       mort_A = am * sum_adult * math.exp(-bm * sum_adult) #Ricker fx
       mort_J = am * sum_juv * math.exp(-bm * sum_juv) #Ricker fx
       mort_M = am * sum_mf * math.exp(-bm * sum_mf) #Ricker fx
+         
