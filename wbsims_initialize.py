@@ -425,7 +425,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      popinit = []
      for mu, size, numworms in zip(muWormBurden, sizeWormBurden, infhost):
          #the number of worms per infected host
-         wb_burden = np.random.negative_binomial(mu, mu/float(mu+size), numworms) 
+         wb_burden = np.random.negative_binomial(size, size/float(mu+size), numworms) 
          #[[10,12,1,15 ... infhostvill1],[19,1,5,4, ... infhostvill2]]
          popinit.append(np.array(wb_burden).tolist())
         
