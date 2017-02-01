@@ -141,7 +141,7 @@ def new_infection_fx(dispersal, transMF, disthost, dfHost):
     
     return dfHost, new_hostidx
 
-def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, densityDep, bednets,
+def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, densitydep_uptake, bednets,
                     bnstart, bnstop, bncoverage, month, dfMF, dfJuv, dfHost):
     '''Transmission events resolved as either reinfection or new infection
 
@@ -157,7 +157,7 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
         rate of bites per person per unit time, here hours
     hours2bite : int, list
         number of hours mosq bite per night/day
-    densityDep : Boolean
+    densitydep_uptake : Boolean
         use the density dependece function for developing L3
     bednets : Boolean, list
         use values from bednets     
@@ -176,8 +176,7 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
     dfJuv : df
          donated MF move to Juvenille age class
     deathdict : dictionary
-         :TODO add description
-         ???????
+         actuarial table, loaded as dictionary
     Returns
     ------
     dfJuv : df
@@ -193,7 +192,7 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite, dens
          avgMF = len(dfMF[dfMF.village == vill])/float(infhost)
          avgMF = 200
          L3trans = vectorbite_fx(bitesPperson[vill], hours2bite[vill], hostpopsize[vill], 
-                                 prev_t, densityDep, avgMF, bednets[vill], 
+                                 prev_t, densitydep_uptake, avgMF, bednets[vill], 
                                  bnstart[vill], bnstop[vill], bncoverage[vill], month)    
          if L3trans > len(dfMF[dfMF.village == vill]):
               transMF = dfMF[dfMF.village == vill]     
