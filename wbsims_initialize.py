@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import random
 from agehost import agehost_fx
+from filtercoords import filtercoords_fx
    
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -309,7 +310,7 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
          return gt, gt2, mutations
          
 
-def sel_fx(locus, positions):
+def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
     '''Initializes the distribution of fitness effects for each mutation
 
     Parameters
@@ -318,15 +319,25 @@ def sel_fx(locus, positions):
       number of loci
     positions : list
       list from coalsims_fx, the the line "positions" in the scrm/ms output
+    basepairs : list, int
+      length of locus in basepairs
+    perc_locus : list, float
+      percent of the locus that is coding
+    cds_length : int
+      average length of the coding sequence
+    intgen_length : int
+      distance between cds in the locus
     Returns
     ------
     dfSel
     '''
+    positions, cds_coordinates = filtercoords_fx(locus, positions, basepairs, perc_locus, 
+                                        cds_length, intgen_length)     
     selF =[]
     selS =[]
     positions = [item for sublist in positions for item in sublist]
     #below functs assume the list of positions contains mutliple loci
-    if isinstance(positions[0], list):
+    if locus > 2:
         numpos = [len(i) for i in positions]
         for loc in range(locus):
            for pos in positions[loc]:
@@ -347,6 +358,8 @@ def sel_fx(locus, positions):
         dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
              'selS', 'freqInit']]
     else: #list only contains a single locus
+      if isinstance(positions,list):
+          positions = positions[0]
       numpos = len(positions)        
       for pos in positions:
            if random.choice("SF") is "F":
@@ -365,11 +378,10 @@ def sel_fx(locus, positions):
                             'selS' : selS,
                             'freqInt' : np.zeros(numpos)})     
       dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-             'selS', 'freqInit']]  
-    return(dfSel)
-
-
-     
+             'selS', 'freqInit']]
+          
+    return(dfSel, cds_coordinates)
+    
 def fit_fx(locus, dfAdult, dfSel):
      ''' Calculates mean fitness for each individual by summing fitness effects
      from dfSel for each position across all loci
@@ -420,7 +432,8 @@ def fit_fx(locus, dfAdult, dfSel):
                
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
               initial_migration, initial_distance_m, theta, basepairs, mutation, 
-              recombination, time2Ancestral, thetaRegional, time_join, selection):
+              recombination, time2Ancestral, thetaRegional, time_join, selection, 
+              perc_locus, cds_length, intgen_length):
      #create parasite burden per host
      popinit = []
      for mu, size, numworms in zip(muWormBurden, sizeWormBurden, infhost):
@@ -469,7 +482,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
 
      #create dfSel
      if selection:
-          dfSel = sel_fx(locus, posSel)
+          dfSel = sel_fx(locus, posSel, basepairs, perc_locus, cds_length, intgen_length)
           fitS, fitF, freq = fit_fx(locus, dfAdult, dfSel)     
           dfSel["freqInit"] = freq                   
           dfAdult["fitF"] = fitF
@@ -482,7 +495,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
 def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurden, 
                 sizeWormBurden, locus, initial_migration, initial_distance_m, theta,
                 basepairs, mutation, recombination, time2Ancestral, thetaRegional,
-                time_join, selection):
+                time_join, selection, perc_locus, cds_length, intgen_length):
      '''main function call for simulations
      Parameters
      ---------
@@ -511,10 +524,10 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
      # dfHost = host_fx(2, [10,10], 100, 1)
      #construct dfAdult, dfSel
      if selection:
-          dfAdult, dfSel= wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, 
+          dfAdult, dfSel, cds_coords= wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, 
                                locus, initial_migration, initial_distance_m, theta, 
                                basepairs, mutation, recombination, time2Ancestral, thetaRegional,
-                               time_join, selection)
+                               time_join, selection, perc_locus, cds_length, intgen_length)
      else:
           dfAdult = wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, 
                      locus, initial_migration, initial_distance_m, theta, 
@@ -536,8 +549,8 @@ if __name__ == '__main__':
      #2 villages with selection
      #dfAdult, dfHost, dfSel = wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, [5, 5], [50, 50], 2, 0.0001, [1000], 
      #                          [[5, 5], [1, 1]], [13000, 200000], 
-     #                          [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, True)    
+     #                          [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, True,  [0, 0.18], 1100, 2500)    
      #2 villages without selection
      dfAdult, dfHost, dfJuv, dfMF = wbsims_init(2, [100, 200], [0.1, 0.3], 100, 1, [5, 5], [50, 50], 2, 0.0001, [1000], 
                                [[5, 5], [1, 1]], [13000, 200000], 
-                               [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, False) 
+                               [7.6E-8, 2.9E-9], [0, 2.9E-9], 1800, 23, 240, False, [0, 0.18], 1100, 2500) 

@@ -9,7 +9,7 @@ import numpy as np
 import random
 import pandas as pd
 
-def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs):
+def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs, cds_coordinates):
     '''calculates number of mutations, changes haplotypes
     
     Parameters
@@ -36,7 +36,6 @@ def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
          if recombination_rate[loc] == 0:
               num_muts = np.random.binomial(len(dfAdult_mf), basepairs[loc] * mutation_rate[loc])
               #print num_muts
-              #muts_counter.append(num_muts)
               muts = 0     
               if num_muts != 0:
                    while muts < num_muts:
@@ -50,7 +49,6 @@ def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
          else:
               num_muts = np.random.binomial(2 * len(dfAdult_mf), basepairs[loc] * mutation_rate[loc])
               #print num_muts
-              muts_counter.append(num_muts)
               muts = 0     
               if num_muts != 0:
                    while muts < num_muts:
@@ -61,12 +59,14 @@ def mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
                         newhap = np.append(dfAdult_mf.iloc[randmf]["locus_" + str(loc) + "_h" + randhap], newsite)
                         dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + randhap, newhap.sort()) 
                         muts += 1
-    #print positions
-    #print muts_counter
-###TO DO: for exon type selection, need to filter this before to only include those positions                    
+                   cds_positions = []
+                   for start, end in cds_coordinates[loc - 1]:
+                        cds_positions.extend(positions[np.where(np.logical_and(positions >= start, 
+                                            positions <= end))])                      
+                   muts_counter.append(cds_positions) 
     dfMuts = pd.DataFrame({
                            "locus" : np.repeat(range(1, locus), muts_counter),
-                           "position" : positions,
+                           "position" : sum(muts_counter, []),
                            "selF" :  np.zeros(len(positions)),
                            "selS" :  np.zeros(len(positions)),
                            "freqInit" :  np.zeros(len(positions))

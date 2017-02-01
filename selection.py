@@ -28,6 +28,7 @@ def selection_fx(dfAdult_mf, dfMuts, dfSel, locus):
      dfAdult_mf : df
           updated with phenotype     
      '''
+     
      for loc in range(1, locus):
           for index, row in dfMuts[dfMuts.locus == loc].iterrows():
                if row["position"].isin[dfSel[dfSel.locus == loc]]:
