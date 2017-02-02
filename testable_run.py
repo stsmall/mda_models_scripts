@@ -3,20 +3,31 @@
 Spyder Editor
 
 """
+import subprocess
+import math
+import random
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+
 import numpy as np
 import pandas as pd
-import math
 from sklearn.metrics import pairwise_distances
-import random
 from scipy.stats import weibull_min
-import subprocess
 
 import wbsims_initialize as wbinit
 import transmission as trans
 from survival import survivalbase_fx
+from village import Village
+
+
+from IPython import embed
+
+
    
  
-def wb_sims(numberGens):
+def wb_sims(numberGens, config_file):
     '''main function for simulations
     Parameters
     ---------
@@ -28,21 +39,31 @@ def wb_sims(numberGens):
          file with options to be read by configparser()
     Returns
     -------
-    
     '''
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    # villages = [Village(hostpopsize = 100, prevalence = 0.1)] 
     #simulation
     numberGens = 1000
     burn_in = 360
+
     #host_demography
-    villages = 2
-    hostpopsize = [100, 200]
-    prevalence = [0.1, 0.3]
-    hostmigrate = 0
+    sh = 'host_demography'
+    villages = config.getint(sh, 'villages')
+    hostpopsize = list(map(int, config.get(sh, 'hostpopsize').split(",")))
+    prevalence = list(map(float, config.get(sh, 'prevalence').split(",")))
+    muWormBurden = list(map(int, config.get(sh, 'muWormBurden').split(",")))
+    sizeWormBurden = list(map(int, config.get(sh, 'sizeWormBurden').split(",")))
+    assert villages == len(hostpopsize)
+
+    # Between village parameters
+    hostmigrate = config.getint(sh, 'hostmigrate')
+    muTrans = config.getint(sh, 'muTrans')
     muTrans = 100
     sizeTrans = 1
-    muWormBurden = [5, 5]
-    sizeWormBurden = [50, 50]
     initial_distance_m = [1000]
+
     #vector
     sigma = 100
     bitesPperson = [10, 10]
@@ -81,34 +102,39 @@ def wb_sims(numberGens):
     mda_sterile = 0.35
     mda_clear = 6
     #output
+    perc_locus = [0.2, 0.5]
+    cds_length = [1000, 2000]
+    intgen_length = 600
+
 
     #set counters
     month = 0
     sim_time = numberGens
     if selection:
-         dfAdult, dfHost, dfMF, dfJuv, dfSel = wbinit.wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, 
-                                  muWormBurden, sizeWormBurden, locus, initial_migration, 
-                                  initial_distance_m, theta, basepairs, mutation_rate, 
-                                  recombination_rate, time2Ancestral, thetaRegional,
-                                  time_join, selection)
-         while month <= sim_time:
-              dfJuv, dfHost = trans.transmission_fx(villages, hostpopsize, sigma, bitesPperson, 
-                                        hours2bite, densityDep, bednets, bnstart,
-                                        bnstop, bncoverage, month, dfMF, dfJuv, dfHost)
-              dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
-                                                   scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
-                                                   fecund, locus, mutation_rate, recombination_rate, 
-                                                   basepairs, selection, dfSel) 
-              month += 1
+        dfAdult, dfHost, dfMF, dfJuv, dfSel = wbinit.wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, 
+                              muWormBurden, sizeWormBurden, locus, initial_migration, 
+                              initial_distance_m, theta, basepairs, mutation_rate, 
+                              recombination_rate, time2Ancestral, thetaRegional,
+                              time_join, selection, perc_locus, cds_length,
+                              intgen_length)
+        embed()
+        for month in range(sim_time):
+            dfJuv, dfHost = trans.transmission_fx(villages, hostpopsize, sigma, bitesPperson, 
+                                    hours2bite, densityDep, bednets, bnstart,
+                                    bnstop, bncoverage, month, dfMF, dfJuv, dfHost)
+            dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
+                                               scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
+                                               fecund, locus, mutation_rate, recombination_rate, 
+                                               basepairs, selection, dfSel) 
 
-         
     else:
          dfAdult, dfHost, dfMF, dfJuv = wbinit.wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, 
                                   muWormBurden, sizeWormBurden, locus, initial_migration, 
                                   initial_distance_m, theta, basepairs, mutation_rate, 
                                   recombination_rate, time2Ancestral, thetaRegional,
-                                  time_join, selection)        
-         while month <= sim_time:
+                                  time_join, selection, perc_locus, cds_length,
+                                  intgen_length)        
+         for month in range(sim_time):
              dfJuv, dfHost = trans.transmission_fx(villages, hostpopsize, sigma, bitesPperson, 
                                              hours2bite, densityDep, bednets, bnstart,
                                              bnstop, bncoverage, month, dfMF, dfJuv, dfHost)
@@ -120,5 +146,5 @@ def wb_sims(numberGens):
 
 if __name__ == '__main__':
      #this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     wb_sims(24)
+     wb_sims(24, 'tests/wbsims.cfg')
  
