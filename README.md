@@ -48,7 +48,7 @@ All options can be set via either config file or command line. The most relevant
 * genetic data: output all or sample as vcf
 
 # Functions tree
-*To Do: i) exon-based selection rather than whole locus, ii) Density dependent fecundity and survival*
+*To Do: i) Density dependent fecundity and survival*
 
 #### wbsims_run.py
 #### wbsims_initialize.py
