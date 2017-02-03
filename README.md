@@ -102,10 +102,13 @@ All options can be set via either config file or command line. The most relevant
   * selection_fx
   * fitness_fx
   
-#### record_data.py
+#### calc_outstats.py
   * record_demo_fx
   * record_popgen_fs
   * gt2scikit_fx
+  
+#### filtercoords.py
+  * filtercoords_fx
         
 # License        
     Filarial worm Genetic Simulations, FiGS
