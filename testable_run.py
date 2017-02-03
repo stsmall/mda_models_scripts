@@ -85,6 +85,7 @@ def wb_sims(numberGens):
     #set counters
     month = 0
     sim_time = numberGens
+    
     if selection:
          dfAdult, dfHost, dfMF, dfJuv, dfSel = wbinit.wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, 
                                   muWormBurden, sizeWormBurden, locus, initial_migration, 
