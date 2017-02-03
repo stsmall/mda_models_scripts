@@ -9,7 +9,6 @@
 import numpy as np
 import pandas as pd
 
-
 def R0net_fx(dfAdult, dfMF, dfJuv):
     '''Calculates the reproductive number, R0, by counting the uniqueness
     of R0net per village and taking the mean counts
@@ -28,7 +27,7 @@ def R0net_fx(dfAdult, dfMF, dfJuv):
     return(R0)
     
     
-def allele_freq_fx(dfAdult, dfSel):
+def allelefreq_fx(dfAdult, dfSel):
     ''' Calculates allele freq for mutations in dfSel by village
     Parameters
     ---------
@@ -41,11 +40,17 @@ def allele_freq_fx(dfAdult, dfSel):
     dfFreq : list, float
         freq of mutations in dfSel for each village
     '''
+    locus = []
+    positions = []
+    freqv1 = []
+    freqv2 = []
+#    freqv3 = []
+#    freqv4 = []
     #list of things to count from dfSel per locus, position
-    positions = dfSel.groupby("locus").position.apply(lambda x: x.values.tolist())
+    pos = dfSel.groupby("locus").position.apply(lambda x: x.values.tolist())
     #counts of each mutation in dfAdult by village for each locus
     #locus = len(positions)
-    for loc in range(1,len(positions)):
+    for loc in range(1,len(pos) + 1):
         hap1 = dfAdult.groupby("village")["locus_" + str(loc) + "_h1"].apply(lambda x: [i for l in 
                        x.values.tolist() for i in l])
         hap2 = dfAdult.groupby("village")["locus_" + str(loc) + "_h2"].apply(lambda x: [i for l in 
@@ -53,10 +58,17 @@ def allele_freq_fx(dfAdult, dfSel):
         #combine counts for same positions in hap1 and hap2 at each locus
         hap3 = hap1 + hap2
         villcounts = dfAdult.groupby("village").size() * 2    
-        #freq
-        dfFreq = pd.DataFrame({"locus" : np.repeat(loc, len(positions[loc])),
-                           "position" : positions[loc],
-                           "freqv1" : [round(hap3[0].count(i) / float(villcounts[0]),2) for i in positions[1]],
-                           "freqv2" : [round(hap3[1].count(i) / float(villcounts[1]),2) for i in positions[1]]
-                           })
+        ##To Do: Generalize to any number of villages, although current limit is 4 and loci
+        locus.extend(np.repeat(loc, len(pos[loc])))
+
+        freqv1.extend([round(hap3[0].count(i) / float(villcounts[0]),2) for i in pos[loc]])
+        freqv2.extend([round(hap3[1].count(i) / float(villcounts[1]),2) for i in pos[loc]])
+        positions.extend(pos[loc])
+        
+    dfFreq = pd.DataFrame({"locus" : np.repeat(range(1,len(pos)+1), [len(i) for i in pos]),
+                       "position" : positions,
+                       "freqv1" : freqv1,
+                       "freqv2" : freqv2
+                       })
+    dfFreq = dfFreq.loc[:, ['locus', 'position', 'freqv1','freqv2']]  
     return(dfFreq) 
