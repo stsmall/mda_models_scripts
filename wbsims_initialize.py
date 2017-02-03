@@ -339,9 +339,9 @@ def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
                             'position' : cds_positions[0],
                             'selF' : selF,
                             'selS' : selS,
-                            'freqInt' : np.zeros(numpos)})     
+                             })     
         dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-             'selS', 'freqInit']]     
+             'selS']]     
     return(dfSel, cds_coordinates)
     
 def fit_fx(locus, dfAdult, dfSel):
@@ -364,23 +364,6 @@ def fit_fx(locus, dfAdult, dfSel):
      freqinit : array
           initial freq of mutations for dfSel
      '''
-#     allele = []
-#     ##freq of positions in dfSel
-#     for loc in range(1, locus):
-#          for index, row in dfAdult.iterrows():
-#               #flatten list and extend
-#               allele.extend(dfSel.loc[dfSel["position"].isin(row.ix
-#                                         ["locus_" + str(loc) + "_h1"])]
-#                                         ['selS'][dfSel["locus"] == loc])
-#               allele.extend(dfSel.loc[dfSel["position"].isin(row.ix
-#                                         ["locus_" + str(loc) + "_h2"])]
-#                                         ['selS'][dfSel["locus"] == loc])
-#     freq = np.unique(allele, return_counts=True)[1] / (len(dfAdult) * 2.0) 
-#     print freq
-#     print len(freq)
-#     print len(dfSel)
-#     print dfSel
-     freq = []
      ##fitness of individual in dfAdult from values in dfSel               
      fitS_ind = []
      fitF_ind = []
@@ -398,7 +381,7 @@ def fit_fx(locus, dfAdult, dfSel):
           fitS.append(round(np.mean(fitS_ind), 5))
           fitF.append(round(np.mean(fitF_ind), 5))  
     
-     return fitS, fitF, freq         
+     return fitS, fitF       
                
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
               initial_migration, initial_distance_m, theta, basepairs, mutation, 
@@ -468,8 +451,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      #create dfSel
      if selection:
           dfSel, cds_coordinates = sel_fx(locus, posSel, basepairs, perc_locus, cds_length, intgen_length)
-          fitS, fitF, freq = fit_fx(locus, dfAdult, dfSel)     
-          dfSel["freqInit"] = freq                   
+          fitS, fitF = fit_fx(locus, dfAdult, dfSel)                      
           dfAdult["fitF"] = fitF
           dfAdult["fitS"] = fitS          
           return(dfAdult, dfSel, cds_coordinates)
