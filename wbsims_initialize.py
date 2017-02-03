@@ -317,10 +317,10 @@ def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
                             'locus' : np.repeat(range(1, locus), numpos),
                             'position' : [item for sub in cds_positions for item in sub],
                             'selF' : selF,
-                            'selS' : selS,
-                            'freqInt' : np.zeros(sum(numpos))})     
+                            'selS' : selS
+                            })     
         dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-             'selS', 'freqInit']]
+             'selS']]
     else: #list only contains a single locus
         numpos = len(cds_positions[0])      
         pos = 0
@@ -361,8 +361,7 @@ def fit_fx(locus, dfAdult, dfSel):
           array filling selF column for fecundity fitness
      fitS : array      
           array filling selS column for survival fitness
-     freqinit : array
-          initial freq of mutations for dfSel
+
      '''
      ##fitness of individual in dfAdult from values in dfSel               
      fitS_ind = []
