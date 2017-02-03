@@ -14,6 +14,7 @@ import subprocess
 import wbsims_initialize as wbinit
 import transmission as trans
 from survival import survivalbase_fx
+from calc_outstats import allelefreq_fx
    
  
 def wb_sims(numberGens):
@@ -31,7 +32,7 @@ def wb_sims(numberGens):
     
     '''
     #simulation
-    numberGens = 1000
+#    numberGens = 1000
     burn_in = 360
     #host_demography
     villages = 2
@@ -66,6 +67,9 @@ def wb_sims(numberGens):
     thetaRegional = 23
     time_join = 240
     selection = False
+    perc_locus = [0, 0.18]
+    cds_length = 1100
+    intgen_length = 2500
     #treatment
     bednets = [False, False]
     bnstart = [0, 0]
@@ -86,40 +90,133 @@ def wb_sims(numberGens):
     month = 0
     sim_time = numberGens
     
+    ##SELECTION
     if selection:
-         dfAdult, dfHost, dfMF, dfJuv, dfSel = wbinit.wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, 
-                                  muWormBurden, sizeWormBurden, locus, initial_migration, 
-                                  initial_distance_m, theta, basepairs, mutation_rate, 
-                                  recombination_rate, time2Ancestral, thetaRegional,
-                                  time_join, selection)
+         dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates = wbinit.wbsims_init(villages, 
+                                                                                   hostpopsize, 
+                                                                                   prevalence, 
+                                                                                   muTrans, 
+                                                                                   sizeTrans, 
+                                                                                   muWormBurden,
+                                                                                   sizeWormBurden, 
+                                                                                   locus, 
+                                                                                   initial_migration, 
+                                                                                   initial_distance_m, 
+                                                                                   theta,
+                                                                                   basepairs, 
+                                                                                   mutation_rate, 
+                                                                                   recombination_rate, 
+                                                                                   time2Ancestral, 
+                                                                                   thetaRegional,
+                                                                                   time_join, 
+                                                                                   selection, 
+                                                                                   perc_locus, 
+                                                                                   cds_length, 
+                                                                                   intgen_length)
          while month <= sim_time:
-              dfJuv, dfHost = trans.transmission_fx(villages, hostpopsize, sigma, bitesPperson, 
-                                        hours2bite, densityDep, bednets, bnstart,
-                                        bnstop, bncoverage, month, dfMF, dfJuv, dfHost)
-              dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
-                                                   scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
-                                                   fecund, locus, mutation_rate, recombination_rate, 
-                                                   basepairs, selection, dfSel) 
+              dfJuv, dfHost = trans.transmission_fx(villages, 
+                                                    hostpopsize, 
+                                                    sigma, 
+                                                    bitesPperson, 
+                                                    hours2bite, 
+                                                    densityDep, 
+                                                    bednets, 
+                                                    bnstart,
+                                                    bnstop, 
+                                                    bncoverage, 
+                                                    month, 
+                                                    dfMF, 
+                                                    dfJuv, 
+                                                    dfHost)
+              dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, 
+                                                                    surv_Juv, 
+                                                                    shapeMF, 
+                                                                    scaleMF, 
+                                                                    shapeAdult,
+                                                                    scaleAdult, 
+                                                                    dfMF, 
+                                                                    dfAdult, 
+                                                                    dfJuv, 
+                                                                    dfHost,
+                                                                    fecund, 
+                                                                    locus, 
+                                                                    mutation_rate, 
+                                                                    recombination_rate, 
+                                                                    basepairs, 
+                                                                    selection, 
+                                                                    dfSel) 
               month += 1
+              if month > burn_in:
+                  allelefreq_fx(dfAdult, dfSel)
+                  dfAdult.groupby("village").describe()
+                  dfJuv.groupby("village").describe()
+                  dfMF.groupby("village").describe()
+                  dfHost.groupby("village").describe()
 
-         
+    ##NOT SELECTION     
     else:
-         dfAdult, dfHost, dfMF, dfJuv = wbinit.wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, 
-                                  muWormBurden, sizeWormBurden, locus, initial_migration, 
-                                  initial_distance_m, theta, basepairs, mutation_rate, 
-                                  recombination_rate, time2Ancestral, thetaRegional,
-                                  time_join, selection)        
+         dfAdult, dfHost, dfMF, dfJuv = wbinit.wbsims_init(villages, 
+                                                           hostpopsize, 
+                                                           prevalence, 
+                                                           muTrans, 
+                                                           sizeTrans, 
+                                                           muWormBurden, 
+                                                           sizeWormBurden, 
+                                                           locus, 
+                                                           initial_migration, 
+                                                           initial_distance_m, 
+                                                           theta, 
+                                                           basepairs, 
+                                                           mutation_rate, 
+                                                           recombination_rate, 
+                                                           time2Ancestral, 
+                                                           thetaRegional,
+                                                           time_join, 
+                                                           selection, 
+                                                           perc_locus, 
+                                                           cds_length, 
+                                                           intgen_length)        
          while month <= sim_time:
-             dfJuv, dfHost = trans.transmission_fx(villages, hostpopsize, sigma, bitesPperson, 
-                                             hours2bite, densityDep, bednets, bnstart,
-                                             bnstop, bncoverage, month, dfMF, dfJuv, dfHost)
-             dfAdult, dfJuv, dfMF, dfHost = survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
-                                                        scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
-                                                        fecund, locus, mutation_rate, recombination_rate, 
-                                                        basepairs, selection, hostmigrate) 
+             dfJuv, dfHost = trans.transmission_fx(villages, 
+                                                   hostpopsize, 
+                                                   sigma, 
+                                                   bitesPperson, 
+                                                   hours2bite, 
+                                                   densityDep, 
+                                                   bednets, 
+                                                   bnstart,
+                                                   bnstop, 
+                                                   bncoverage, 
+                                                   month, 
+                                                   dfMF, 
+                                                   dfJuv, 
+                                                   dfHost)
+             dfAdult, dfJuv, dfMF, dfHost = survivalbase_fx(month, 
+                                                            surv_Juv, 
+                                                            shapeMF, 
+                                                            scaleMF, 
+                                                            shapeAdult,
+                                                            scaleAdult, 
+                                                            dfMF, 
+                                                            dfAdult, 
+                                                            dfJuv, 
+                                                            dfHost,
+                                                            fecund, 
+                                                            locus, 
+                                                            mutation_rate, 
+                                                            recombination_rate, 
+                                                            basepairs, 
+                                                            selection, 
+                                                            hostmigrate) 
              month += 1
+             if month > burn_in:
+                 dfAdult.groupby("village").describe()
+                 dfJuv.groupby("village").describe()
+                 dfMF.groupby("village").describe()
+                 dfHost.groupby("village").describe()
+                 
 
 if __name__ == '__main__':
      #this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     wb_sims(24)
+     wb_sims(1000)
  
