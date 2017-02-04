@@ -8,17 +8,17 @@
 """
 import numpy as np
 def agehost_fx(sex):
-    '''calculate age of host and age of death
+    '''Calculate age of host and age of death from acturial table
     Parameters
     ---------
-    sex: str
+    sex : str
          male or female
 
     Returns
     ------
-    age: int
+    age : int
          age of host
-    death: int
+    death : int
          age of death
     '''
     zero_10 = 0.24 #12%
@@ -49,7 +49,7 @@ def agehost_fx(sex):
     
     #dictionary from actuarial tables 
     deathdict = {}
-    with open("act.tbl",'r') as tbl:
+    with open("/home/scott/act.tbl",'r') as tbl:
          for line in tbl:
               line = line.strip()
               deathdict["{}".format(line.split()[0])] = list(map(float,
@@ -58,4 +58,4 @@ def agehost_fx(sex):
     #when do they die
     death = deathdict[str(age)][int(sex)] + np.random.normal(0,6) + age
          
-    return age, round(death)
+    return(age, round(death))
