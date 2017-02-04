@@ -39,22 +39,12 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     coordinates = []
     host_idx = []
     for vill in range(villages):
-<<<<<<< HEAD
-        # list of host positions
-        coordinates.extend(np.random.negative_binomial(sizeTrans, sizeTrans
-                                                       / float((sizeTrans + muTrans)), (infhost[vill],
-                                                                                        2)))
-        for host in range(infhost[vill]):
-            host_idx.append("v" + str(vill) + "h" + str(host + 1))
-
-=======
          #list of host positions
          coordinates.extend(np.random.negative_binomial(sizeTrans, sizeTrans
                              / float((sizeTrans+muTrans)), (infhost[vill],
                                                            2)))
          for host in range(infhost[vill]):
              host_idx.append("v" + str(vill) + "h" + str(host + 1))
->>>>>>> 57571acd4194c8604703d0635aad0608c65d176f
     sex = [random.choice("01") for i in range(sum(infhost))]
     age_death = [agehost_fx(i) for i in sex]
 
@@ -69,20 +59,12 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
         'MDA_cum': np.zeros(sum(infhost))
     })
     dfHost = dfHost.loc[:, ['village', 'hostidx', 'sex',
-<<<<<<< HEAD
-                            'age', 'agedeath', 'coordinates', 'MDA', 'MDA_cum']]
-
-    return dfHost
-
-
-def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, theta,
-                       basepairs, mutation):
-=======
             'age', 'agedeath', 'coordinates', 'MDA', 'MDA_cum']]
     return(dfHost)    
+
+
 def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
                      basepairs, mutation_rate):
->>>>>>> 57571acd4194c8604703d0635aad0608c65d176f
     '''Creates a string that represents a migration matrix between
     metapopulations. Migration here is a stepping stone not island model
 
@@ -92,25 +74,9 @@ def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
 
     Parameters
     ----------
-<<<<<<< HEAD
-    villages : int
-        number of villages/metapopulations
-    initial_migration : float
-        migration for ms/scrm as the fraction of subpopulation i
-        which is made up of migrants from subpopulation j each generation
-    initial_distance_m : (list,float)
-        distance between villages in meters
-    theta : float, list
-        theta values per village for locus
-    basepairs : int
-         length of locus
-    mutation : float
-         mutation rate of locus
-
-=======
     thetaN0 : float
          theta from the first village of the locus
->>>>>>> 57571acd4194c8604703d0635aad0608c65d176f
+
     Returns
     -------
     Migration matrix : string

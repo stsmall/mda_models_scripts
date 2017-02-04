@@ -19,16 +19,11 @@ from scipy.stats import weibull_min
 import wbsims_initialize as wbinit
 import transmission as trans
 from survival import survivalbase_fx
-<<<<<<< HEAD
 from village import Village
 
 
 from IPython import embed
-
-
-=======
 from calc_outstats import allelefreq_fx
->>>>>>> 57571acd4194c8604703d0635aad0608c65d176f
    
  
 def wb_sims(numberGens, config_file):
