@@ -22,7 +22,6 @@ from survival import survivalbase_fx
 from village import Village
 
 
-from IPython import embed
 from calc_outstats import allelefreq_fx
    
  
@@ -59,23 +58,27 @@ def wb_sims(numberGens, config_file):
     # Between village parameters
     hostmigrate = config.getint(sh, 'hostmigrate')
     muTrans = config.getint(sh, 'muTrans')
-    muTrans = 100
-    sizeTrans = 1
-    initial_distance_m = [1000]
+    sizeTrans = config.getint(sh, 'sizeTrans')
+    initial_distance_m = list(map(int, config.get(sh, 'initial_distance_m').split(",")))
+    print(initial_distance_m)
+    assert len(initial_distance_m)+1 == villages
 
     #vector
-    sigma = 100
+    sh = 'vector'
+    sigma = config.getint(sh, 'sigma')
     bitesPperson = [10, 10]
     hours2bite = [8, 8]
     densityDep = [True, True]  
     #parasite
-    fecund = 20
-    surv_Juv = 0.866
+    sh = 'parasite'
+    fecund = config.getint(sh, 'fecund')
+    surv_Juv = config.getfloat(sh, 'surv_Juv')
     shapeMF = 3.3
     scaleMF = 10
     shapeAdult = 3.8
     scaleAdult = 8
     #genetic
+    sh = 'genetic'
     locus = 2
     initial_migration = 0.0001
     theta = [[5, 5], [10, 10]]
@@ -85,11 +88,12 @@ def wb_sims(numberGens, config_file):
     time2Ancestral = 1800
     thetaRegional = 23
     time_join = 240
-    selection = False
+    selection = True
     perc_locus = [0, 0.18]
     cds_length = 1100
     intgen_length = 2500
     #treatment
+    sh = 'treatment'
     bednets = [False, False]
     bnstart = [0, 0]
     bnstop = [0, 0]
@@ -115,29 +119,32 @@ def wb_sims(numberGens, config_file):
     
     ##SELECTION
     if selection:
-         dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates = wbinit.wbsims_init(villages, 
-                                                                                   hostpopsize, 
-                                                                                   prevalence, 
-                                                                                   muTrans, 
-                                                                                   sizeTrans, 
-                                                                                   muWormBurden,
-                                                                                   sizeWormBurden, 
-                                                                                   locus, 
-                                                                                   initial_migration, 
-                                                                                   initial_distance_m, 
-                                                                                   theta,
-                                                                                   basepairs, 
-                                                                                   mutation_rate, 
-                                                                                   recombination_rate, 
-                                                                                   time2Ancestral, 
-                                                                                   thetaRegional,
-                                                                                   time_join, 
-                                                                                   selection, 
-                                                                                   perc_locus, 
-                                                                                   cds_length, 
-                                                                                   intgen_length)
-         for month in range(sim_time):
-              dfJuv, dfHost = trans.transmission_fx(villages, 
+        dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates =\
+                 wbinit.wbsims_init(villages, 
+                                   hostpopsize, 
+                                   prevalence, 
+                                   muTrans, 
+                                   sizeTrans, 
+                                   muWormBurden,
+                                   sizeWormBurden, 
+                                   locus, 
+                                   initial_migration, 
+                                   initial_distance_m, 
+                                   theta,
+                                   basepairs, 
+                                   mutation_rate, 
+                                   recombination_rate, 
+                                   time2Ancestral, 
+                                   thetaRegional,
+                                   time_join, 
+                                   selection, 
+                                   perc_locus, 
+                                   cds_length, 
+                                   intgen_length)
+        from IPython import embed
+        embed()
+        for month in range(sim_time):
+             dfJuv, dfHost = trans.transmission_fx(villages, 
                                                     hostpopsize, 
                                                     sigma, 
                                                     bitesPperson, 
@@ -151,7 +158,7 @@ def wb_sims(numberGens, config_file):
                                                     dfMF, 
                                                     dfJuv, 
                                                     dfHost)
-              dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, 
+             dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month, 
                                                                     surv_Juv, 
                                                                     shapeMF, 
                                                                     scaleMF, 
@@ -168,7 +175,7 @@ def wb_sims(numberGens, config_file):
                                                                     basepairs, 
                                                                     selection, 
                                                                     dfSel) 
-              if month > burn_in:
+             if month > burn_in:
                   allelefreq_fx(dfAdult, dfSel)
                   dfAdult.groupby("village").describe()
                   dfJuv.groupby("village").describe()

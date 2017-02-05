@@ -30,7 +30,7 @@ class Village(object):
     """
 
     def __init__(self, hostpopsize = 100,
-            pervalence = 0.1):
+            prevalence = 0.1):
         """
         """
         self.hostpopsize = 100

@@ -8,6 +8,11 @@
 """
 import numpy as np
 import pandas as pd
+from collections import Counter
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def R0net_fx(dfAdult, dfMF, dfJuv):
     '''Calculates the reproductive number, R0, by counting the uniqueness

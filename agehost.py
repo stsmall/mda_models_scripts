@@ -7,6 +7,7 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
+
 def agehost_fx(sex):
     '''Calculate age of host and age of death from acturial table
     Parameters
@@ -49,7 +50,7 @@ def agehost_fx(sex):
     
     #dictionary from actuarial tables 
     deathdict = {}
-    with open("/home/scott/act.tbl",'r') as tbl:
+    with open("./act.tbl",'r') as tbl:
          for line in tbl:
               line = line.strip()
               deathdict["{}".format(line.split()[0])] = list(map(float,
