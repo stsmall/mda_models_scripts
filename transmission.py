@@ -187,8 +187,6 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite,
     '''
     print("transmission")
     dispersal = 2 * sigma
-    from IPython import embed
-    embed()
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(hostpopsize[vill])
