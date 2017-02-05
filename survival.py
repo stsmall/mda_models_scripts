@@ -52,6 +52,8 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
         dfAdult.age = dfAdult.age + 1 #2 - 21
         
         ##host survival is from act table
+        from IPython import embed
+        embed()
         dfHost = dfHost[dfHost.age < dfHost.agedeath]
         #remove all worms with dead host.hostidx from all dataframes
         dfAdult = dfAdult.loc[dfAdult["hostidx"].isin(dfHost.hostidx)]

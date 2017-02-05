@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 import random
 from agehost import agehost_fx
-from filtercoords import filtercoords_fx   
+from filtercoords import filtercoords_fx
+
 
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -45,21 +46,23 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
          for host in range(infhost[vill]):
              host_idx.append("v" + str(vill) + "h" + str(host + 1))
     sex = [random.choice("01") for i in range(sum(infhost))]
-    age_death  = [agehost_fx(i) for i in sex]
+    age_death = [agehost_fx(i) for i in sex]
 
     dfHost = pd.DataFrame({
-                      'village' : np.repeat(range(villages), infhost),
-                      'hostidx' : host_idx,
-                      'sex' : sex,
-                      'age' : [i[0] for i in age_death],
-                      'agedeath' : [i[1] for i in age_death],
-                      'coordinates' : coordinates,
-                      'MDA' : np.zeros(sum(infhost)),
-                      'MDA_cum' : np.zeros(sum(infhost))                
-                      })
+        'village': np.repeat(range(villages), infhost),
+        'hostidx': host_idx,
+        'sex': sex,
+        'age': [i[0] for i in age_death],
+        'agedeath': [i[1] for i in age_death],
+        'coordinates': coordinates,
+        'MDA': np.zeros(sum(infhost)),
+        'MDA_cum': np.zeros(sum(infhost))
+    })
     dfHost = dfHost.loc[:, ['village', 'hostidx', 'sex',
             'age', 'agedeath', 'coordinates', 'MDA', 'MDA_cum']]
     return(dfHost)    
+
+
 def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
                      basepairs, mutation_rate):
     '''Creates a string that represents a migration matrix between
@@ -73,6 +76,7 @@ def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
     ----------
     thetaN0 : float
          theta from the first village of the locus
+
     Returns
     -------
     Migration matrix : string
@@ -118,7 +122,7 @@ def parse_coalsims_fx(msout, ploidy):
          stdout from scrm
     ploidy : int
          ploidy of the current locus
-         
+
     Returns
     ------
     gt_array
@@ -129,16 +133,21 @@ def parse_coalsims_fx(msout, ploidy):
     for line in iter(msout.stdout.readline, ''):
         line = line.decode('utf-8')
         if line.startswith("positions"):
-            ##collisions can result here when theta is high
-            pos = np.round(np.array(line.strip().split()[1:], dtype=np.float64))
+            # collisions can result here when theta is high
+            pos = np.round(
+                np.array(
+                    line.strip().split()[
+                        1:],
+                    dtype=np.float64))
             prev = 0
             for idx, item in enumerate(pos, start=0):
                 while prev >= item:
-                     item += 1
+                    item += 1
                 pos[idx] = item
-                prev = pos[idx]  
+                prev = pos[idx]
             break
-        else: pass 
+        else:
+            pass
     #:TODO convert to read directly from memory into arrays
     if ploidy == 1:
         gt_array = []
@@ -162,7 +171,7 @@ def parse_coalsims_fx(msout, ploidy):
             hap = np.array(list(line.strip()), dtype=int)
             try:
                 gt = hap * pos
-                gt_array.append(gt[gt != 0])                     
+                gt_array.append(gt[gt != 0])
                 hap2_temp = next(iter(msout.stdout.readline, ''))
                 hap2 = np.array(list(hap2_temp.strip()), dtype=int)
                 gt2 = hap2 * pos
@@ -171,7 +180,7 @@ def parse_coalsims_fx(msout, ploidy):
                 break
         return(gt_array, gt_array2, pos)
 
-                   
+
 def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
         theta, basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
         time_join):
@@ -186,6 +195,25 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     ----------
     worm_popsize: (list, int)
         how many worms to simulate
+    villages: int
+        number of villages/metapopulations
+    theta: (list,float)
+        list of theta values for each locus. With more than 1 village
+        it is list of lists [[locus1_meta1,locus1_meta2],
+        [locus2_meta1,locus2_meta2]]
+    basepairs:(list,int)
+        list of basepairs (lengths) for each locus
+    mutation: (list,float)
+        mutation rate for each locus as probability per base per generation
+    recombination:(list,float)
+        recombination rate for each locus as probability per base
+        per generation
+    thetaRegional: float
+        theta for regional pops to the ratio of N0 e.g.,23 times larger
+    time2Ancestral: int
+        time in generations to the ancestral population
+    time_join: int
+        time in generations for joining/splitting villages
 
     Returns
     -------
@@ -196,7 +224,7 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     mutations : array      
          array of mutation positions
     '''
-    #theta for first village
+    # theta for first village
     thetaN0 = theta[0]
     #recombination rate for locus
     rho = thetaN0 * (recombination_rate / mutation_rate)    
@@ -207,29 +235,29 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     tjoin = basepairs * (time_join / (thetaN0 / mutation_rate))
     #check ploidy for total haplotypes
     if rho == 0:
-         ploidy = 1
+        ploidy = 1
     else:
-         worm_popsize = [x * 2 for x in worm_popsize]
-         ploidy = 2
-    #parameters for ms or scrm
+        worm_popsize = [x * 2 for x in worm_popsize]
+        ploidy = 2
+    # parameters for ms or scrm
     ms_params = {
-            'nhaps': sum(worm_popsize),
-            'theta': thetaN0,
-            'rho': rho,
-            'basepair': basepairs - 1,
-            'exp_growth': (-1 / tA) * math.log(thetaRegional),
-            'time_growth': tA,
-            'sig_digits': 12,
-        }
-     
-    #order matters for the command call
+        'nhaps': sum(worm_popsize),
+        'theta': thetaN0,
+        'rho': rho,
+        'basepair': basepairs - 1,
+        'exp_growth': (-1 / tA) * math.log(thetaRegional),
+        'time_growth': tA,
+        'sig_digits': 12,
+    }
+
+    # order matters for the command call
     if villages == 1:
         scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
-                 "-G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
-                 " {sig_digits} ")
+                     "-G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
+                     " {sig_digits} ")
         mscmd = scrm_base.format(**ms_params)
     else:  # ms setup for >1 villages
-        num_subpops = len(worm_popsize)  # -I num_pops        
+        num_subpops = len(worm_popsize)  # -I num_pops
         sub_pop = " ".join(map(str, worm_popsize))  # -I X i j ...
         mm = coalsims_migmat_fx(
            villages,
@@ -239,44 +267,46 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
            basepairs,
            mutation_rate)
         if villages == 2:
-                 scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
-                     "{sub_pop} {present_pop} {join} -G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
-                     " {sig_digits} ")
-                 ms_params['present_pop'] = '-n 1 1 -n 2 {}'.format(float(theta[1])/thetaN0)
-                 ms_params['sub_pop'] = '-I {} {} {}'.format(num_subpops, sub_pop, mm)
-                 ms_params['join'] = '-ej {} 1 2'.format(tjoin)
-                 mscmd = scrm_base.format(**ms_params)
-        else:     
-                 scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
-                     "{sub_pop} {present_pop} {ma} {join} -G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
-                     " {sig_digits} ")
-                 ms_params['sub_pop'] = '-I {} {}'.format(num_subpops, sub_pop)
-                 ms_params['ma'] = '-ma {} '.format(mm)
-                 joinstr = ''
-                 subpopstr = ''
-                 
-                 for village_ix in range(villages):
-                    present_pop = float(theta[village_ix])/thetaN0
-                    subpopstr += '-n {} {} '.format(village_ix + 1, present_pop)
-                    if village_ix != villages -1:
-                         joinstr += '-ej {0} {1} {2} '.format(
-                             tjoin,
-                             village_ix + 1,
-                             village_ix + 2)
-                 ms_params['present_pop'] = subpopstr
-                 ms_params['join'] = joinstr
-                 mscmd = scrm_base.format(**ms_params)     
+            scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
+                         "{sub_pop} {present_pop} {join} -G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
+                         " {sig_digits} ")
+            ms_params[
+                'present_pop'] = '-n 1 1 -n 2 {}'.format(float(theta[1]) / thetaN0)
+            ms_params[
+                'sub_pop'] = '-I {} {} {}'.format(num_subpops, sub_pop, mm)
+            ms_params['join'] = '-ej {} 1 2'.format(tjoin)
+            mscmd = scrm_base.format(**ms_params)
+        else:
+            scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
+                         "{sub_pop} {present_pop} {ma} {join} -G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
+                         " {sig_digits} ")
+            ms_params['sub_pop'] = '-I {} {}'.format(num_subpops, sub_pop)
+            ms_params['ma'] = '-ma {} '.format(mm)
+            joinstr = ''
+            subpopstr = ''
+
+            for village_ix in range(villages):
+                present_pop = float(theta[village_ix]) / thetaN0
+                subpopstr += '-n {} {} '.format(village_ix + 1, present_pop)
+                if village_ix != villages - 1:
+                    joinstr += '-ej {0} {1} {2} '.format(
+                        tjoin,
+                        village_ix + 1,
+                        village_ix + 2)
+            ms_params['present_pop'] = subpopstr
+            ms_params['join'] = joinstr
+            mscmd = scrm_base.format(**ms_params)
     print(mscmd)
-    msout = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)          
+    msout = subprocess.Popen(mscmd, shell=True, stdout=subprocess.PIPE)
     #msout = subprocess.check_output(mscmd.split(" ")).decode('utf-8')
     #:TODO refactor this, less variation on returns
     if ploidy == 1:
-         gt, mutations = parse_coalsims_fx(msout, ploidy)    
-         return gt, mutations
+        gt, mutations = parse_coalsims_fx(msout, ploidy)
+        return gt, mutations
     elif ploidy == 2:
-         gt, gt2, mutations = parse_coalsims_fx(msout, ploidy)
-         return gt, gt2, mutations
-         
+        gt, gt2, mutations = parse_coalsims_fx(msout, ploidy)
+        return gt, gt2, mutations
+
 
 def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
     '''Initializes the distribution of fitness effects for each mutation
@@ -343,7 +373,8 @@ def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
         dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
              'selS']]     
     return(dfSel, cds_coordinates)
-    
+
+
 def fit_fx(locus, dfAdult, dfSel):
      ''' Calculates mean fitness for each individual by summing fitness effects
      from dfSel for each position across all loci
@@ -383,8 +414,8 @@ def fit_fx(locus, dfAdult, dfSel):
      return fitS, fitF       
                
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
-              initial_migration, initial_distance_m, theta, basepairs, mutation, 
-              recombination, time2Ancestral, thetaRegional, time_join, selection, 
+              initial_migration, initial_distance_m, theta, basepairs, mutation,
+              recombination, time2Ancestral, thetaRegional, time_join, selection,
               perc_locus, cds_length, intgen_length):
      '''Function to generate df and coalescent histories
      Parameters
@@ -563,8 +594,8 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
                      basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                      time_join, selection, perc_locus, cds_length, intgen_length)
      
-     dfJuv = pd.DataFrame({})
-     dfMF = pd.DataFrame({})
+     dfJuv = pd.DataFrame({}, columns = dfAdult.columns)
+     dfMF = pd.DataFrame({}, columns = dfAdult.columns)
      
      if selection:
           return(dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates)  
@@ -572,7 +603,10 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
           return(dfAdult, dfHost, dfJuv, dfMF)
 
 ##3 loci, 2 villages, with selection
-#dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates=wbinit.wbsims_init(2, [100, 200], 
-#[0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]], 
-#[13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240, 
-#True, [0, 0.18, 0.20], 1100, 2500)
+if __name__ == '__main__':
+    dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates=wbsims_init(2, [100, 200], 
+    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]], 
+    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240, 
+    True, [0, 0.18, 0.20], 1100, 2500)
+    from IPython import embed
+    embed()

@@ -8,14 +8,21 @@
 """
 import numpy as np
 import pandas as pd
+from collections import Counter
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def R0net_fx(dfAdult, dfMF, dfJuv):
     '''Calculates the reproductive number, R0, by counting the uniqueness
     of R0net per village and taking the mean counts
+
     Parameters
     ----------
     dfJuv : df
         dataframe of juvenilles age 13
+
     Returns
     --------
     R0 : float, list
@@ -29,12 +36,14 @@ def R0net_fx(dfAdult, dfMF, dfJuv):
     
 def allelefreq_fx(dfAdult, dfSel):
     ''' Calculates allele freq for mutations in dfSel by village
+
     Parameters
     ---------
     dfAdult : df
         data frame of adult worms
     dfSel : df
         data frame of mutation positions at each locus
+
     Returns
     -------
     dfFreq : list, float
