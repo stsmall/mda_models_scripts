@@ -42,9 +42,10 @@ def wb_sims(numberGens, config_file):
     config.read(config_file)
 
     # villages = [Village(hostpopsize = 100, prevalence = 0.1)]
+
     # simulation
-#    numberGens = 1000
-    burn_in = 360
+    sh = "simulation"
+    burn_in = config.getint(sh, "burn_in")
 
     # host_demography
     sh = 'host_demography'
@@ -55,65 +56,86 @@ def wb_sims(numberGens, config_file):
     sizeWormBurden = list(
         map(int, config.get(sh, 'sizeWormBurden').split(",")))
     assert villages == len(hostpopsize)
-
-    # Between village parameters
-    hostmigrate = config.getint(sh, 'hostmigrate')
     muTrans = config.getint(sh, 'muTrans')
     sizeTrans = config.getint(sh, 'sizeTrans')
+
+    # host_demography - between village parameters
+    hostmigrate = config.getfloat(sh, 'hostmigrate')
     initial_distance_m = list(
         map(int, config.get(sh, 'initial_distance_m').split(",")))
     print(initial_distance_m)
-    assert len(initial_distance_m) + 1 == villages
+    assert len(initial_distance_m) == (villages * (villages - 1)) / 2
 
     # vector
     sh = 'vector'
-    sigma = config.getint(sh, 'sigma')
-    bitesPperson = [10, 10]
-    hours2bite = [8, 8]
-    densityDep = [True, True]
+    sigma = config.getfloat(sh, 'sigma')
+    bitesPperson = list(map(int, config.get(sh, 'bitesPperson').split(",")))
+    hours2bite = list(map(int, config.get(sh, 'hours2bite').split(",")))
+    densitydep_uptake = config.getboolean(sh, "densitydep_uptake")
+
     # parasite
     sh = 'parasite'
     fecund = config.getint(sh, 'fecund')
     surv_Juv = config.getfloat(sh, 'surv_Juv')
-    shapeMF = 3.3
-    scaleMF = 10
-    shapeAdult = 3.8
-    scaleAdult = 8
+    shapeMF = config.getfloat(sh, 'shapeMF')
+    scaleMF = config.getfloat(sh, 'scaleMF')
+    shapeAdult = config.getfloat(sh, 'shapeAdult')
+    scaleAdult = config.getfloat(sh, 'scaleAdult')
+    densitydep_surv = config.getboolean(sh, 'densitydep_surv') 
+    densitydep_fec = config.getboolean(sh, 'densitydep_fec')
+ 
     # genetic
     sh = 'genetic'
-    locus = 2
-    initial_migration = 0.0001
-    theta = [[5, 5], [10, 10]]
-    basepairs = [13000, 200000]
-    mutation_rate = [7.6E-8, 2.9E-9]
-    recombination_rate = [0, 2.9E-9]
-    time2Ancestral = 1800
-    thetaRegional = 23
-    time_join = 240
-    selection = False
-    perc_locus = [0, 0.18]
-    cds_length = 1100
-    intgen_length = 2500
+    locus = config.getint(sh, 'locus')
+    initial_migration = config.getfloat(sh, 'initial_migration')
+    theta = [list(map(int,i.split(","))) for i in config.get(sh, 'theta').split()]
+    basepairs = list(map(int, config.get(sh, 'basepairs').split(",")))
+    mutation_rate = list(map(float, config.get(sh, 'mutation_rate').split(",")))
+    recombination_rate = list(map(float, config.get(sh, 'recombination_rate').split(",")))
+    time2Ancestral = config.getint(sh, 'time2Ancestral')
+    thetaRegional = config.getfloat(sh, 'thetaRegional')
+    time_join = config.getint(sh, 'time_join')
+    selection = config.getboolean(sh, 'selection')
+    perc_locus = list(map(float, config.get(sh, 'perc_locus').split(",")))
+    cds_length = config.getint(sh, 'cds_length')
+    intgen_length = config.getint(sh, 'intgen_length')
+    
     # treatment
     sh = 'treatment'
-    bednets = [False, False]
-    bnstart = [0, 0]
-    bnstop = [0, 0]
-    bncoverage = [0, 0]
-    mda = [False, False]
-    mda_start = [12, 12]
-    mda_num = [6, 6]  # how many mdas
-    mda_freq = 12  # every 12 months
-    mda_coverage = [0.8, 0.7]
-    mda_macro = 0.05
-    mda_micro = 0.95
-    mda_sterile = 0.35
-    mda_clear = 6
-    # output
-    perc_locus = [0.2, 0.5]
-    cds_length = [1000, 2000]
-    intgen_length = 600
+    bednets = config.getboolean(sh, 'bednets')
+    bnstart = list(map(int, config.get(sh, 'bnstart').split(",")))
+    bnstop = list(map(int, config.get(sh, 'bnstop').split(",")))
+    bncoverage = list(map(float, config.get(sh, 'bncoverage').split(",")))
+    mda = config.getboolean(sh, 'mda')
+    mda_start = list(map(int, config.get(sh, 'mda_start').split(",")))
+    mda_num = list(map(int, config.get(sh, 'mda_num').split(",")))
+    mda_freq = config.getint(sh, 'mda_freq')
+    mda_coverage = list(map(int, config.get(sh, 'mda_coverage').split(",")))
+    mda_macro = config.getfloat(sh, 'mda_macro')
+    mda_micro = config.getfloat(sh, 'mda_micro')
+    mda_sterile = config.getfloat(sh, 'mda_sterile')
+    mda_clear = config.getint(sh, 'mda_clear')
 
+    # outfiles
+    sh = 'outfiles'
+    demofigs=config.getboolean(sh, 'demofigs')
+    demotables=config.getboolean(sh, 'demotables')    
+    demoTime==config.getint(sh, 'demoTime')    
+    sample_size=config.getfloat(sh, 'sample_size')    
+    window_length=config.getint(sh, 'window_length')    
+    num_windows=config.getint(sh, 'num_windows')
+    popgenfigs=config.getboolean(sh, 'popgenfigs')
+    popgentables=config.getboolean(sh, 'popgentables') 
+    popgenTime=config.getint(sh, 'popgenTime')    
+    wb2vcf=config.getboolean(sh, 'wb2vcf')    
+    wbmfvcf=config.getboolean(sh, 'wbmfvcf')
+    wbadultvcf=config.getboolean(sh, 'wbadultvcf')
+    wbjuvvcf=config.getboolean(sh, 'wbjuvvcf')    
+    wbfracvcf=config.getfloat(sh, 'wbfracvcf')
+    wb2scikit=config.getboolean(sh, 'wb2scikit')    
+    wbdebug=config.getboolean(sh, 'wbdebug')
+    
+    
     # set counters
     month = 0
     sim_time = numberGens
