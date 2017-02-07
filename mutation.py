@@ -7,14 +7,12 @@ Created on Thu Jan 12 17:59:27 2017
 """
 import numpy as np
 import random
-import pandas as pd
 
 def mutation_fx(locus,
                 dfAdult_mf,
                 mutation_rate,
                 recombination_rate,
-                basepairs,
-                cds_coordinates):
+                basepairs):
     '''calculates number of mutations, changes haplotypes
 
     Parameters
@@ -40,7 +38,6 @@ def mutation_fx(locus,
          list of positions of new mutations
     '''
     positions = []
-    muts_counter = []
     for loc in range(locus):
          if recombination_rate[loc] == 0:
               num_muts = np.random.binomial(len(dfAdult_mf), basepairs[loc] * mutation_rate[loc])
@@ -59,28 +56,19 @@ def mutation_fx(locus,
               num_muts = np.random.binomial(2 * len(dfAdult_mf), basepairs[loc] * mutation_rate[loc])
               #print num_muts
               muts = 0
+              mutpos = []
               if num_muts != 0:
                    while muts < num_muts:
                         randmf = np.random.randint(0,len(dfAdult_mf))
                         newsite = np.random.randint(1,basepairs[loc])
-                        positions.append(newsite)
+                        mutpos.append(newsite)
                         randhap = random.choice("12")
                         newhap = np.append(dfAdult_mf.iloc[randmf]["locus_" + str(loc) + "_h" + randhap], newsite)
                         dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + randhap, newhap.sort())
                         muts += 1
+              positions.append(mutpos)
 
-                   cds_positions = []
-                   for start, end in cds_coordinates[loc - 1]:
-                        cds_positions.extend(positions[np.where(np.logical_and(positions >= start,
-                                            positions <= end))])
-                   muts_counter.append(cds_positions)
-    dfMuts = pd.DataFrame({
-                           "locus" : np.repeat(range(1, locus), muts_counter),
-                           "position" : sum(muts_counter, []),
-                           "selF" :  np.zeros(len(positions)),
-                           "selS" :  np.zeros(len(positions)),
-                           })
-    return dfAdult_mf, dfMuts
+    return dfAdult_mf, positions
 
 
 
