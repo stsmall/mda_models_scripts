@@ -178,6 +178,7 @@ def wb_sims(numberGens, config_file):
 
     ## after intialize run main loop
     for month in range(1,sim_time):
+        print(month)
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
                                                             villages,
                                                             hostpopsize,
