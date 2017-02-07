@@ -70,7 +70,7 @@ def recombination_fx(locus,
                                             hap1_co = np.where(h1m > crossover_pos)[0][-1]
                                             hap2_co = np.where(h2m > crossover_pos)[0][-1]
                                        except IndexError:
-                                            break
+                                            continue
                                        h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:]
                                        h2m_new = h2m[0:hap2_co + 1] + h1m[hap1_co:]
                                        h1m = h1m_new
@@ -83,7 +83,7 @@ def recombination_fx(locus,
                                             hap1_co = np.where(h1f> crossover_pos)[0][-1]
                                             hap2_co = np.where(h2f > crossover_pos)[0][-1]
                                        except IndexError:
-                                            break
+                                            continue
                                        h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:]
                                        h2f_new = h2f[0:hap2_co + 1] + h1f[hap1_co:]
                                        h1f = h1f_new
