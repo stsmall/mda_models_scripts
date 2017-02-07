@@ -596,7 +596,14 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
                      locus, initial_migration, initial_distance_m, theta,
                      basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                      time_join, selection, perc_locus, cds_length, intgen_length)
-          dfSel = pd.DataFrame({})
+
+          dfSel = pd.DataFrame({
+                              'locus' : [],
+                              'position' : [],
+                              'selF' : [],
+                              'selS' : []
+                              })
+
           cds_coordinates = []
 
      dfJuv = pd.DataFrame({}, columns = dfAdult.columns)
