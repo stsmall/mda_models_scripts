@@ -15,6 +15,7 @@
 *.ipynb
 *.coverage
 *.nfs*
+*.png
 
 config.cfg
 

@@ -218,19 +218,20 @@ def transmission_fx(month,
                                  bnstart[vill], bnstop[vill], bncoverage[vill])
         from IPython import embed
         embed()
-
-        if L3trans > (dfMF.village == vill).sum():  #more transmision events than possible MF
+        # Need to initialize dfMF to something than emptydataframe
+        #more transmision events than possible MF
+        if L3trans > (dfMF.village == vill).sum():  
               transMF = dfMF[dfMF.village == vill]
         else:
             transMF = dfMF[dfMF.village == vill].sample(L3trans)
         distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
-###alternative way only returns points whose distance is <= dispersal
-         #meaning these are the only hosts that can transmit to each other and
-         #disMat is a dict with keys as tuples
-         #from scipy.spatial import KDTree
-         #tree = KDTree(np.vstack(dfHost[dfHost.village == vill].coordinates))
-         #distMat = tree.sparse_distance_matrix(np.vstack(dfHost[dfHost.village == vill].coordinates), dispersal)
-         #rehost = [i for i, x in enumerate(distMat.keys()) if x[0] == index]
+        ###a lternative way only returns points whose distance is <= dispersal
+        # meaning these are the only hosts that can transmit to each other and
+        # disMat is a dict with keys as tuples
+        # from scipy.spatial import KDTree
+        # tree = KDTree(np.vstack(dfHost[dfHost.village == vill].coordinates))
+        # distMat = tree.sparse_distance_matrix(np.vstack(dfHost[dfHost.village == vill].coordinates), dispersal)
+        # rehost = [i for i, x in enumerate(distMat.keys()) if x[0] == index]
 
         for index, row in transMF.iterrows():
              dfdistHost = dfHost[dfHost.village == vill]

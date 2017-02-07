@@ -21,7 +21,11 @@ import transmission as trans
 from village import Village
 
 from calc_outstats import allelefreq_fx
-from plotting import plot_allele_frequency
+from plotting import (plot_allele_frequency,
+        plot_coordinates_host)
+
+from IPython import embed
+import matplotlib.pyplot as plt
 
 
 
@@ -182,6 +186,8 @@ def wb_sims(numberGens, config_file):
                                cdslist)
 
     ## after intialize run main loop
+    fig = plot_coordinates_host(dfHost)
+    embed()
     for month in range(sim_time):
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
                                                             villages,
