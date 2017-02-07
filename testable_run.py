@@ -136,7 +136,6 @@ def wb_sims(numberGens, config_file):
 
     if selection:
         if mda:
-            mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_micro, mda_sterile, mda_clear]
             if fitness == 1:
                  from survival_mda import survivalmda_sel1_fx as survfx
             elif fitness == 2:
@@ -147,11 +146,10 @@ def wb_sims(numberGens, config_file):
             from survival import survivalbase_fx as survfx
     else:
         if mda:
-            mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_micro, mda_sterile, mda_clear]
             from survival_mda import survivalmda_fx as survfx
         else:
             from survival import survivalbase_fx as survfx
-
+    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_micro, mda_sterile, mda_clear]
     bnlist = [bednets, bnstart, bnstop, bncoverage]
     cdslist = [perc_locus, cds_length, intgen_length]
     # set counters
