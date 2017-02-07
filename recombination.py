@@ -46,10 +46,10 @@ def recombination_fx(locus,
          while mf < dfAdult.loc[index, "fec"]:
               for loc in range(locus):
                    if recombination_rate[loc] == 0:
-                        pass
+                        continue
                    else:
                         num_recomb = np.random.poisson(recombination_rate[loc] * basepairs[loc] * 2)
-                        print(num_recomb)
+                        #print(num_recomb)
                         if num_recomb == 0:
                              row["locus_" + str(loc) + "_h1"] = row["locus_" + str(loc) + "_h" + random.choice("12")]
                              #male contribution
@@ -59,16 +59,21 @@ def recombination_fx(locus,
                              #randomly choose male or female
                              sex_xing = random.choice("MF")
                              #while loop to account for multiple recombination events
-                             h1m = np.concatenate(male["locus_" + str(loc) + "_h1"].values)
-                             h2m = np.concatenate(male["locus_" + str(loc) + "_h2"].values)
-                             h1f = np.concatenate(row["locus_" + str(loc) + "_h1"].values)
-                             h2f = np.concatenate(row["locus_" + str(loc) + "_h2"].values)
+                             h1m = male["locus_" + str(loc) + "_h1"]
+                             h2m = male["locus_" + str(loc) + "_h2"]
+                             h1f = row["locus_" + str(loc) + "_h1"]
+                             h2f = row["locus_" + str(loc) + "_h2"]
+                             print h1m
+                             print h2m
+                             print h1f
+                             print h2f
                              if sex_xing is "M":
                                   while r < num_recomb:
                                        crossover_pos = random.randint(0, basepairs[loc])
+                                       print crossover_pos
                                        try:
-                                            hap1_co = np.where(h1m > crossover_pos)[0][-1]
-                                            hap2_co = np.where(h2m > crossover_pos)[0][-1]
+                                            hap1_co = [i for i,x in enumerate(h1m) if x > crossover_pos][-1]
+                                            hap2_co = [i for i,x in enumerate(h2m) if x > crossover_pos][-1]
                                        except IndexError:
                                             continue
                                        h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:]
@@ -79,9 +84,10 @@ def recombination_fx(locus,
                              elif sex_xing is "F":
                                   while r < num_recomb:
                                        crossover_pos = random.randint(0, basepairs[loc])
+                                       print crossover_pos
                                        try:
-                                            hap1_co = np.where(h1f> crossover_pos)[0][-1]
-                                            hap2_co = np.where(h2f > crossover_pos)[0][-1]
+                                            hap1_co = [i for i,x in enumerate(h1f) if x > crossover_pos][-1]
+                                            hap2_co = [i for i,x in enumerate(h2f) if x > crossover_pos][-1]
                                        except IndexError:
                                             continue
                                        h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:]
