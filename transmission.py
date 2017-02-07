@@ -206,8 +206,10 @@ def transmission_fx(month,
     bncoverage = bnlist[3]
     dispersal = 2 * sigma
     print(dispersal)
+    print(bnstop)
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
+        print infhost
         print infhost
         prev_t = infhost / float(hostpopsize[vill])
         print prev_t
@@ -256,7 +258,7 @@ def transmission_fx(month,
                       row.age = 0
                       dfJuv = dfJuv.append(row)
                  dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
-        except ValueError:
+        except:
             print("dfMF is empty")
             continue
     return dfHost, dfJuv, dfMF, L3trans
