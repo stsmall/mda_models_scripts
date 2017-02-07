@@ -7,7 +7,9 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-def hostmda_fx(villages, dfHost, mda_coverage):
+def hostmda_fx(villages,
+               dfHost,
+               mda_coverage):
      ''' Assigns MDA to hosts per village based on mda_coverage
      Parameters
      ----------
@@ -17,7 +19,7 @@ def hostmda_fx(villages, dfHost, mda_coverage):
           dataframe containing host information
      mda_coverage : list, float
           coverage of mda for each village
-     
+
      Returns
      -------
      dfHost : df
@@ -31,4 +33,4 @@ def hostmda_fx(villages, dfHost, mda_coverage):
      for vill in villages:
           sub = round(mda_coverage[vill] * len(dfHost[dfHost.village == vill]))
           dfHost.ix[np.random.choice(dfHost.index, sub, replace = False), "MDA"] = 1
-     return(dfHost)               
+     return(dfHost)

@@ -7,14 +7,15 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-def hostmigration_fx(dfHost, hostmigrate):
+def hostmigration_fx(dfHost,
+                     hostmigrate):
      ''' allows host to move between villages
      Parameters
      ---------
      dfHost : df
           df of hosts
      hostmigrate : float
-          host migration rate between villages per year     
+          host migration rate between villages per year
      Returns
      --------
      dfHost : df
@@ -26,5 +27,5 @@ def hostmigration_fx(dfHost, hostmigrate):
                if dfHost.loc[migrant, "village"] < max(dfHost.village):
                     dfHost.loc[migrant, "village"] += 1
                else:
-                    dfHost.loc[migrant, "village"] -= 1                             
+                    dfHost.loc[migrant, "village"] -= 1
      return dfHost
