@@ -202,7 +202,7 @@ def transmission_fx(month,
     bnstop = bnlist[2]
     bncoverage = bnlist[3]
     dispersal = 2 * sigma
-
+    new_rows = []
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(hostpopsize[vill])
@@ -212,7 +212,7 @@ def transmission_fx(month,
                                  bnstart[vill], bnstop[vill], bncoverage[vill])
         print("village is %i transmitted is %i" %(vill,L3trans))
         if L3trans != 0:
-            new_rows=[]
+            #new_rows=[]
             if L3trans > (dfMF.village == vill).sum():  #more transmision events than possible MF
                   transMF = dfMF[dfMF.village == vill]
             else:
@@ -255,8 +255,7 @@ def transmission_fx(month,
                      newrow['age'] = 0
                 dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
                 new_rows.append(newrow.values)
-            dfJuv = dfJuv.append(pd.DataFrame(new_rows, columns=dfJuv.columns),ignore_index=True).reset_index(drop=True)
         else:
             print("dfMF is empty")
-
+    dfJuv = pd.concat([dfJuv, pd.DataFrame(new_rows, columns=dfJuv.columns)],ignore_index=True, copy=True)
     return dfHost, dfJuv, dfMF, L3trans

@@ -105,10 +105,10 @@ def survivalbase_fx(month,
 
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
+    dfJuv.age += 1
     surv_juvrand = np.random.random(len(np.where(dfJuv.age > 0)[0]))
     surviveJuv = np.where(surv_juvrand <= surv_Juv)
     dfJuv = dfJuv.iloc[surviveJuv]
-    dfJuv.age = dfJuv.age + 1 # 1 - 13
 
     ##MF is weibull cdf
     surv_mfrand = np.random.random(len(dfMF))
