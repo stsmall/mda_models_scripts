@@ -18,9 +18,7 @@ from scipy.stats import weibull_min
 
 import wbsims_initialize as wbinit
 import transmission as trans
-from survival import survivalbase_fx
 from village import Village
-
 
 from calc_outstats import allelefreq_fx
 
@@ -81,9 +79,9 @@ def wb_sims(numberGens, config_file):
     scaleMF = config.getfloat(sh, 'scaleMF')
     shapeAdult = config.getfloat(sh, 'shapeAdult')
     scaleAdult = config.getfloat(sh, 'scaleAdult')
-    densitydep_surv = config.getboolean(sh, 'densitydep_surv') 
+    densitydep_surv = config.getboolean(sh, 'densitydep_surv')
     densitydep_fec = config.getboolean(sh, 'densitydep_fec')
- 
+
     # genetic
     sh = 'genetic'
     locus = config.getint(sh, 'locus')
@@ -96,10 +94,11 @@ def wb_sims(numberGens, config_file):
     thetaRegional = config.getfloat(sh, 'thetaRegional')
     time_join = config.getint(sh, 'time_join')
     selection = config.getboolean(sh, 'selection')
+    fitness = config.getint(sh, 'fitness')
     perc_locus = list(map(float, config.get(sh, 'perc_locus').split(",")))
     cds_length = config.getint(sh, 'cds_length')
     intgen_length = config.getint(sh, 'intgen_length')
-    
+
     # treatment
     sh = 'treatment'
     bednets = config.getboolean(sh, 'bednets')
@@ -107,10 +106,10 @@ def wb_sims(numberGens, config_file):
     bnstop = list(map(int, config.get(sh, 'bnstop').split(",")))
     bncoverage = list(map(float, config.get(sh, 'bncoverage').split(",")))
     mda = config.getboolean(sh, 'mda')
-    mda_start = list(map(int, config.get(sh, 'mda_start').split(",")))
-    mda_num = list(map(int, config.get(sh, 'mda_num').split(",")))
+    mda_start = config.getint(sh, 'mda_start')
+    mda_num = config.getint(sh, 'mda_num')
     mda_freq = config.getint(sh, 'mda_freq')
-    mda_coverage = list(map(int, config.get(sh, 'mda_coverage').split(",")))
+    mda_coverage = list(map(float, config.get(sh, 'mda_coverage').split(",")))
     mda_macro = config.getfloat(sh, 'mda_macro')
     mda_micro = config.getfloat(sh, 'mda_micro')
     mda_sterile = config.getfloat(sh, 'mda_sterile')
@@ -119,155 +118,110 @@ def wb_sims(numberGens, config_file):
     # outfiles
     sh = 'outfiles'
     demofigs=config.getboolean(sh, 'demofigs')
-    demotables=config.getboolean(sh, 'demotables')    
-    demoTime==config.getint(sh, 'demoTime')    
-    sample_size=config.getfloat(sh, 'sample_size')    
-    window_length=config.getint(sh, 'window_length')    
+    demotables=config.getboolean(sh, 'demotables')
+    demoTime=config.getint(sh, 'demoTime')
+    sample_size=config.getfloat(sh, 'sample_size')
+    window_length=config.getint(sh, 'window_length')
     num_windows=config.getint(sh, 'num_windows')
     popgenfigs=config.getboolean(sh, 'popgenfigs')
-    popgentables=config.getboolean(sh, 'popgentables') 
-    popgenTime=config.getint(sh, 'popgenTime')    
-    wb2vcf=config.getboolean(sh, 'wb2vcf')    
+    popgentables=config.getboolean(sh, 'popgentables')
+    popgenTime=config.getint(sh, 'popgenTime')
+    wb2vcf=config.getboolean(sh, 'wb2vcf')
     wbmfvcf=config.getboolean(sh, 'wbmfvcf')
     wbadultvcf=config.getboolean(sh, 'wbadultvcf')
-    wbjuvvcf=config.getboolean(sh, 'wbjuvvcf')    
+    wbjuvvcf=config.getboolean(sh, 'wbjuvvcf')
     wbfracvcf=config.getfloat(sh, 'wbfracvcf')
-    wb2scikit=config.getboolean(sh, 'wb2scikit')    
+    wb2scikit=config.getboolean(sh, 'wb2scikit')
     wbdebug=config.getboolean(sh, 'wbdebug')
-    
-    
+
+    if selection:
+        if mda:
+            mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_micro, mda_sterile, mda_clear]
+            if fitness == 1:
+                 from survival_mda import survivalmda_sel1_fx as survfx
+            elif fitness == 2:
+                 from survival_mda import survivalmda_sel2_fx as survfx
+            else:
+                 from survival_mda import survivalmda_fx as survfx
+        else:
+            from survival import survivalbase_fx as survfx
+    else:
+        if mda:
+            mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_micro, mda_sterile, mda_clear]
+            from survival_mda import survivalmda_fx as survfx
+        else:
+            from survival import survivalbase_fx as survfx
+
+    bnlist = [bednets, bnstart, bnstop, bncoverage]
+    cdslist = [perc_locus, cds_length, intgen_length]
     # set counters
     month = 0
     sim_time = numberGens
 
-    # SELECTION
-    if selection:
-        dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates =\
-                 wbinit.wbsims_init(villages,
-                                   hostpopsize,
-                                   prevalence,
-                                   muTrans,
-                                   sizeTrans,
-                                   muWormBurden,
-                                   sizeWormBurden,
-                                   locus,
-                                   initial_migration,
-                                   initial_distance_m,
-                                   theta,
-                                   basepairs,
-                                   mutation_rate,
-                                   recombination_rate,
-                                   time2Ancestral,
-                                   thetaRegional,
-                                   time_join,
-                                   selection,
-                                   perc_locus,
-                                   cds_length,
-                                   intgen_length)
-        for month in range(sim_time):
+    dfAdult, dfHost, dfJuv, dfMF, dfSel, cds_coordinates =\
+             wbinit.wbsims_init(villages,
+                               hostpopsize,
+                               prevalence,
+                               muTrans,
+                               sizeTrans,
+                               muWormBurden,
+                               sizeWormBurden,
+                               locus,
+                               initial_migration,
+                               initial_distance_m,
+                               theta,
+                               basepairs,
+                               mutation_rate,
+                               recombination_rate,
+                               time2Ancestral,
+                               thetaRegional,
+                               time_join,
+                               selection,
+                               cdslist)
 
-             dfJuv, dfHost = trans.transmission_fx(villages,
-                                                    hostpopsize,
-                                                    sigma,
-                                                    bitesPperson,
-                                                    hours2bite,
-                                                    densityDep,
-                                                    bednets,
-                                                    bnstart,
-                                                    bnstop,
-                                                    bncoverage,
-                                                    month,
-                                                    dfMF,
+    ## after intialize run main loop
+    for month in range(sim_time):
+        dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
+                                                            villages,
+                                                            hostpopsize,
+                                                            sigma,
+                                                            bitesPperson,
+                                                            hours2bite,
+                                                            densitydep_uptake,
+                                                            bnlist,
+                                                            dfHost,
+                                                            dfJuv,
+                                                            dfMF)
+        dfHost, dfAdult, dfJuv, dfMF, dfSel = survfx(month,
+                                                    surv_Juv,
+                                                    shapeMF,
+                                                    scaleMF,
+                                                    shapeAdult,
+                                                    scaleAdult,
+                                                    fecund,
+                                                    locus,
+                                                    mutation_rate,
+                                                    recombination_rate,
+                                                    basepairs,
+                                                    selection,
+                                                    dfSel,
+                                                    cds_coordinates,
+                                                    hostmigrate,
+                                                    mdalist,
+                                                    densitydep_surv,
+                                                    densitydep_fec,
+                                                    dfHost,
+                                                    dfAdult,
                                                     dfJuv,
-                                                    dfHost)
-             dfAdult, dfJuv, dfMF, dfHost, dfSel = survivalbase_fx(month,
-                                                                    surv_Juv,
-                                                                    shapeMF,
-                                                                    scaleMF,
-                                                                    shapeAdult,
-                                                                    scaleAdult,
-                                                                    dfMF,
-                                                                    dfAdult,
-                                                                    dfJuv,
-                                                                    dfHost,
-                                                                    fecund,
-                                                                    locus,
-                                                                    mutation_rate,
-                                                                    recombination_rate,
-                                                                    basepairs,
-                                                                    selection,
-                                                                    dfSel)
-             if month > burn_in:
+                                                    dfMF)
+        if month > burn_in:
                   allelefreq_fx(dfAdult, dfSel)
                   dfAdult.groupby("village").describe()
                   dfJuv.groupby("village").describe()
                   dfMF.groupby("village").describe()
                   dfHost.groupby("village").describe()
 
-    # NOT SELECTION
-    else:
-        dfAdult, dfHost, dfMF, dfJuv = wbinit.wbsims_init(villages,
-                                                           hostpopsize,
-                                                           prevalence,
-                                                           muTrans,
-                                                           sizeTrans,
-                                                           muWormBurden,
-                                                           sizeWormBurden,
-                                                           locus,
-                                                           initial_migration,
-                                                           initial_distance_m,
-                                                           theta,
-                                                           basepairs,
-                                                           mutation_rate,
-                                                           recombination_rate,
-                                                           time2Ancestral,
-                                                           thetaRegional,
-                                                           time_join,
-                                                           selection,
-                                                           perc_locus,
-                                                           cds_length,
-                                                           intgen_length)
-        print("******INITIALIZED********")
-        for month in range(sim_time):
-            dfJuv, dfHost = trans.transmission_fx(villages, 
-                                               hostpopsize, 
-                                               sigma, 
-                                               bitesPperson, 
-                                               hours2bite, 
-                                               densityDep, 
-                                               bednets, 
-                                               bnstart,
-                                               bnstop, 
-                                               bncoverage, 
-                                               month, 
-                                               dfMF, 
-                                               dfJuv, 
-                                               dfHost)
-            dfAdult, dfJuv, dfMF, dfHost = survivalbase_fx(month, 
-                                                        surv_Juv, 
-                                                        shapeMF, 
-                                                        scaleMF, 
-                                                        shapeAdult,
-                                                        scaleAdult, 
-                                                        dfMF, 
-                                                        dfAdult, 
-                                                        dfJuv, 
-                                                        dfHost,
-                                                        fecund, 
-                                                        locus, 
-                                                        mutation_rate, 
-                                                        recombination_rate, 
-                                                        basepairs, 
-                                                        selection, 
-                                                        hostmigrate) 
-            if month > burn_in:
-                dfAdult.groupby("village").describe()
-                dfJuv.groupby("village").describe()
-                dfMF.groupby("village").describe()
-                dfHost.groupby("village").describe()
-                 
-
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
      wb_sims(10, 'tests/wbsims.cfg')
- 
+
