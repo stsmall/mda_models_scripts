@@ -584,7 +584,7 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
      infhost = np.round(hostpopsize * prevalence).astype(np.int64)
      dfHost = host_fx(villages, infhost, muTrans, sizeTrans)
      if selection:
-          dfAdult, dfSel, cds_coordinates= wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, 
+          dfAdult, dfSel, cds_coordinates = wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, 
                                locus, initial_migration, initial_distance_m, theta, 
                                basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                                time_join, selection, perc_locus, cds_length, intgen_length)

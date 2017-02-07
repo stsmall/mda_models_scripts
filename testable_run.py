@@ -93,12 +93,10 @@ def wb_sims(numberGens, config_file):
     time2Ancestral = config.getint(sh, 'time2Ancestral')
     thetaRegional = config.getint(sh, 'thetaRegional')
     time_join = config.getint(sh, 'time_join')
-    selection = False
+    selection = True 
     perc_locus = [0, 0.18]
     #cds_length = config.getint(sh, 'cds_length')
     intgen_length = 2500 # treatment
-    sh = 'treatment'
-    bednets = [False, False]
     bnstart = [0, 0]
     bnstop = [0, 0]
     bncoverage = [0, 0]
@@ -144,6 +142,9 @@ def wb_sims(numberGens, config_file):
                                    perc_locus,
                                    cds_length,
                                    intgen_length)
+        print("******INITIALIZED********")
+        from IPython import embed
+        test = allelefreq_fx(dfAdult, dfSel)
         for month in range(sim_time):
 
              dfJuv, dfHost = trans.transmission_fx(villages,
@@ -207,10 +208,6 @@ def wb_sims(numberGens, config_file):
                                                            perc_locus,
                                                            cds_length,
                                                            intgen_length)
-        print("******INITIALIZED********")
-        from IPython import embed
-        embed()
-        test
 
         for month in range(sim_time):
             dfJuv, dfHost = trans.transmission_fx(villages, 

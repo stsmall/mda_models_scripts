@@ -185,13 +185,14 @@ def transmission_fx(villages, hostpopsize, sigma, bitesPperson, hours2bite,
     dfHost : df
          in the case of newinfection, new host
     '''
-    print("transmission")
+    print("Transmission")
     dispersal = 2 * sigma
+
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(hostpopsize[vill])
 
-        avgMF = len(dfMF[dfMF.village == vill])/float(infhost)
+        avgMF = (dfMF.village == vill).sum()/float(infhost)
         avgMF = 200
         L3trans = vectorbite_fx(bitesPperson[vill], hours2bite[vill], hostpopsize[vill], 
                                  prev_t, densitydep_uptake, avgMF, bednets[vill], 
