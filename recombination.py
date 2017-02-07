@@ -72,28 +72,28 @@ def recombination_fx(locus,
                                        crossover_pos = random.randint(0, basepairs[loc])
                                        print crossover_pos
                                        try:
-                                            hap1_co = [i for i,x in enumerate(h1m) if x > crossover_pos][-1]
-                                            hap2_co = [i for i,x in enumerate(h2m) if x > crossover_pos][-1]
+                                           hap1_co = [i for i,x in enumerate(h1m) if x > crossover_pos][-1]
+                                           hap2_co = [i for i,x in enumerate(h2m) if x > crossover_pos][-1]
+                                           h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:]
+                                           h2m_new = h2m[0:hap2_co + 1] + h1m[hap1_co:]
+                                           h1m = h1m_new
+                                           h2m = h2m_new
                                        except IndexError:
-                                            continue
-                                       h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:]
-                                       h2m_new = h2m[0:hap2_co + 1] + h1m[hap1_co:]
-                                       h1m = h1m_new
-                                       h2m = h2m_new
+                                           continue
                                        r += 1
                              elif sex_xing is "F":
                                   while r < num_recomb:
                                        crossover_pos = random.randint(0, basepairs[loc])
                                        print crossover_pos
                                        try:
-                                            hap1_co = [i for i,x in enumerate(h1f) if x > crossover_pos][-1]
-                                            hap2_co = [i for i,x in enumerate(h2f) if x > crossover_pos][-1]
+                                           hap1_co = [i for i,x in enumerate(h1f) if x > crossover_pos][-1]
+                                           hap2_co = [i for i,x in enumerate(h2f) if x > crossover_pos][-1]
+                                           h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:]
+                                           h2f_new = h2f[0:hap2_co + 1] + h1f[hap1_co:]
+                                           h1f = h1f_new
+                                           h2f = h2f_new
                                        except IndexError:
-                                            continue
-                                       h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:]
-                                       h2f_new = h2f[0:hap2_co + 1] + h1f[hap1_co:]
-                                       h1f = h1f_new
-                                       h2f = h2f_new
+                                           continue
                                        r += 1
                              row["locus_" + str(loc) + "_h1"] = random.choice([h1f, h2f])
                              row["locus_" + str(loc) + "_h2"] = random.choice([h1m, h2m])
