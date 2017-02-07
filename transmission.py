@@ -82,7 +82,6 @@ def vectorbite_fx(month,
        # 0.414 is proportion of  L3 that leave mosquito per bite
        # 0.32 proportion of L3 that make it into the host
        L3trans = np.random.binomial(infbites, (0.414 * 0.32))
-    print(int(L3trans))
     return(int(L3trans))
 
 
@@ -119,7 +118,6 @@ def new_infection_fx(dispersal,
 
     while next((True for elem in dfHost['coordinates'].values if np.array_equal(elem, newpts)),False) is True:
          #shift of new points
-         print("loop")
          x_new = random.randint( -maxc, maxc )
          y_new = random.randint( -maxc, maxc )
          #test that new shifts are min distance
@@ -127,9 +125,7 @@ def new_infection_fx(dispersal,
               newhostptX = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][0] + x_new
               newhostptY = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][1] + y_new
               newpts = np.array([newhostptX, newhostptY])
-              print(newpts)
                       #[12, 12], [36, 36], 1, dfMF, dfJuv, dfHost, deathdict)
-    print("outloop")
     #copy village
     vill = transMF.village
     #new host index
@@ -205,16 +201,10 @@ def transmission_fx(month,
     bnstop = bnlist[2]
     bncoverage = bnlist[3]
     dispersal = 2 * sigma
-    print(dispersal)
-    print(bnstop)
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
-        print infhost
-        print infhost
         prev_t = infhost / float(hostpopsize[vill])
-        print prev_t
         avgMF = ((dfMF.village == vill).sum())/float(infhost)
-        print avgMF
         L3trans = vectorbite_fx(month, bitesPperson[vill], hours2bite[vill], hostpopsize[vill],
                                  prev_t, densitydep_uptake, avgMF, bednets,
                                  bnstart[vill], bnstop[vill], bncoverage[vill])
@@ -241,9 +231,7 @@ def transmission_fx(month,
                  else: #everyone is already infected
                       prob_newinfection = 0
 
-                 print(prob_newinfection, row, index)
                  if np.random.random() < prob_newinfection:
-                      print("new loop")
                       #new host
                       dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
                       row.hostidx = new_hostidx
@@ -252,7 +240,6 @@ def transmission_fx(month,
                       #need to update distMat to include new host
                       distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
                  else: #reinfection
-                      print("reinfect loop")
                       rehost = dfHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
                       row.hostidx = rehost.hostidx
                       row.age = 0
