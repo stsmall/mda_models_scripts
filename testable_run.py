@@ -153,10 +153,9 @@ def wb_sims(numberGens, config_file):
     bnlist = [bednets, bnstart, bnstop, bncoverage]
     cdslist = [perc_locus, cds_length, intgen_length]
     # set counters
-    month = 1
     sim_time = numberGens
 
-    dfAdult, dfHost, dfJuv, dfMF, dfSel, cds_coordinates =\
+    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates =\
              wbinit.wbsims_init(villages,
                                hostpopsize,
                                prevalence,
@@ -178,7 +177,7 @@ def wb_sims(numberGens, config_file):
                                cdslist)
 
     ## after intialize run main loop
-    for month in range(sim_time):
+    for month in range(1,sim_time):
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
                                                             villages,
                                                             hostpopsize,

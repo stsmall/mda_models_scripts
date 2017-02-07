@@ -609,13 +609,13 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
      dfJuv = pd.DataFrame({}, columns = dfAdult.columns)
      dfMF = pd.DataFrame({}, columns = dfAdult.columns)
 
-     return(dfAdult, dfHost, dfJuv, dfMF, dfSel, cds_coordinates)
+     return(dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates)
 
 ##3 loci, 2 villages, with selection
 #if __name__ == '__main__':
-#    dfAdult, dfHost, dfSel, dfJuv, dfMF, cds_coordinates=wbsims_init(2, [100, 200],
+#    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates=wbsims_init(2, [100, 200],
 #    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
 #    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
-#    True, [0, 0.18, 0.20], 1100, 2500)
+#    True, [[0, 0.18, 0.20], 1100, 2500])
 #    from IPython import embed
 #    embed()
