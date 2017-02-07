@@ -56,7 +56,7 @@ def vectorbite_fx(month,
     L3trans : int
          all new juv are age class 0
     '''
-    print("vectorbite")
+    #print("vectorbite")
     if bednets:
         if month > bnstart and month < bnstop:
              totalbites = ((1 - bncoverage) * bitesPperson * hours2bite * 30
@@ -106,7 +106,7 @@ def new_infection_fx(dispersal,
     newhostidx: str
           new host index
     '''
-    print("newfx")
+    #print("newfx")
     #how close
     mindist = 5
     #how far
@@ -246,6 +246,6 @@ def transmission_fx(month,
                       dfJuv = dfJuv.append(row)
                  dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
         except:
-            print("dfMF is empty")
+            #print("dfMF is empty")
             continue
     return dfHost, dfJuv, dfMF, L3trans

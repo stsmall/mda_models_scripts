@@ -178,7 +178,7 @@ def wb_sims(numberGens, config_file):
 
     ## after intialize run main loop
     for month in range(1,sim_time):
-        print(month)
+        print("month is %i\n\n" %month)
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
                                                             villages,
                                                             hostpopsize,
@@ -212,6 +212,10 @@ def wb_sims(numberGens, config_file):
                                                     dfAdult,
                                                     dfJuv,
                                                     dfMF)
+        print(dfAdult.describe())
+        print(dfMF.describe())
+        print(dfJuv.describe())
+        print(dfHost.describe())
         if month > burn_in:
                   allelefreq_fx(dfAdult, dfSel)
                   dfAdult.groupby("village").describe()
