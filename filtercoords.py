@@ -8,7 +8,11 @@
 """
 import numpy as np
 
-def filtercoords_fx(positions, basepairs, perc_locus, cds_length, intgen_length):
+def filtercoords_fx(positions,
+                    basepairs,
+                    perc_locus,
+                    cds_length,
+                    intgen_length):
     ''' Filters coordinates to keep only those in defined cds
 
     Parameters
@@ -19,21 +23,21 @@ def filtercoords_fx(positions, basepairs, perc_locus, cds_length, intgen_length)
     perc_locus : list, float
     cds_length : int
     intgen_length : int
-    
+
     Returns
     -------
     cds_positions : list
         filterd positions to only include cds
     cds_coordinates : lisit
         coordinates (start,end) of cds
-    
+
     '''
     cds_positions = []
     cds_coordinates = []
     #size parameter
     size = 3
     #average distance between in bp
-    mu = intgen_length 
+    mu = intgen_length
     #last coordinate is approx num_cds * mu; so if num_cds is too large or mu is too long
     #genes will run over the locus length
     for loc in range(len(positions)):
@@ -54,10 +58,10 @@ def filtercoords_fx(positions, basepairs, perc_locus, cds_length, intgen_length)
             else:
                 cds_coords.append([i + cds_stop, i + j + cds_stop])
                 cds_stop += (i + j)
-            
+
         keep_pos = []
         for start, end in cds_coords:
-            keep_pos.extend(positions[loc][np.where(np.logical_and(positions[loc] >= start, positions[loc] <= end))]) 
+            keep_pos.extend(positions[loc][np.where(np.logical_and(positions[loc] >= start, positions[loc] <= end))])
         cds_positions.append(keep_pos) #this is a nested list for each locus
         cds_coordinates.append(cds_coords) #this is a nested list for each locus
     return(cds_positions, cds_coordinates)   

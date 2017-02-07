@@ -32,8 +32,8 @@ def R0net_fx(dfAdult, dfMF, dfJuv):
     dfJuv[dfJuv.age == 13].groupby(["village", "R0net"]).size()[1].mean()
     R0 = 1
     return(R0)
-    
-    
+
+
 def allelefreq_fx(dfAdult, dfSel):
     ''' Calculates allele freq for mutations in dfSel by village
 
@@ -60,24 +60,24 @@ def allelefreq_fx(dfAdult, dfSel):
     #counts of each mutation in dfAdult by village for each locus
     #locus = len(positions)
     for loc in range(1,len(pos) + 1):
-        hap1 = dfAdult.groupby("village")["locus_" + str(loc) + "_h1"].apply(lambda x: [i for l in 
+        hap1 = dfAdult.groupby("village")["locus_" + str(loc) + "_h1"].apply(lambda x: [i for l in
                        x.values.tolist() for i in l])
-        hap2 = dfAdult.groupby("village")["locus_" + str(loc) + "_h2"].apply(lambda x: [i for l in 
+        hap2 = dfAdult.groupby("village")["locus_" + str(loc) + "_h2"].apply(lambda x: [i for l in
                        x.values.tolist() for i in l])        #filter hap1,hap2 by positions in dfSel
         #combine counts for same positions in hap1 and hap2 at each locus
         hap3 = hap1 + hap2
-        villcounts = dfAdult.groupby("village").size() * 2    
+        villcounts = dfAdult.groupby("village").size() * 2
         ##To Do: Generalize to any number of villages, although current limit is 4 and loci
         locus.extend(np.repeat(loc, len(pos[loc])))
 
         freqv1.extend([round(hap3[0].count(i) / float(villcounts[0]),2) for i in pos[loc]])
         freqv2.extend([round(hap3[1].count(i) / float(villcounts[1]),2) for i in pos[loc]])
         positions.extend(pos[loc])
-        
+
     dfFreq = pd.DataFrame({"locus" : np.repeat(range(1,len(pos)+1), [len(i) for i in pos]),
                        "position" : positions,
                        "freqv1" : freqv1,
                        "freqv2" : freqv2
                        })
-    dfFreq = dfFreq.loc[:, ['locus', 'position', 'freqv1','freqv2']]  
-    return(dfFreq) 
+    dfFreq = dfFreq.loc[:, ['locus', 'position', 'freqv1','freqv2']]
+    return(dfFreq)

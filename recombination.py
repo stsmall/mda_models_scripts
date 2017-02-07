@@ -10,7 +10,10 @@ import numpy as np
 import random
 import pandas as pd
 
-def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
+def recombination_fx(locus,
+                     dfAdult,
+                     recombination_rate,
+                     basepairs):
     """calculate number of recombination events and rearranges haplotypes
 
     Parameters
@@ -20,16 +23,16 @@ def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
     dfAdult_mf : pandas dataframe
           dataframe containing new larval parasites
     dfAdult : pd df
-          dataframe containing reproducing adults      
+          dataframe containing reproducing adults
     recombination_rate : float, list
-          recombination rate for each locus 
+          recombination rate for each locus
     basepairs : int, list
-          length of each locus in basepairs 
+          length of each locus in basepairs
 
     Returns
     -------
     dfAdult_mf : pd df
-    
+
     """
     dfAdult_mf = pd.DataFrame({})
 
@@ -44,13 +47,13 @@ def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
               for loc in range(locus):
                    if recombination_rate[loc] == 0:
                         pass
-                   else:                                         
+                   else:
                         num_recomb = np.random.poisson(recombination_rate[loc] * basepairs[loc] * 2)
                         print(num_recomb)
                         if num_recomb == 0:
-                             row["locus_" + str(loc) + "_h1"] = row["locus_" + str(loc) + "_h" + random.choice("12")]     
+                             row["locus_" + str(loc) + "_h1"] = row["locus_" + str(loc) + "_h" + random.choice("12")]
                              #male contribution
-                             row["locus_" + str(loc) + "_h2"] = male["locus_" + str(loc) + "_h" + random.choice("12")]                                                    
+                             row["locus_" + str(loc) + "_h2"] = male["locus_" + str(loc) + "_h" + random.choice("12")]
                         else:
                              r = 0
                              #randomly choose male or female
@@ -68,7 +71,7 @@ def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
                                             hap2_co = np.where(h2m > crossover_pos)[0][-1]
                                        except IndexError:
                                             break
-                                       h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:] 
+                                       h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:]
                                        h2m_new = h2m[0:hap2_co + 1] + h1m[hap1_co:]
                                        h1m = h1m_new
                                        h2m = h2m_new
@@ -81,14 +84,14 @@ def recombination_fx(locus, dfAdult, recombination_rate, basepairs):
                                             hap2_co = np.where(h2f > crossover_pos)[0][-1]
                                        except IndexError:
                                             break
-                                       h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:] 
+                                       h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:]
                                        h2f_new = h2f[0:hap2_co + 1] + h1f[hap1_co:]
                                        h1f = h1f_new
                                        h2f = h2f_new
                                        r += 1
-                             row["locus_" + str(loc) + "_h1"] = random.choice([h1f, h2f])     
-                             row["locus_" + str(loc) + "_h2"] = random.choice([h1m, h2m])      
+                             row["locus_" + str(loc) + "_h1"] = random.choice([h1f, h2f])
+                             row["locus_" + str(loc) + "_h2"] = random.choice([h1m, h2m])
               dfAdult_mf = dfAdult_mf.append([row], ignore_index=True)
               mf += 1
-     
+
     return dfAdult_mf

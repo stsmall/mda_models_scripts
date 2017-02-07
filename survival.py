@@ -11,14 +11,31 @@ from scipy.stats import weibull_min
 from fecundity import fecunditybase_fx
 from host_migration import hostmigration_fx
 import random
-   
-def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
-                    scaleAdult, dfMF, dfAdult, dfJuv, dfHost,
-                    fecund, locus, mutation_rate, recombination_rate, 
-                    basepairs, selection, hostmigrate):
-   #(1, 0.866, 3.3, 10, 3.8, 8, dfMF, dfAdult, dfJuv, dfHost)  
-                        
-    '''base survival function
+
+def survivalbase_fx(month,
+                    surv_Juv,
+                    shapeMF,
+                    scaleMF,
+                    shapeAdult,
+                    scaleAdult,
+                    fecund,
+                    locus,
+                    mutation_rate,
+                    recombination_rate,
+                    basepairs,
+                    selection,
+                    dfSel,
+                    cds_coordinates,
+                    hostmigrate,
+                    mdalist,
+                    densitydep_surv,
+                    densitydep_fec,
+                    dfHost,
+                    dfAdult,
+                    dfJuv,
+                    dfMF):
+
+    '''Base survival function
     Parameters
     ---------
     month: int
@@ -33,27 +50,47 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
          shape parameter for weibull distribution of Adults
     scaleAdult: int
          scale parameter for weibull distribution of MF
-
+    dfMF : df
+        dataframe of MF
+    dfAdult : df
+        dataframe of adult worms
+    dfJuv : df
+        dataframe of juvenille worms
+    dfHost : df
+        dataframe of hosts
+    basepairs : int, list
+        length of loci
+    hostmigrate : float
+        rate of migration per year between villages
+    selection : boolean
+        T/F for selection
+    dfSel : df
+        dataframe of cds positions and fitness
+    cds_coordinates : list
+        list of coding seq coordinates
+    mdalist : list
+        list of mda parameters
+    densitydep_surv : boolean
+    densitydep_fec : boolean
     Returns
     -------
     dfMF
     dfAdult
     dfJuv
     dfHost
-    
+    dfSel
+
     '''
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
-        surv_adultrand = np.random.random(len(dfAdult))    
+        surv_adultrand = np.random.random(len(dfAdult))
         surv_adultfxage = weibull_min.cdf(dfAdult.age, shapeAdult,loc=0,scale=scaleAdult)
         surviveAdult = np.where(surv_adultrand <= (1 - surv_adultfxage))
         dfAdult = dfAdult.iloc[surviveAdult]
         dfAdult.age = dfAdult.age + 1 #2 - 21
-        
+
         ##host survival is from act table
-        from IPython import embed
-        embed()
         dfHost = dfHost[dfHost.age < dfHost.agedeath]
         #remove all worms with dead host.hostidx from all dataframes
         dfAdult = dfAdult.loc[dfAdult["hostidx"].isin(dfHost.hostidx)]
@@ -62,7 +99,7 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
         #add 1 year to all ages of hosts
         dfHost.age = dfHost.age + 1
         dfHost = hostmigration_fx(dfHost, hostmigrate)
-        
+
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
     surv_juvrand = np.random.random(len(np.where(dfJuv.age > 0))[0])
@@ -71,7 +108,7 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
     dfJuv.age = dfJuv.age + 1 # 1 - 13
 
     ##MF is weibull cdf
-    surv_mfrand = np.random.random(len(dfMF))    
+    surv_mfrand = np.random.random(len(dfMF))
     surv_mffxage = weibull_min.cdf(dfMF.age,shapeMF,loc=0,scale=scaleMF)
     surviveMF = np.where(surv_mfrand <= (1 - surv_mffxage))
     dfMF = dfMF.iloc[surviveMF]
@@ -81,7 +118,7 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
     ##move Juv age 13 to adult age 1
     #dfJuv_new = pd.DataFrame({})
     dfJuv_new = dfJuv[dfJuv.age > 12]
-    #reset age to adult   
+    #reset age to adult
     dfJuv_new.age = 1
     #increase R0net for next gen
     dfJuv_new.R0net = dfJuv_new.R0net + 1
@@ -89,13 +126,15 @@ def survivalbase_fx(month, surv_Juv, shapeMF, scaleMF, shapeAdult,
     dfAdult = dfAdult.append(dfJuv_new, ignore_index=True)
     #remove Juv age 13 from dfJuv
     dfJuv = dfJuv[dfJuv.age <= 12]
-     
+
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate, recombination_rate, basepairs)
+    dfAdult_mf, dfSel = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
+                                         recombination_rate, basepairs, selection,
+                                         dfSel, cds_coordinates, densitydep_fec)
     dfAdult_mf.age = 1
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
-    dfMF = dfMF.append(dfAdult_mf, ignore_index=True)     
+    dfMF = dfMF.append(dfAdult_mf, ignore_index=True)
 
-    return dfAdult, dfHost, dfJuv, dfMF if month%12 == 0 else dfJuv, dfMF
+    return dfHost, dfAdult, dfJuv, dfMF, dfSel
