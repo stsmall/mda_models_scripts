@@ -17,9 +17,8 @@ def recombination_locus(h1, h2, basepairs):
     crossover_pos = random.randint(0, basepairs)
     h1_ix = [i for i, x in enumerate(h1) if x > crossover_pos][0]
     h2_ix = [i for i, x in enumerate(h2) if x > crossover_pos][0]
-    embed()
-    h1_new = np.append([h1[0:h1_ix + 1], h2[h2_ix:]])
-    h2_new = np.append([h2[0:h2_ix + 1], h1[h1_ix:]])
+    h1_new = np.append(h1[0:h1_ix + 1], h2[h2_ix:])
+    h2_new = np.append(h2[0:h2_ix + 1], h1[h1_ix:])
     return(h1_new, h2_new)
 
 
@@ -72,11 +71,10 @@ def recombination_fx(locus,
                                 row[lid.format(random.choice("12"))]
                         #male contribution
                         new_row[lid.format(2)] =\
-                                male[lid.format(random.choice("12"))]
+                                male[lid.format(random.choice("12"))].values[0]
                     else:
                         #randomly choose male or female
                         sex_xing = random.choice("MF")
-                        #while loop to account for multiple recombination events
                         # :TODO need to fix how this is initialized
                         h1m = male[lid.format(1)].values[0].copy()
                         h2m = male[lid.format(2)].values[0].copy()
@@ -92,7 +90,6 @@ def recombination_fx(locus,
                                         basepairs[loc])
                         new_row[lid.format(1)] = random.choice([h1f, h2f])
                         new_row[lid.format(2)] = random.choice([h1m, h2m])
-                newmf.append(new_row)
-    dfAdult_mf = pd.concat(newmf, ignore_index=True)
-    print('Recombination finished')
+                    newmf.append(new_row)
+    dfAdult_mf = pd.concat(newmf, ignore_index=True, axis=1).T
     return dfAdult_mf
