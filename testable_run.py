@@ -61,7 +61,6 @@ def wb_sims(numberGens, config_file):
     hostmigrate = config.getfloat(sh, 'hostmigrate')
     initial_distance_m = list(
         map(int, config.get(sh, 'initial_distance_m').split(",")))
-    print(initial_distance_m)
     assert len(initial_distance_m) == (villages * (villages - 1)) / 2
 
     # vector
@@ -212,10 +211,6 @@ def wb_sims(numberGens, config_file):
                                                     dfAdult,
                                                     dfJuv,
                                                     dfMF)
-        print(dfAdult.describe())
-        print(dfMF.describe())
-        print(dfJuv.describe())
-        print(dfHost.describe())
         if month > burn_in:
                   allelefreq_fx(dfAdult, dfSel)
                   dfAdult.groupby("village").describe()
@@ -227,5 +222,5 @@ def wb_sims(numberGens, config_file):
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     wb_sims(10, 'tests/wbsims.cfg')
+     dfHost, dfAdult, dfJuv, dfMF, dfSel = wb_sims(10, 'tests/wbsims.cfg')
 
