@@ -227,10 +227,11 @@ def transmission_fx(month,
              #distMat = tree.sparse_distance_matrix(np.vstack(dfHost[dfHost.village == vill].coordinates), dispersal)
              #rehost = [i for i, x in enumerate(distMat.keys()) if x[0] == index]
             for index, row in transMF.iterrows():
-                #print index, row
-                dfdistHost = dfHost[dfHost.village == vill]
-                #new infection
-                disthost = np.where((dfdistHost["hostidx"] == row.hostidx))[0]
+
+                dfdistHost = dfHost[dfHost.village == vill].reset_index(drop=True)
+
+                disthost = np.where(dfdistHost["hostidx"] == row.hostidx)[0]
+
                 if len(dfHost[dfHost.village == vill]) < hostpopsize[vill]:
                      prob_newinfection = 1.0/(len(distMat[disthost] <= dispersal) + 1)
                 else: #everyone is already infected
@@ -247,11 +248,11 @@ def transmission_fx(month,
                 else: #reinfection
                      #print("reinfection")
                      #print(row)
-                     rehost = dfHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
+                     rehost = dfdistHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
+                     print(row.hostidx, rehost.hostidx)
                      newrow = row
-                     print(row.hostidx)
                      newrow['hostidx'] = rehost['hostidx']
-                     print(newrow.hostidx)
+                     #print(row.hostidx, newrow.hostidx)
                      newrow['age'] = 0
                 dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
                 new_rows.append(newrow.values)
