@@ -14,8 +14,7 @@ import pandas as pd
 import random
 from agehost import agehost_fx
 from filtercoords import filtercoords_fx
-import cpickle as pickle
-
+import cPickle as pickle
 
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -36,14 +35,7 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     -------
     dfHost : dataframe
     '''
-    #dictionary from actuarial tables 
-    deathdict = {}
-    with open("./act.tbl",'r') as tbl:
-         for line in tbl:
-              line = line.strip()
-              deathdict["{}".format(line.split()[0])] = list(map(float,
-                  line.split()[1:]))
-    pickle.dump( deathdict, open( "acttable.p", "wb" ) )
+    deathdict = pickle.load( open( "./acttable.p", "rb" ) )
     assert villages == len(infhost)
     coordinates = []
     host_idx = []
