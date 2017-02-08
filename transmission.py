@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.metrics import pairwise_distances
 import random
 from agehost import agehost_fx
+import copy
 import cPickle as pickle
 deathdict = pickle.load( open( "./acttable.p", "rb" ) )
 
@@ -133,9 +134,7 @@ def new_infection_fx(dispersal,
     vill = transMF.village
     #new host index
     old_hostidx = dfHost[dfHost.village == transMF.village].hostidx.iloc[-1]
-    print(old_hostidx)
     new_hostidx = old_hostidx[:old_hostidx.rfind('h')] + 'h' + str(int(old_hostidx.split('h')[1]) + 1)
-    print(new_hostidx)
     #radnom sex
     sex = random.choice("01")
     #age and agedeath function from wbsims_initialize
@@ -242,17 +241,16 @@ def transmission_fx(month,
                      prob_newinfection = 0
 
                 if np.random.random() < prob_newinfection:
-                     print("new host")
+                     #print("new host")
                      dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                     newrow = row
+                     newrow = copy.deepcopy(row)
                      newrow['hostidx'] = new_hostidx
                      newrow['age'] = 0
-                     print(row.hostidx, newrow.hostidx)
                      #need to update distMat to include new host
                      distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
                 else: #reinfection
                      rehost = dfdistHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
-                     newrow = row
+                     newrow = copy.deepcopy(row)
                      newrow['hostidx'] = rehost['hostidx']
                      newrow['age'] = 0
                 dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
