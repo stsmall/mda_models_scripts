@@ -8,6 +8,7 @@
 """
 import numpy as np
 import math
+import pandas as pd
 from sklearn.metrics import pairwise_distances
 import random
 from agehost import agehost_fx
@@ -56,7 +57,7 @@ def vectorbite_fx(month,
     L3trans : int
          all new juv are age class 0
     '''
-    print("vectorbite")
+    #print("vectorbite")
     if bednets:
         if month > bnstart and month < bnstop:
              totalbites = ((1 - bncoverage) * bitesPperson * hours2bite * 30
@@ -106,7 +107,7 @@ def new_infection_fx(dispersal,
     newhostidx: str
           new host index
     '''
-    print("newfx")
+    #print("newfx")
     #how close
     mindist = 5
     #how far
@@ -136,7 +137,7 @@ def new_infection_fx(dispersal,
     #age and agedeath function from wbsims_initialize
     age, agedeath = agehost_fx(sex)
     #add to dfHost at bottom
-    dfHost.loc[len(dfHost) + 1] = [vill, new_hostidx, sex, age, agedeath, newpts, 0]
+    dfHost.loc[len(dfHost) + 1] = [vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]
 
     return dfHost, new_hostidx
 
@@ -195,12 +196,13 @@ def transmission_fx(month,
     L3trans : int
         number of transmitted MF
     '''
-    print("transmission")
+    print("transmission_fx")
     bednets = bnlist[0]
     bnstart = bnlist[1]
     bnstop = bnlist[2]
     bncoverage = bnlist[3]
     dispersal = 2 * sigma
+    new_rows = []
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(hostpopsize[vill])
@@ -208,11 +210,14 @@ def transmission_fx(month,
         L3trans = vectorbite_fx(month, bitesPperson[vill], hours2bite[vill], hostpopsize[vill],
                                  prev_t, densitydep_uptake, avgMF, bednets,
                                  bnstart[vill], bnstop[vill], bncoverage[vill])
-        try:
+        print("village is %i transmitted is %i" %(vill,L3trans))
+        if L3trans != 0:
+            #new_rows=[]
             if L3trans > (dfMF.village == vill).sum():  #more transmision events than possible MF
                   transMF = dfMF[dfMF.village == vill]
             else:
                 transMF = dfMF[dfMF.village == vill].sample(L3trans)
+
             distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
     ###alternative way only returns points whose distance is <= dispersal
              #meaning these are the only hosts that can transmit to each other and
@@ -221,31 +226,37 @@ def transmission_fx(month,
              #tree = KDTree(np.vstack(dfHost[dfHost.village == vill].coordinates))
              #distMat = tree.sparse_distance_matrix(np.vstack(dfHost[dfHost.village == vill].coordinates), dispersal)
              #rehost = [i for i, x in enumerate(distMat.keys()) if x[0] == index]
-
             for index, row in transMF.iterrows():
-                 dfdistHost = dfHost[dfHost.village == vill]
-                 #new infection
-                 disthost = np.where((dfdistHost["hostidx"] == row.hostidx))[0]
-                 if len(dfHost[dfHost.village == vill]) < hostpopsize[vill]:
-                      prob_newinfection = 1.0/(len(distMat[disthost] <= dispersal) + 1)
-                 else: #everyone is already infected
-                      prob_newinfection = 0
 
-                 if np.random.random() < prob_newinfection:
-                      #new host
-                      dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                      row.hostidx = new_hostidx
-                      row.age = 0
-                      dfJuv = dfJuv.append(row)
-                      #need to update distMat to include new host
-                      distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
-                 else: #reinfection
-                      rehost = dfHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
-                      row.hostidx = rehost.hostidx
-                      row.age = 0
-                      dfJuv = dfJuv.append(row)
-                 dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
-        except:
+                dfdistHost = dfHost[dfHost.village == vill].reset_index(drop=True)
+
+                disthost = np.where(dfdistHost["hostidx"] == row.hostidx)[0]
+
+                if len(dfHost[dfHost.village == vill]) < hostpopsize[vill]:
+                     prob_newinfection = 1.0/(len(distMat[disthost] <= dispersal) + 1)
+                else: #everyone is already infected
+                     prob_newinfection = 0
+
+                if np.random.random() < prob_newinfection:
+                     #print("new host")
+                     dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
+                     newrow = row
+                     newrow['hostidx'] = new_hostidx
+                     newrow['age'] = 0
+                     #need to update distMat to include new host
+                     distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
+                else: #reinfection
+                     #print("reinfection")
+                     #print(row)
+                     rehost = dfdistHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
+                     print(row.hostidx, rehost.hostidx)
+                     newrow = row
+                     newrow['hostidx'] = rehost['hostidx']
+                     #print(row.hostidx, newrow.hostidx)
+                     newrow['age'] = 0
+                dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
+                new_rows.append(newrow.values)
+        else:
             print("dfMF is empty")
-            continue
+    dfJuv = pd.concat([dfJuv, pd.DataFrame(new_rows, columns=dfJuv.columns)],ignore_index=True, copy=True)
     return dfHost, dfJuv, dfMF, L3trans

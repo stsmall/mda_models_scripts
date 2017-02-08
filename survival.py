@@ -83,16 +83,17 @@ def survivalbase_fx(month,
     '''
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
-        print("month is %i\n\n" %month)
         #Adult survival is based on weibull cdf
         surv_adultrand = np.random.random(len(dfAdult))
-        surv_adultfxage = weibull_min.cdf(dfAdult.age, shapeAdult,loc=0,scale=scaleAdult)
+        try:
+            surv_adultfxage = weibull_min.cdf(dfAdult.age, shapeAdult,loc=0,scale=scaleAdult)
+        except TypeError:
+            surv_adultfxage = weibull_min.cdf(0, shapeAdult,loc=0,scale=scaleAdult)
         surviveAdult = np.where(surv_adultrand <= (1 - surv_adultfxage))
         dfAdult = dfAdult.iloc[surviveAdult]
         dfAdult.age = dfAdult.age + 1 #2 - 21
 
         ##host survival is from act table
-        print(dfHost.head())
         dfHost = dfHost[dfHost.age < dfHost.agedeath]
         #remove all worms with dead host.hostidx from all dataframes
         dfAdult = dfAdult.loc[dfAdult["hostidx"].isin(dfHost.hostidx)]
@@ -104,19 +105,20 @@ def survivalbase_fx(month,
 
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
+    dfJuv.age += 1
     surv_juvrand = np.random.random(len(np.where(dfJuv.age > 0)[0]))
     surviveJuv = np.where(surv_juvrand <= surv_Juv)
     dfJuv = dfJuv.iloc[surviveJuv]
-    dfJuv.age = dfJuv.age + 1 # 1 - 13
 
     ##MF is weibull cdf
+    surv_mfrand = np.random.random(len(dfMF))
     try:
-        surv_mfrand = np.random.random(len(dfMF))
         surv_mffxage = weibull_min.cdf(dfMF.age,shapeMF,loc=0,scale=scaleMF)
-        surviveMF = np.where(surv_mfrand <= (1 - surv_mffxage))
-        dfMF = dfMF.loc[surviveMF]
-    except:
-        print("dfMF is empty")
+    except TypeError:
+        surv_mffxage = weibull_min.cdf(0,shapeMF,loc=0,scale=scaleMF)
+    surviveMF = np.where(surv_mfrand <= (1 - surv_mffxage))
+    dfMF = dfMF.loc[surviveMF]
+
     dfMF.age = dfMF.age + 1 #2 - 12
     dfMF = dfMF[dfMF.age < 13] #hard cutoff at 12 months
 
