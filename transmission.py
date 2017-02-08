@@ -141,7 +141,7 @@ def new_infection_fx(dispersal,
     #add to dfHost at bottom
     dfHost.loc[len(dfHost) + 1] = [vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]
 
-    return dfHost, new_hostidx
+    return(dfHost, new_hostidx)
 
 def transmission_fx(month,
                     villages,
@@ -260,5 +260,5 @@ def transmission_fx(month,
                 new_rows.append(newrow.values)
         else:
             print("dfMF is empty")
-    dfJuv = pd.concat([dfJuv, pd.DataFrame(new_rows, columns=dfJuv.columns)],ignore_index=True, copy=True)
-    return dfHost, dfJuv, dfMF, L3trans
+    dfJuv = pd.concat([dfJuv, pd.DataFrame(new_rows, columns=dfJuv.columns)],ignore_index=True)
+    return(dfHost, dfJuv, dfMF, L3trans)

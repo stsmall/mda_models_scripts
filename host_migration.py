@@ -28,4 +28,4 @@ def hostmigration_fx(dfHost,
                     dfHost.loc[migrant, "village"] += 1
                else:
                     dfHost.loc[migrant, "village"] -= 1
-     return dfHost
+     return(dfHost)

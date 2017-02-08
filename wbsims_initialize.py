@@ -311,10 +311,10 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     #:TODO refactor this, less variation on returns
     if ploidy == 1:
         gt, mutations = parse_coalsims_fx(msout, ploidy)
-        return gt, mutations
+        return(gt, mutations)
     elif ploidy == 2:
         gt, gt2, mutations = parse_coalsims_fx(msout, ploidy)
-        return gt, gt2, mutations
+        return(gt, gt2, mutations)
 
 
 def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
@@ -420,7 +420,7 @@ def fit_fx(locus, dfAdult, dfSel):
           fitS.append(round(np.mean(fitS_ind), 5))
           fitF.append(round(np.mean(fitF_ind), 5))
 
-     return fitS, fitF
+     return(fitS, fitF)
 
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
               initial_migration, initial_distance_m, theta, basepairs, mutation,

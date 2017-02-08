@@ -7,6 +7,7 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
+import pandas as pd
 from scipy.stats import weibull_min
 from fecundity import fecunditybase_fx
 from host_migration import hostmigration_fx
@@ -101,12 +102,13 @@ def survivalbase_fx(month,
         dfMF = dfMF.loc[dfMF["hostidx"].isin(dfHost.hostidx)]
         #add 1 year to all ages of hosts
         dfHost.age = dfHost.age + 1
-        dfHost = hostmigration_fx(dfHost, hostmigrate)
+        if hostmigrate != 0:
+            dfHost = hostmigration_fx(dfHost, hostmigrate)
 
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
     dfJuv.age += 1
-    surv_juvrand = np.random.random(len(np.where(dfJuv.age > 0)[0]))
+    surv_juvrand = np.random.random(len(dfJuv))
     surviveJuv = np.where(surv_juvrand <= surv_Juv)
     dfJuv = dfJuv.iloc[surviveJuv]
 
@@ -118,7 +120,6 @@ def survivalbase_fx(month,
         surv_mffxage = weibull_min.cdf(0,shapeMF,loc=0,scale=scaleMF)
     surviveMF = np.where(surv_mfrand <= (1 - surv_mffxage))
     dfMF = dfMF.loc[surviveMF]
-
     dfMF.age = dfMF.age + 1 #2 - 12
     dfMF = dfMF[dfMF.age < 13] #hard cutoff at 12 months
 
@@ -130,7 +131,7 @@ def survivalbase_fx(month,
     #increase R0net for next gen
     dfJuv_new.R0net = dfJuv_new.R0net + 1
     #append to adults
-    dfAdult = dfAdult.append(dfJuv_new, ignore_index=True)
+    dfAdult = pd.concat([dfAdult, dfJuv_new], ignore_index=True)
     #remove Juv age 13 from dfJuv
     dfJuv = dfJuv[dfJuv.age <= 12]
 
@@ -142,6 +143,6 @@ def survivalbase_fx(month,
     dfAdult_mf.age = 1
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
-    dfMF = dfMF.append(dfAdult_mf, ignore_index=True)
+    dfMF = pd.concat([dfMF, dfAdult_mf], ignore_index=True)
 
-    return dfHost, dfAdult, dfJuv, dfMF, dfSel
+    return(dfHost, dfAdult, dfJuv, dfMF, dfSel)
