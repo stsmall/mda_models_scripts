@@ -14,6 +14,7 @@ import pandas as pd
 import random
 from agehost import agehost_fx
 from filtercoords import filtercoords_fx
+import cpickle as pickle
 
 
 def host_fx(villages, infhost, muTrans, sizeTrans):
@@ -35,6 +36,14 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     -------
     dfHost : dataframe
     '''
+    #dictionary from actuarial tables 
+    deathdict = {}
+    with open("./act.tbl",'r') as tbl:
+         for line in tbl:
+              line = line.strip()
+              deathdict["{}".format(line.split()[0])] = list(map(float,
+                  line.split()[1:]))
+    pickle.dump( deathdict, open( "acttable.p", "wb" ) )
     assert villages == len(infhost)
     coordinates = []
     host_idx = []
@@ -46,7 +55,7 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
          for host in range(infhost[vill]):
              host_idx.append("v" + str(vill) + "h" + str(host + 1))
     sex = [random.choice("01") for i in range(sum(infhost))]
-    age_death = [agehost_fx(i) for i in sex]
+    age_death = [agehost_fx(i, deathdict) for i in sex]
 
     dfHost = pd.DataFrame({
         'village': np.repeat(range(villages), infhost),
