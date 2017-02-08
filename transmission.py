@@ -139,7 +139,10 @@ def new_infection_fx(dispersal,
     #age and agedeath function from wbsims_initialize
     age, agedeath = agehost_fx(sex, deathdict)
     #add to dfHost at bottom
-    dfHost = pd.concat([dfHost, pd.DataFrame([vill, new_hostidx, sex, age, agedeath, newpts, 0, 0])],ignore_index=True)
+    #dfHost = dfHost.append([dfHost, pd.DataFrame([vill, new_hostidx, sex, age, agedeath, newpts, 0, 0])],ignore_index=True)
+    newhostlist = [[vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]]
+    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
+    #dfHost.reset_index(drop=True,inplace=True)
     return(dfHost, new_hostidx)
 
 def transmission_fx(month,
