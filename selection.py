@@ -40,7 +40,7 @@ def fitness_fx(locus,
          row.fitS.set_value(round(np.mean(fitS_ind), 5))
          row.fitF.set_value(round(np.mean(fitF_ind), 5))
 
-    return dfAdult_mf
+    return(dfAdult_mf)
 
 def selection_fx(dfAdult_mf,
                  positions,
@@ -93,9 +93,11 @@ def selection_fx(dfAdult_mf,
                 else:
                     row.selS.set_value(np.random.gamma(4, scale=0.25))
                     row.selF.set_value(1)
-
-    dfSel = dfSel.append(dfMuts)
+    #this should resolve collisions between dfSel and dfMuts   
+#    common = dfSel.merge(dfMuts,on=['locus','position'])
+#    dfSel[(~dfSel.locus.isin(common.locus))&(~dfSel.position.isin(common.position))]   
+    dfSel = pd.concat([dfSel, dfMuts],ignore_index=True)
     dfSel.sort(['locus','position'], inplace=True)
     dfSel.reset_index(drop=True, inplace=True)
     dfAdult_mf = fitness_fx(locus, dfAdult_mf, dfSel)
-    return dfAdult_mf, dfSel
+    return(dfAdult_mf, dfSel)

@@ -57,7 +57,7 @@ def recombination_fx(locus,
             print("No males in human host, no sex")
             continue
         mf = 0
-        while mf < row.fec:
+        for mf in range(row.fec):
             for loc in range(locus):
                 # locus identifier
                 lid = "locus_" + str(loc) + '_h{0!s}'
