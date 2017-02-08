@@ -1,14 +1,26 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-    FiGS Copyright (C) 2017 Scott T. Small
-    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
-    This is free software, and you are welcome to redistribute it
-    under certain conditions; type `show c' for details.
+FiGS Copyright (C) 2017 Scott T. Small
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+This is free software, and you are welcome to redistribute it
+under certain conditions; type `show c' for details.
 '''
 import numpy as np
 import random
 import pandas as pd
+from IPython import embed
+
+def recombination_locus(basepairs, h1, h2):
+    """Calculates the recombination at a given locus
+    """
+    crossover_pos = random.randint(0, basepairs)
+    h1_ix = [i for i, x in enumerate(h1) if x > crossover_pos][0]
+    h2_ix = [i for i, x in enumerate(h2) if x > crossover_pos][0]
+    h1_new = h1[0:h1_ix + 1].extend(h2[h2_ix:])
+    h2_new = h2[0:h2_ix + 1].extend(h1[h1_ix:])
+    return(h1_new, h2_new)
+
 
 def recombination_fx(locus,
                      dfAdult,
@@ -19,15 +31,15 @@ def recombination_fx(locus,
     Parameters
     ---------
     locus: int
-         number of loci
+        number of loci
     dfAdult_mf : pandas dataframe
-          dataframe containing new larval parasites
+        dataframe containing new larval parasites
     dfAdult : pd df
-          dataframe containing reproducing adults
+        dataframe containing reproducing adults
     recombination_rate : float, list
-          recombination rate for each locus
+        recombination rate for each locus
     basepairs : int, list
-          length of each locus in basepairs
+        length of each locus in basepairs
 
     Returns
     -------
@@ -35,69 +47,71 @@ def recombination_fx(locus,
 
     """
     dfAdult_mf = pd.DataFrame({})
-
-    for index, row in dfAdult[dfAdult.sex == "F"].iterrows(): #for each female
-         try:
-              male = dfAdult.loc[(dfAdult["sex"] == "M") & (dfAdult["hostidx"] == row.hostidx)].sample(1)
-         except ValueError:
-              print("no males, no sex")
-              break
-         mf = 0
-         while mf < dfAdult.loc[index, "fec"]:
-              for loc in range(locus):
-                   if recombination_rate[loc] == 0:
-                        continue
-                   else:
-                        num_recomb = np.random.poisson(recombination_rate[loc] * basepairs[loc] * 2)
-                        #print(num_recomb)
-                        if num_recomb == 0:
-                             row["locus_" + str(loc) + "_h1"] = row["locus_" + str(loc) + "_h" + random.choice("12")]
-                             #male contribution
-                             row["locus_" + str(loc) + "_h2"] = male["locus_" + str(loc) + "_h" + random.choice("12")]
-                        else:
-                             r = 0
-                             #randomly choose male or female
-                             sex_xing = random.choice("MF")
-                             #while loop to account for multiple recombination events
-                             h1m = male["locus_" + str(loc) + "_h1"]
-                             h2m = male["locus_" + str(loc) + "_h2"]
-                             h1f = row["locus_" + str(loc) + "_h1"]
-                             h2f = row["locus_" + str(loc) + "_h2"]
-                             print h1m
-                             print h2m
-                             print h1f
-                             print h2f
-                             if sex_xing is "M":
-                                  while r < num_recomb:
-                                       crossover_pos = random.randint(0, basepairs[loc])
-                                       print crossover_pos
-                                       try:
-                                           hap1_co = [i for i,x in enumerate(h1m) if x > crossover_pos][-1]
-                                           hap2_co = [i for i,x in enumerate(h2m) if x > crossover_pos][-1]
-                                           h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:]
-                                           h2m_new = h2m[0:hap2_co + 1] + h1m[hap1_co:]
-                                           h1m = h1m_new
-                                           h2m = h2m_new
-                                       except IndexError:
-                                           continue
-                                       r += 1
-                             elif sex_xing is "F":
-                                  while r < num_recomb:
-                                       crossover_pos = random.randint(0, basepairs[loc])
-                                       print crossover_pos
-                                       try:
-                                           hap1_co = [i for i,x in enumerate(h1f) if x > crossover_pos][-1]
-                                           hap2_co = [i for i,x in enumerate(h2f) if x > crossover_pos][-1]
-                                           h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:]
-                                           h2f_new = h2f[0:hap2_co + 1] + h1f[hap1_co:]
-                                           h1f = h1f_new
-                                           h2f = h2f_new
-                                       except IndexError:
-                                           continue
-                                       r += 1
-                             row["locus_" + str(loc) + "_h1"] = random.choice([h1f, h2f])
-                             row["locus_" + str(loc) + "_h2"] = random.choice([h1m, h2m])
-              dfAdult_mf = dfAdult_mf.append([row], ignore_index=True)
-              mf += 1
-
+    males = dfAdult.query('sex == "M"')
+    # For each female
+    for index, row in dfAdult.query('sex == "F"').iterrows():
+        hostidx = row.hostidx
+        try:
+            male = males.query('hostidx == @hostidx').sample(1)
+        except ValueError:
+            print("No males in human host, no sex")
+            continue
+        mf = 0
+        while mf < row.fec:
+            for loc in range(locus):
+                # locus identifier
+                lid = "locus_" + str(loc) + '_h{0!s}'
+                if recombination_rate[loc] == 0:
+                     continue
+                else:
+                    num_recomb = np.random.poisson(recombination_rate[loc] * basepairs[loc] * 2)
+                    #print(num_recomb)
+                    if num_recomb == 0:
+                        row[lid.format(1)] =\
+                                row[lid.format(random.choice("12"))]
+                        #male contribution
+                        row[lid.format(2)] =\
+                                male[lid.format(random.choice("12"))]
+                    else:
+                        r = 0
+                        #randomly choose male or female
+                        sex_xing = random.choice("MF")
+                        #while loop to account for multiple recombination events
+                        # :TODO need to fix how this is initialized
+                        h1m = male[lid.format(1)]
+                        h2m = male[lid.format(2)]
+                        h1f = row[lid.format(1)]
+                        h2f = row[lid.format(2)]
+                        if sex_xing is "M":
+                            while r < num_recomb:
+                                crossover_pos = random.randint(0, basepairs[loc])
+                                print(crossover_pos)
+                                try:
+                                    hap1_co = [i for i,x in enumerate(h1m) if x > crossover_pos][-1]
+                                    hap2_co = [i for i,x in enumerate(h2m) if x > crossover_pos][-1]
+                                    h1m_new = h1m[0:hap1_co + 1] + h2m[hap2_co:]
+                                    h2m_new = h2m[0:hap2_co + 1] + h1m[hap1_co:]
+                                    h1m = h1m_new
+                                    h2m = h2m_new
+                                except IndexError:
+                                    continue
+                                r += 1
+                        elif sex_xing is "F":
+                            while r < num_recomb:
+                                crossover_pos = random.randint(0, basepairs[loc])
+                                print(crossover_pos)
+                                try:
+                                    hap1_co = [i for i,x in enumerate(h1f) if x > crossover_pos][-1]
+                                    hap2_co = [i for i,x in enumerate(h2f) if x > crossover_pos][-1]
+                                    h1f_new = h1f[0:hap1_co + 1] + h2f[hap2_co:]
+                                    h2f_new = h2f[0:hap2_co + 1] + h1f[hap1_co:]
+                                    h1f = h1f_new
+                                    h2f = h2f_new
+                                except IndexError:
+                                    continue
+                                r += 1
+                        row["locus_" + str(loc) + "_h1"] = random.choice([h1f, h2f])
+                        row["locus_" + str(loc) + "_h2"] = random.choice([h1m, h2m])
+            dfAdult_mf = dfAdult_mf.append([row], ignore_index=True)
+            mf += 1
     return dfAdult_mf

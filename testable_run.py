@@ -46,6 +46,7 @@ def wb_sims(numberGens, config_file):
     config.read(config_file)
 
     # villages = [Village(hostpopsize = 100, prevalence = 0.1)]
+    # villages = [Village(**i) for i in ]
 
     # simulation
     sh = "simulation"
