@@ -13,7 +13,7 @@ from sklearn.metrics import pairwise_distances
 import random
 from agehost import agehost_fx
 import copy
-import cPickle as pickle
+import pickle
 deathdict = pickle.load( open( "./acttable.p", "rb" ) )
 
 def vectorbite_fx(month,
@@ -210,8 +210,7 @@ def transmission_fx(month,
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(hostpopsize[vill])
-        #print(prev_t)
-        avgMF = ((dfMF.village == vill).sum())/float(infhost)
+        avgMF = (dfMF.village == vill).sum()/float(infhost)
         L3trans = vectorbite_fx(month, bitesPperson[vill], hours2bite[vill], hostpopsize[vill],
                                  prev_t, densitydep_uptake, avgMF, bednets,
                                  bnstart[vill], bnstop[vill], bncoverage[vill])

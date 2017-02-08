@@ -21,6 +21,12 @@ import transmission as trans
 from village import Village
 
 from calc_outstats import allelefreq_fx
+from plotting import (plot_allele_frequency,
+        plot_coordinates_host)
+
+from IPython import embed
+import matplotlib.pyplot as plt
+
 
 
 def wb_sims(numberGens, config_file):
@@ -40,6 +46,7 @@ def wb_sims(numberGens, config_file):
     config.read(config_file)
 
     # villages = [Village(hostpopsize = 100, prevalence = 0.1)]
+    # villages = [Village(**i) for i in ]
 
     # simulation
     sh = "simulation"
@@ -176,7 +183,9 @@ def wb_sims(numberGens, config_file):
                                cdslist)
 
     ## after intialize run main loop
-    for month in range(1,sim_time):
+    fig = plot_coordinates_host(dfHost)
+    embed()
+    for month in range(sim_time):
         print("month is %i\n\n" %month)
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
                                                             villages,
