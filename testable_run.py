@@ -223,6 +223,8 @@ def wb_sims(numberGens, config_file):
                   dfMF.groupby("village").describe()
                   dfHost.groupby("village").describe()
 
+    return(dfHost,dfAdult,dfJuv,dfMF,dfSel)
+
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
      wb_sims(10, 'tests/wbsims.cfg')
