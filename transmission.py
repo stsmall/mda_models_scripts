@@ -12,6 +12,8 @@ import pandas as pd
 from sklearn.metrics import pairwise_distances
 import random
 from agehost import agehost_fx
+import cpickle as pickle
+deathdict = pickle.load( open( "acttable.p", "rb" ) )
 
 def vectorbite_fx(month,
                   bitesPperson,
@@ -135,7 +137,7 @@ def new_infection_fx(dispersal,
     #radnom sex
     sex = random.choice("01")
     #age and agedeath function from wbsims_initialize
-    age, agedeath = agehost_fx(sex)
+    age, agedeath = agehost_fx(sex, deathdict)
     #add to dfHost at bottom
     dfHost.loc[len(dfHost) + 1] = [vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]
 
