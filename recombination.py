@@ -9,6 +9,7 @@
 import numpy as np
 import random
 import pandas as pd
+import copy
 
 def recombination_fx(locus,
                      dfAdult,
@@ -35,10 +36,12 @@ def recombination_fx(locus,
 
     """
     dfAdult_mf = pd.DataFrame({}, columns = dfAdult.columns)
-
-    for index, row in dfAdult[dfAdult.sex == "F"].iterrows(): #for each female
+    newmf = []
+    for index, nfemale in dfAdult[dfAdult.sex == "F"].iterrows(): #for each female
          try:
-             male = dfAdult.loc[(dfAdult["sex"] == "M") & (dfAdult["hostidx"] == row.hostidx)].sample(1)
+             nmale = dfAdult.loc[(dfAdult["sex"] == "M") & (dfAdult["hostidx"] == nfemale.hostidx)].sample(1)
+             male = copy.deepcopy(nmale)
+             row = copy.deepcopy(nfemale)
              mf = 0
              while mf < dfAdult.loc[index, "fec"]:
                   for loc in range(locus):
@@ -88,10 +91,11 @@ def recombination_fx(locus,
                                            r += 1
                                  row["locus_" + str(loc) + "_h1"] = random.choice([h1f, h2f])
                                  row["locus_" + str(loc) + "_h2"] = random.choice([h1m, h2m])
-                  dfAdult_mf = dfAdult_mf.append([row], ignore_index=True)
                   mf += 1
+                  newmf.append(row)
          except ValueError:
              #print("no males, no sex")
              continue
-
+    dfAdult_mf = pd.concat([dfAdult_mf, pd.DataFrame(newmf, columns=dfAdult.columns)], ignore_index=True)
+    #dfAdult_mf = pd.DataFrame({newmf}, columns = dfAdult.columns)
     return dfAdult_mf
