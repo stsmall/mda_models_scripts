@@ -9,16 +9,20 @@ under certain conditions; type `show c' for details.
 import numpy as np
 import random
 import pandas as pd
-from IPython import embed
 
-def recombination_locus(h1, h2, basepairs):
+def recombination_locus(h1, h2, crossover_pos):
     """Calculates the recombination at a given locus
     """
-    crossover_pos = random.randint(0, basepairs)
-    h1_ix = [i for i, x in enumerate(h1) if x > crossover_pos][0]
-    h2_ix = [i for i, x in enumerate(h2) if x > crossover_pos][0]
-    h1_new = np.append(h1[0:h1_ix + 1], h2[h2_ix:])
-    h2_new = np.append(h2[0:h2_ix + 1], h1[h1_ix:])
+    try:
+        h1_ix = [i for i, x in enumerate(h1) if x > crossover_pos][0]
+    except IndexError:
+        h1_ix = len(h1)
+    try:
+        h2_ix = [i for i, x in enumerate(h2) if x > crossover_pos][0]
+    except IndexError:
+        h2_ix = len(h2)
+    h1_new = np.append(h1[0:h1_ix], h2[h2_ix:])
+    h2_new = np.append(h2[0:h2_ix], h1[h1_ix:])
     return(h1_new, h2_new)
 
 
@@ -80,14 +84,18 @@ def recombination_fx(locus,
                         h2m = male[lid.format(2)].values[0].copy()
                         h1f = row[lid.format(1)].copy()
                         h2f = row[lid.format(2)].copy()
-                        if sex_xing is "M":
+                        if sex_xing == "M":
                             for _ in range(num_recomb):
+                                crossover_pos = random.randint(0,
+                                        basepairs[loc])
                                 h1m, h2m = recombination_locus(h1m, h2m,
-                                        basepairs[loc])
-                        elif sex_xing is "F":
+                                        crossover_pos)
+                        elif sex_xing == "F":
                             for _ in range(num_recomb):
-                                h1f, h2f = recombination_locus(h1f, h2f,
+                                crossover_pos = random.randint(0,
                                         basepairs[loc])
+                                h1f, h2f = recombination_locus(h1f, h2f,
+                                        crossover_pos)
                         new_row[lid.format(1)] = random.choice([h1f, h2f])
                         new_row[lid.format(2)] = random.choice([h1m, h2m])
                     newmf.append(new_row)
