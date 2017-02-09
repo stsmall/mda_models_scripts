@@ -7,6 +7,8 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
+
+
 def hostmda_fx(villages,
                dfHost,
                mda_coverage):

@@ -6,15 +6,18 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-import numpy as np
 import math
-import pandas as pd
-from sklearn.metrics import pairwise_distances
 import random
-from agehost import agehost_fx
 import copy
 import pickle
-deathdict = pickle.load( open( "./acttable.p", "rb" ) )
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import pairwise_distances
+
+from figs.agehost import agehost_fx
+
+deathdict = pickle.load( open( "../acttable.p", "rb" ) )
 
 def vectorbite_fx(month,
                   bitesPperson,

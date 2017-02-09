@@ -7,9 +7,10 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-from recombination import recombination_fx
-from mutation import mutation_fx
-from selection import selection_fx
+
+from figs.recombination import recombination_fx
+from .mutation import mutation_fx
+from .selection import selection_fx
 
 
 def fecunditybase_fx(fecund,

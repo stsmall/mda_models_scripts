@@ -9,6 +9,8 @@
 import numpy as np
 import random
 import pandas as pd
+
+
 def fitness_fx(locus,
                dfAdult_mf,
                dfSel):
@@ -41,6 +43,7 @@ def fitness_fx(locus,
          row.fitF.set_value(round(np.mean(fitF_ind), 5))
 
     return(dfAdult_mf)
+
 
 def selection_fx(dfAdult_mf,
                  positions,

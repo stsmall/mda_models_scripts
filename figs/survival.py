@@ -9,9 +9,10 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import weibull_min
-from fecundity import fecunditybase_fx
-from host_migration import hostmigration_fx
 import random
+
+from figs.fecundity import fecunditybase_fx
+from figs.host_migration import hostmigration_fx
 
 def survivalbase_fx(month,
                     surv_Juv,

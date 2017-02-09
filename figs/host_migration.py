@@ -7,6 +7,8 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
+
+
 def hostmigration_fx(dfHost,
                      hostmigrate):
      ''' allows host to move between villages

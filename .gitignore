@@ -17,6 +17,7 @@
 *.nfs*
 *.png
 *.prof
+*.egg-info
 
 config.cfg
 

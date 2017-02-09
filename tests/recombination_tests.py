@@ -2,14 +2,13 @@ import unittest
 
 import sys
 import os.path
-sys.path.append(
-            os.path.abspath(os.path.join(os.path.dirname(__file__),
-                os.path.pardir)))
-
-from recombination import recombination_locus, recombination_fx
 import random
 import numpy as np
 import pandas as pd
+from pstats import Stats
+import cProfile
+
+from figs.recombination import recombination_locus, recombination_fx
 
 random.seed(100)
 
@@ -50,9 +49,6 @@ class Test_Recombination_Locus(unittest.TestCase):
         np.testing.assert_equal(self.h1, [1,5,6])
 
 
-
-
-
 class Test_Recombination_Fx(unittest.TestCase):
     def setUp(self):
         villages = [0, 0, 0]
@@ -77,12 +73,26 @@ class Test_Recombination_Fx(unittest.TestCase):
             'locus_0_h2' : [M_hap2, F_hap2, F_hap1],
             })
 
+        self.pr = cProfile.Profile()
+        self.pr.enable()
         self.adult = df_adult
+
+
+    def tearDown(self):
+        p = Stats(self.pr)
+        p.strip_dirs()
+        p.sort_stats('cumtime')
+        p.print_stats()
 
         
 
     def test_recombination_fx(self):
         df_adult_mf = recombination_fx(1, self.adult, [0.5], [10])
+        np.testing.assert_equal(self.adult.locus_0_h1[0] , [1, 3, 9])
+        np.testing.assert_equal(self.adult.locus_0_h2[0] , [2, 4, 6])
+        np.testing.assert_equal(df_adult_mf.shape[0], 12)
+
+
 
 
 

@@ -15,17 +15,17 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import pairwise_distances
 from scipy.stats import weibull_min
+import matplotlib.pyplot as plt
 
-import wbsims_initialize as wbinit
-import transmission as trans
-from village import Village
+import figs.wbsims_initialize as wbinit
+import figs.transmission as trans
+from figs.village import Village
 
-from calc_outstats import allelefreq_fx
-from plotting import (plot_allele_frequency,
+from figs.calc_outstats import allelefreq_fx
+from figs.plotting import (plot_allele_frequency,
         plot_coordinates_host)
 
 from IPython import embed
-import matplotlib.pyplot as plt
 
 
 
@@ -143,18 +143,18 @@ def wb_sims(numberGens, config_file):
     if selection:
         if mda:
             if fitness == 1:
-                 from survival_mda import survivalmda_sel1_fx as survfx
+                 from figs.survival_mda import survivalmda_sel1_fx as survfx
             elif fitness == 2:
-                 from survival_mda import survivalmda_sel2_fx as survfx
+                 from figs.survival_mda import survivalmda_sel2_fx as survfx
             else:
-                 from survival_mda import survivalmda_fx as survfx
+                 from figs.survival_mda import survivalmda_fx as survfx
         else:
-            from survival import survivalbase_fx as survfx
+            from figs.survival import survivalbase_fx as survfx
     else:
         if mda:
-            from survival_mda import survivalmda_fx as survfx
+            from figs.survival_mda import survivalmda_fx as survfx
         else:
-            from survival import survivalbase_fx as survfx
+            from figs.survival import survivalbase_fx as survfx
     mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_micro, mda_sterile, mda_clear]
     bnlist = [bednets, bnstart, bnstop, bncoverage]
     cdslist = [perc_locus, cds_length, intgen_length]
@@ -230,5 +230,6 @@ def wb_sims(numberGens, config_file):
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     dfHost, dfAdult, dfJuv, dfMF, dfSel = wb_sims(10, 'tests/wbsims.cfg')
+     dfHost, dfAdult, dfJuv, dfMF, dfSel = wb_sims(10, '../tests/wbsims.cfg')
+     embed()
 
