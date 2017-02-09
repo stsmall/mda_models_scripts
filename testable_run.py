@@ -184,7 +184,6 @@ def wb_sims(numberGens, config_file):
 
     ## after intialize run main loop
     fig = plot_coordinates_host(dfHost)
-    embed()
     for month in range(sim_time):
         print("month is %i\n\n" %month)
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
