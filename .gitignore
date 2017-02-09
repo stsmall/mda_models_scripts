@@ -18,6 +18,9 @@
 *.png
 *.prof
 *.egg-info
+/figs/*.html
+/tests/*.txt
+
 
 config.cfg
 

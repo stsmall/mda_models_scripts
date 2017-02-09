@@ -9,7 +9,6 @@ from pstats import Stats
 import cProfile
 
 from figs.recombination import recombination_locus, recombination_fx
-
 random.seed(100)
 
 class Test_Recombination_Locus(unittest.TestCase):
