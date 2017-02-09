@@ -68,7 +68,7 @@ def mutation_fx(locus,
                         muts += 1
               positions.append(mutpos)
 
-    return dfAdult_mf, positions
+    return(dfAdult_mf, positions)
 
 
 

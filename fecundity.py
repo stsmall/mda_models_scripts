@@ -37,6 +37,7 @@ def fecunditybase_fx(fecund,
     selection : boolean
     dfSel : df
     cds_coordinates : [list], int
+    
     Returns
     ------
     dfAdult_mf : df
@@ -61,4 +62,4 @@ def fecunditybase_fx(fecund,
      if selection:
          dfAdult_mf, dfSel = selection_fx(dfAdult_mf, positions, dfSel, locus, cds_coordinates)
 
-     return dfAdult_mf, dfSel
+     return(dfAdult_mf, dfSel)

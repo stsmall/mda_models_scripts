@@ -12,6 +12,9 @@ import pandas as pd
 from sklearn.metrics import pairwise_distances
 import random
 from agehost import agehost_fx
+import copy
+import pickle
+deathdict = pickle.load( open( "./acttable.p", "rb" ) )
 
 def vectorbite_fx(month,
                   bitesPperson,
@@ -126,7 +129,6 @@ def new_infection_fx(dispersal,
               newhostptX = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][0] + x_new
               newhostptY = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][1] + y_new
               newpts = np.array([newhostptX, newhostptY])
-                      #[12, 12], [36, 36], 1, dfMF, dfJuv, dfHost, deathdict)
     #copy village
     vill = transMF.village
     #new host index
@@ -135,11 +137,13 @@ def new_infection_fx(dispersal,
     #radnom sex
     sex = random.choice("01")
     #age and agedeath function from wbsims_initialize
-    age, agedeath = agehost_fx(sex)
+    age, agedeath = agehost_fx(sex, deathdict)
     #add to dfHost at bottom
-    dfHost.loc[len(dfHost) + 1] = [vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]
-
-    return dfHost, new_hostidx
+    #dfHost = dfHost.append([dfHost, pd.DataFrame([vill, new_hostidx, sex, age, agedeath, newpts, 0, 0])],ignore_index=True)
+    newhostlist = [[vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]]
+    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
+    #dfHost.reset_index(drop=True,inplace=True)
+    return(dfHost, new_hostidx)
 
 def transmission_fx(month,
                     villages,
@@ -233,30 +237,28 @@ def transmission_fx(month,
                 disthost = np.where(dfdistHost["hostidx"] == row.hostidx)[0]
 
                 if len(dfHost[dfHost.village == vill]) < hostpopsize[vill]:
-                     prob_newinfection = 1.0/(len(distMat[disthost] <= dispersal) + 1)
+                     prob_newinfection = 1.0/(len(np.where(distMat[disthost][0] <= dispersal)[0]) + 1)
                 else: #everyone is already infected
                      prob_newinfection = 0
 
                 if np.random.random() < prob_newinfection:
                      #print("new host")
                      dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                     newrow = row
+                     newrow = copy.deepcopy(row)
                      newrow['hostidx'] = new_hostidx
                      newrow['age'] = 0
                      #need to update distMat to include new host
                      distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
                 else: #reinfection
-                     #print("reinfection")
-                     #print(row)
-                     rehost = dfdistHost.iloc[random.choice(np.where((distMat[disthost] <= dispersal)[0])[0])]
-                     print(row.hostidx, rehost.hostidx)
-                     newrow = row
+                     rehost = dfdistHost.ix[random.choice(np.where(distMat[disthost][0] <= dispersal)[0])]
+                     #print(distMat[disthost])
+                     #print(np.where(distMat[disthost][0] <= dispersal)[0])
+                     newrow = copy.deepcopy(row)
                      newrow['hostidx'] = rehost['hostidx']
-                     #print(row.hostidx, newrow.hostidx)
                      newrow['age'] = 0
                 dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
                 new_rows.append(newrow.values)
         else:
             print("dfMF is empty")
-    dfJuv = pd.concat([dfJuv, pd.DataFrame(new_rows, columns=dfJuv.columns)],ignore_index=True, copy=True)
-    return dfHost, dfJuv, dfMF, L3trans
+    dfJuv = pd.concat([dfJuv, pd.DataFrame(new_rows, columns=dfJuv.columns)],ignore_index=True)
+    return(dfHost, dfJuv, dfMF, L3trans)

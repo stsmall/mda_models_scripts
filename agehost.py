@@ -7,8 +7,9 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
+import bisect
 
-def agehost_fx(sex):
+def agehost_fx(sex, deathdict):
     '''Calculate age of host and age of death from acturial table
     Parameters
     ---------
@@ -22,39 +23,10 @@ def agehost_fx(sex):
     death : int
          age of death
     '''
-    zero_10 = 0.24 #12%
-    eleven_20 = 0.46 #11%
-    twentyone_30 = 0.64 #9%
-    thirtyone_40 = 0.78 #7%
-    fourtyone_50 = 0.88 #5%
-    fiftyone_60 = 0.94 #3%
-    sixtyone_70 = 0.98 #2%                     
-    #assign age
-    agerand = np.random.random()
-    if agerand <= zero_10:
-         age = np.random.randint(1,10)
-    elif agerand > zero_10 and agerand <= eleven_20:
-         age = np.random.randint(11,20)
-    elif agerand > eleven_20 and agerand <= twentyone_30:
-         age = np.random.randint(21,30)
-    elif agerand > twentyone_30 and agerand <= thirtyone_40:
-         age = np.random.randint(31,40)
-    elif agerand > thirtyone_40 and agerand <= fourtyone_50:
-         age = np.random.randint(41,50)
-    elif agerand > fourtyone_50 and agerand <= fiftyone_60:
-         age = np.random.randint(51,60)
-    elif agerand > fiftyone_60 and agerand <= sixtyone_70:
-         age = np.random.randint(61,70)
-    elif agerand > sixtyone_70:
-         age = np.random.randint(71,80)
-    
-    #dictionary from actuarial tables 
-    deathdict = {}
-    with open("./act.tbl",'r') as tbl:
-         for line in tbl:
-              line = line.strip()
-              deathdict["{}".format(line.split()[0])] = list(map(float,
-                  line.split()[1:]))
+    ageclass = [0.24, 0.46, 0.64, 0.78, 0.88, 0.94, 0.98]
+    agerange = [[0,10],[11,20],[21,30],[31,40],[41,50],[51,60],[61,70],[71,80]]
+    ageint = bisect.bisect_left(ageclass, np.random.random())
+    age = np.random.randint(agerange[ageint][0], agerange[ageint][1])
     
     #when do they die
     death = deathdict[str(age)][int(sex)] + np.random.normal(0,6) + age
