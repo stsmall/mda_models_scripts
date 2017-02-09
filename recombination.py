@@ -38,6 +38,10 @@ def recombination_locus(h1, h2, crossover_pos):
 def _temp(df, loci):
     females = df.query('sex == "F" and fec > 0')
     males = df.query('sex == "M"')
+    if males.shape[0] == 0:
+        return(males)
+    elif females.shape[0] == 0:
+        return(females)
     outs = []
     for _, f_row in females.iterrows():
         nr = f_row.copy()
@@ -105,4 +109,5 @@ def recombination_fx(locus,
             j != 0]
     _temp2 = partial(_temp, loci=loci)
     dfAdult_mf = hosts.apply(_temp2)
+    dfAdult_mf.reset_index(drop=True, inplace=True)
     return dfAdult_mf
