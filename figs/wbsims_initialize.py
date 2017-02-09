@@ -12,9 +12,10 @@ import subprocess
 import numpy as np
 import pandas as pd
 import random
-from agehost import agehost_fx
-from filtercoords import filtercoords_fx
 import pickle
+
+from figs.agehost import agehost_fx
+from figs.filtercoords import filtercoords_fx
 
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -35,7 +36,7 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     -------
     dfHost : dataframe
     '''
-    deathdict = pickle.load( open( "./acttable.p", "rb" ) )
+    deathdict = pickle.load( open( "../acttable.p", "rb" ) )
     assert villages == len(infhost)
     coordinates = []
     host_idx = []

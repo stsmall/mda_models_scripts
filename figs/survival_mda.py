@@ -8,12 +8,13 @@
 """
 import numpy as np
 from scipy.stats import weibull_min
-from fecundity_mda import fecunditymda_fx
-from fecundity_mda import fecunditymda_sel1_fx
-from fecundity_mda import fecunditymda_sel2_fx
-from host_migration import hostmigration_fx
-from hostmda import hostmda_fx
 import random
+
+from figs.fecundity_mda import fecunditymda_fx
+from figs.fecundity_mda import fecunditymda_sel1_fx
+from figs.fecundity_mda import fecunditymda_sel2_fx
+from figs.host_migration import hostmigration_fx
+from figs.hostmda import hostmda_fx
 
 def survivalmda_fx(month,
                    villages,
