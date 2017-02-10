@@ -42,9 +42,9 @@ def filtercoords_fx(positions,
     #genes will run over the locus length
     for loc in range(len(positions)):
         num_cds = int(round((perc_locus[loc + 1]*basepairs[loc + 1]) /
-            cds_length[loc +1]))
+            cds_length))
         size_cds = np.round(np.random.gamma(4, 0.25, num_cds) *
-                cds_length[loc+1])
+                cds_length)
         #r = size
         #m = mean
         #p = r / (  r + m )
@@ -64,4 +64,4 @@ def filtercoords_fx(positions,
             keep_pos.extend(positions[loc][np.where(np.logical_and(positions[loc] >= start, positions[loc] <= end))])
         cds_positions.append(keep_pos) #this is a nested list for each locus
         cds_coordinates.append(cds_coords) #this is a nested list for each locus
-    return(cds_positions, cds_coordinates)   
+    return(cds_positions, cds_coordinates)

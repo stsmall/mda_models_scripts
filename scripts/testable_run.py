@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import figs.wbsims_initialize as wbinit
 import figs.transmission as trans
 from figs.village import Village
+from figs.counthaps import hapcount
 
 from figs.calc_outstats import allelefreq_fx
 from figs.plotting import (plot_allele_frequency,
@@ -51,6 +52,7 @@ def wb_sims(numberGens, config_file):
     # simulation
     sh = "simulation"
     burn_in = config.getint(sh, "burn_in")
+    seed = config.getint(sh, "seed")
 
     # host_demography
     sh = 'host_demography'
@@ -184,6 +186,7 @@ def wb_sims(numberGens, config_file):
 
     ## after intialize run main loop
     fig = plot_coordinates_host(dfHost)
+    print("\nUniqHaps : %i\n" %hapcount(dfAdult.locus_0))
     for month in range(sim_time):
         print("month is %i\n\n" %month)
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
@@ -231,5 +234,5 @@ def wb_sims(numberGens, config_file):
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
      dfHost, dfAdult, dfJuv, dfMF, dfSel = wb_sims(10, '../tests/wbsims.cfg')
-     embed()
+#     embed()
 
