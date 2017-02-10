@@ -128,7 +128,7 @@ def survivalbase_fx(month,
 
     ##move Juv age 13 to adult age 1
     #dfJuv_new = pd.DataFrame({})
-    dfJuv_new = dfJuv[dfJuv.age > 12]
+    dfJuv_new = dfJuv[dfJuv.age > 12].copy()
     #reset age to adult
     dfJuv_new.age = 1
     #increase R0net for next gen
