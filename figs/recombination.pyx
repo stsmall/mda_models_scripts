@@ -138,6 +138,6 @@ def recombination_fx(locus,
     hosts = dfAdult.hostidx.unique()
     N = hosts.shape[0]
     for i in range(N):
-        dout.append(_temp(hosts[i], loci))
+        dout.append(_temp(dfAdult[dfAdult.hostidx == hosts[i]], loci))
     dfAdult_mf = pd.concat(dout)
     return dfAdult_mf
