@@ -9,7 +9,7 @@
 import numpy as np
 from scipy.stats import weibull_min
 import random
-
+import pandas as pd
 from figs.fecundity_mda import fecunditymda_fx
 from figs.fecundity_mda import fecunditymda_sel1_fx
 from figs.fecundity_mda import fecunditymda_sel2_fx
@@ -136,18 +136,31 @@ def survivalmda_fx(month,
         ##apply MDA effect to host populations of worms
         for index, row in dfHost[dfHost.MDA == 1].iterrows():
              #kill MF
-             dfMF.drop(dfMF[dfMF.hostidx == row.hostidx].sample(frac = mda_micro).index, inplace = True)
+             try:
+                 dfMF.drop(dfMF[dfMF.hostidx == row.hostidx].sample(frac = mda_micro).index, inplace = True)
+             except ValueError:
+                 #some hosts have no MF, just Juv
+                 pass
              #kill Juv
-             dfJuv.drop(dfJuv[dfJuv.hostidx == row.hostidx].sample(frac = mda_juvicide).index, inplace = True)
+             try:
+                 dfJuv.drop(dfJuv[dfJuv.hostidx == row.hostidx].sample(frac = mda_juvicide).index, inplace = True)
+             except ValueError:
+                 #some hosts have no Juv
+                 pass
              #kill Adults
-             dfAdult.drop(dfAdult[dfAdult.hostidx == row.hostidx].sample(frac = mda_macro).index, inplace = True)
-
-    ##normal surival funxtions
+             try:
+                 dfAdult.drop(dfAdult[dfAdult.hostidx == row.hostidx].sample(frac = mda_macro).index, inplace = True)
+             except ValueError:
+                 # some hosts have no adults
+                 pass
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
         surv_adultrand = np.random.random(len(dfAdult))
-        surv_adultfxage = weibull_min.cdf(dfAdult.age, shapeAdult,loc=0,scale=scaleAdult)
+        try:
+            surv_adultfxage = weibull_min.cdf(dfAdult.age, shapeAdult,loc=0,scale=scaleAdult)
+        except TypeError:
+            surv_adultfxage = weibull_min.cdf(0, shapeAdult,loc=0,scale=scaleAdult)
         surviveAdult = np.where(surv_adultrand <= (1 - surv_adultfxage))
         dfAdult = dfAdult.iloc[surviveAdult]
         dfAdult.age = dfAdult.age + 1 #2 - 21
@@ -160,20 +173,24 @@ def survivalmda_fx(month,
         dfMF = dfMF.loc[dfMF["hostidx"].isin(dfHost.hostidx)]
         #add 1 year to all ages of hosts
         dfHost.age = dfHost.age + 1
-        dfHost = hostmigration_fx(dfHost, hostmigrate)
+        if hostmigrate != 0:
+            dfHost = hostmigration_fx(dfHost, hostmigrate)
 
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
-    surv_juvrand = np.random.random(len(np.where(dfJuv.age > 0))[0])
+    dfJuv.age += 1
+    surv_juvrand = np.random.random(len(dfJuv))
     surviveJuv = np.where(surv_juvrand <= surv_Juv)
     dfJuv = dfJuv.iloc[surviveJuv]
-    dfJuv.age = dfJuv.age + 1 # 1 - 13
 
     ##MF is weibull cdf
     surv_mfrand = np.random.random(len(dfMF))
-    surv_mffxage = weibull_min.cdf(dfMF.age,shapeMF,loc=0,scale=scaleMF)
+    try:
+        surv_mffxage = weibull_min.cdf(dfMF.age,shapeMF,loc=0,scale=scaleMF)
+    except TypeError:
+        surv_mffxage = weibull_min.cdf(0,shapeMF,loc=0,scale=scaleMF)
     surviveMF = np.where(surv_mfrand <= (1 - surv_mffxage))
-    dfMF = dfMF.iloc[surviveMF]
+    dfMF = dfMF.loc[surviveMF]
     dfMF.age = dfMF.age + 1 #2 - 12
     dfMF = dfMF[dfMF.age < 13] #hard cutoff at 12 months
 
@@ -185,21 +202,21 @@ def survivalmda_fx(month,
     #increase R0net for next gen
     dfJuv_new.R0net = dfJuv_new.R0net + 1
     #append to adults
-    dfAdult = dfAdult.append(dfJuv_new, ignore_index=True)
+    dfAdult = pd.concat([dfAdult, dfJuv_new], ignore_index=True)
     #remove Juv age 13 from dfJuv
     dfJuv = dfJuv[dfJuv.age <= 12]
 
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
     dfAdult_mf, dfSel = fecunditymda_fx(villages, fecund, locus, mutation_rate, recombination_rate,
-                                 basepairs, selection, dfSel, cds_coordinates, densitydep_fec,
-                                 clear_count, mda_sterile, mda_clear, dfHost, dfAdult)
+                                 basepairs, selection, cds_coordinates, densitydep_fec,
+                                 clear_count, mda_sterile, mda_clear, dfHost, dfAdult,dfSel)
     dfAdult_mf.age = 1
     dfAdult_mf.fec = 0
     dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
-    dfMF = dfMF.append(dfAdult_mf, ignore_index=True)
+    dfMF = pd.concat([dfMF, dfAdult_mf], ignore_index=True)
 
-    return dfHost, dfAdult, dfJuv, dfMF, dfSel
+    return(dfHost, dfAdult, dfJuv, dfMF, dfSel)
 
 def survivalmda_sel1_fx(month,
                    villages,
