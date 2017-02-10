@@ -16,13 +16,13 @@ from libc.stdlib cimport abort, malloc, free
 
 
 DTYPE = np.int
-ctypedef np.int_t DTYPE_t
+ctypedef np.int DTYPE_t
 
 from .locus import Locus
 
 
-def recombination_locus(np.ndarray[int, ndim=1] h1,
-        np.ndarray[int, ndim=1] h2,
+def recombination_locus(np.ndarray[np.int64_t, ndim=1] h1,
+        np.ndarray[np.int64_t, ndim=1] h2,
         int crossover_pos):
     """Calculates the recombination at a given locus
     """
