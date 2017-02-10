@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import figs.wbsims_initialize as wbinit
 import figs.transmission as trans
 from figs.village import Village
-from figs.counthaps import counthaps
+from figs.counthaps import hapcount
 
 from figs.calc_outstats import allelefreq_fx
 from figs.plotting import (plot_allele_frequency,
@@ -186,7 +186,7 @@ def wb_sims(numberGens, config_file):
 
     ## after intialize run main loop
     fig = plot_coordinates_host(dfHost)
-    counthaps(dfAdult.locus_0)
+    print("\nUniqHaps : %i\n" %hapcount(dfAdult.locus_0))
     for month in range(sim_time):
         print("month is %i\n\n" %month)
         dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
