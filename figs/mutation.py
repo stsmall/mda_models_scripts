@@ -37,7 +37,7 @@ def mutation_fx(locus,
     mutations : int, list
          list of positions of new mutations
     '''
-    dfAdult_mf.reset_index(drop=True, inplace=True)
+    #dfAdult_mf.reset_index(drop=True, inplace=True)
     positions = []
     for loc in range(locus):
          if recombination_rate[loc] == 0:

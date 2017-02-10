@@ -15,6 +15,7 @@ from figs.fecundity import fecunditybase_fx
 from figs.host_migration import hostmigration_fx
 
 def survivalbase_fx(month,
+                    villages,
                     surv_Juv,
                     shapeMF,
                     scaleMF,
@@ -36,6 +37,7 @@ def survivalbase_fx(month,
                     dfAdult,
                     dfJuv,
                     dfMF):
+
 
     '''Base survival function
     Parameters
