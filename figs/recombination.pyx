@@ -21,13 +21,13 @@ ctypedef np.int_t DTYPE_t
 from .locus import Locus
 
 
-def recombination_locus(np.ndarray[int, ndim=1] h1, 
-        np.ndarray[int, ndim=1] h2, 
+def recombination_locus(np.ndarray[int, ndim=1] h1,
+        np.ndarray[int, ndim=1] h2,
         int crossover_pos):
     """Calculates the recombination at a given locus
     """
     cdef int h1_ix = h1.shape[0]
-    cdef int h2_ix = h2.shape[0] 
+    cdef int h2_ix = h2.shape[0]
     cdef unsigned i = 0
     cdef int j
     for j in h1:
@@ -49,7 +49,7 @@ def recombination_locus(np.ndarray[int, ndim=1] h1,
 
 
 def _temp(df, loci):
-    """ 
+    """
     Parameter
     ---------
     df : pandas dataframe
@@ -62,7 +62,7 @@ def _temp(df, loci):
 
     females = df.query('sex == "F" and fec > 0')
     males = df.ix[df.sex == "M", :]
-    
+
     if males.shape[0] == 0:
         return(males)
     elif females.shape[0] == 0:
@@ -133,9 +133,9 @@ def recombination_fx(locus,
     lid = "locus_{0!s}"
     dout = []
     loci = [Locus(lid.format(i), recombination_rate = j, basepairs = k)
-            for i, j, k in zip(range(locus), recombination_rate, basepairs) if 
+            for i, j, k in zip(range(locus), recombination_rate, basepairs) if
             j != 0]
-    hosts = dfAdult.hostidx.unique().value 
+    hosts = dfAdult.hostidx.unique()
     N = hosts.shape[0]
     for i in range(N):
         dout.append(_temp(hosts[i], loci))
