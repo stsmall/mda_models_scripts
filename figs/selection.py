@@ -37,6 +37,7 @@ def fitness_fx(locus,
 #        print row["locus_" + str(1) + "_h1"]
 #        print row["locus_" + str(1) + "_h2"]
         for loc in range(1,locus):
+            print row
             fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
                                         ["locus_" + str(loc) + "_h1"])]
                                         ['selS'][dfSel["locus"] == loc])

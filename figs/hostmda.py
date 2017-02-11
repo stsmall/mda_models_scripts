@@ -32,7 +32,7 @@ def hostmda_fx(villages,
      ##rezero MDA identifier
      dfHost.MDA = 0
      ##assign MDA randomly
-     for vill in villages:
+     for vill in range(villages):
           sub = round(mda_coverage[vill] * len(dfHost[dfHost.village == vill]))
           dfHost.ix[np.random.choice(dfHost.index, sub, replace = False), "MDA"] = 1
      return(dfHost)
