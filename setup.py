@@ -1,5 +1,5 @@
 import glob
-from setuptools import setup
+from setuptools import setup, find_packages
 from distutils.extension import Extension
 
 
@@ -43,10 +43,11 @@ if use_cython:
 metadata = {'name': name,
             'version': version,
             'ext_modules' : cythonize(ext_modules),
-            'scripts': glob.glob('scripts/*.py'),
             'author': 'Scott Smalls',
             'packages': ['figs',
-                ]
+                ],
+            'package_data': {'figs' : ['data/']},
+            'scripts': glob.glob('scripts/*.py'),
             }
 
 
