@@ -14,9 +14,9 @@ import pandas as pd
 import random
 import pickle
 
-from figs.agehost import agehost_fx
-from figs.filtercoords import filtercoords_fx
-from .figs.worm import Worms
+from .agehost import agehost_fx
+from .filtercoords import filtercoords_fx
+from .worm import Worms
 from IPython import embed
 
 

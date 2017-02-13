@@ -201,6 +201,7 @@ def wb_sims(numberGens, config_file):
                                                             dfJuv,
                                                             dfMF)
         dfHost, dfAdult, dfJuv, dfMF, dfSel = survfx(month,
+                                                    villages, 
                                                     surv_Juv,
                                                     shapeMF,
                                                     scaleMF,
