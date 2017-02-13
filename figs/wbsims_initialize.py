@@ -16,6 +16,8 @@ import pickle
 
 from figs.agehost import agehost_fx
 from figs.filtercoords import filtercoords_fx
+from figs.worm import Worm
+from IPython import embed
 
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -116,7 +118,7 @@ def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
                 0, m1, m2, m3, m1, 0, m4, m5, m2, m4, 0, m6, m3, m5, m6, 0))
 
 
-def parse_coalsims_fx(msout, ploidy):
+def parse_coalsims_fx(msout, ploidy, nind):
     """Parse output from ms or scrm.
     Parameters
     ---------
@@ -132,6 +134,8 @@ def parse_coalsims_fx(msout, ploidy):
     pos
          list of positions for the mutaitons
     """
+    print('NINDVS' + str(nind)) 
+    # Parsing positions
     for line in iter(msout.stdout.readline, ''):
         line = line.decode('utf-8')
         if line.startswith("positions"):
@@ -152,32 +156,32 @@ def parse_coalsims_fx(msout, ploidy):
             pass
     pos = pos.astype(np.int64)
     if ploidy == 1:
-        gt_array = []
+        gt_array = np.zeros((nind, pos.shape[0]) , dtype=np.uint8)
         #:TODO Seriously think about returning the whole genotype array
+        cix = 0
         for line in iter(msout.stdout.readline, ''):
             line = line.decode('utf-8')
-            hap = np.array(list(line.strip()), dtype=int)
+            line = list(line.strip())
             try:
-                gt = hap * pos
-                gt_array.append(gt[gt != 0])
-            except ValueError:
-                # Last line
+                gt_array[cix, :] = np.array(line, dtype=np.uint8)
+            except IndexError:
                 break
-        #print(gt_array)
+            cix += 1
         return(gt_array, pos)
     elif ploidy == 2:
-        gt_array = []
-        gt_array2 = []
+        cix = 0
+        gt_array = np.zeros((nind, pos.shape[0]) , dtype=np.uint8)
+        gt_array2 = np.zeros((nind, pos.shape[0]) , dtype=np.uint8)
         for line in iter(msout.stdout.readline, ''):
             line = line.decode('utf-8')
-            hap = np.array(list(line.strip()), dtype=int)
+            hap = np.array(list(line.strip()), dtype=np.uint8)
             try:
-                gt = hap * pos
-                gt_array.append(gt[gt != 0])
-                hap2_temp = next(iter(msout.stdout.readline, ''))
-                hap2 = np.array(list(hap2_temp.strip()), dtype=int)
-                gt2 = hap2 * pos
-                gt_array2.append(gt2[gt2 != 0])
+                gt_array[cix, :] = hap
+                hap2 = next(iter(msout.stdout.readline, ''))
+                gt_array2[cix, :] =  np.array(list(hap2_temp.strip()),
+                        dtype=np.bool)
+                gt_array2.append(gt2)
+                cix += 1
             except ValueError:
                 # End of output
                 break
@@ -304,11 +308,12 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     #msout = subprocess.check_output(mscmd.split(" ")).decode('utf-8')
     #:TODO refactor this, less variation on returns
     if ploidy == 1:
-        gt, mutations = parse_coalsims_fx(msout, ploidy)
-        return(gt, mutations)
+        gt, positions = parse_coalsims_fx(msout, ploidy, sum(worm_popsize))
+        return(gt, positions)
     elif ploidy == 2:
-        gt, gt2, mutations = parse_coalsims_fx(msout, ploidy)
-        return(gt, gt2, mutations)
+        gt, gt2, positions = parse_coalsims_fx(msout, ploidy,
+                sum(worm_popsize))
+        return(gt, gt2, positions)
 
 
 def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
@@ -416,6 +421,7 @@ def fit_fx(locus, dfAdult, dfSel):
 
      return(fitS, fitF)
 
+
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
               initial_migration, initial_distance_m, theta, basepairs, mutation,
               recombination, time2Ancestral, thetaRegional, time_join, selection,
@@ -461,6 +467,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      dfAdult = dfAdult.loc[:, ['village', 'hostidx', 'age',
             'sex', 'R0net', 'fec']]
      # Add genetic data
+     dfAdult = Worms(dfAdult)
      posSel = []
      for loc in range(locus):
          if recombination[loc] == 0:
@@ -469,16 +476,18 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
                      theta[loc], basepairs[loc], mutation[loc],
                      recombination[loc], time2Ancestral, thetaRegional, 
                      time_join)
-             dfAdult["locus_" + str(loc)] = gt_array
+             dfAdult.h1["locus_" + str(loc)] = gt_array
          elif recombination[loc] > 0:
              gt_array, gt_array2, mutations = coalsims_fx(wormpopsize, 
                      villages, initial_migration, initial_distance_m, 
                      theta[loc], basepairs[loc], mutation[loc],
                      recombination[loc], time2Ancestral, thetaRegional, time_join)
-             dfAdult["locus_" + str(loc) + "_h1"] = gt_array
-             dfAdult["locus_" + str(loc) + "_h2"] = gt_array2
+             dfAdult.h1["locus_" + str(loc) + "_h1"] = gt_array
+             dfAdult.h2["locus_" + str(loc) + "_h2"] = gt_array2
              posSel.append(mutations)
      # Create dfSel
+     from IPython import embed
+     embed()
      if selection:
           dfSel, cds_coordinates = sel_fx(locus, posSel, basepairs, 
                   perc_locus, cds_length, intgen_length)
@@ -580,6 +589,7 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
     cds_length = 1100
     intgen_length = 2500
     '''
+
     hostpopsize = np.array(hostpopsize)
     prevalence = np.array(prevalence)
     infhost = np.round(hostpopsize * prevalence).astype(np.int64)
@@ -612,10 +622,10 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
     return(dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates)
 
 ##3 loci, 2 villages, with selection
-#if __name__ == '__main__':
-#    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates=wbsims_init(2, [100, 200],
-#    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
-#    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
-#    True, [[0, 0.18, 0.20], 1100, 2500])
-#    from IPython import embed
-#    embed()
+if __name__ == '__main__':
+    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates=wbsims_init(2, [100, 200],
+    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
+    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
+    True, [[0, 0.18, 0.20], 1100, 2500])
+    from IPython import embed
+    embed()

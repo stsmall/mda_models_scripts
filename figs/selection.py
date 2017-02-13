@@ -30,14 +30,11 @@ def fitness_fx(locus,
 
     fitS = []
     fitF = []
-#    print dfSel.head()
     for index, row in dfAdult_mf.iterrows():
         fitS_ind = []
         fitF_ind = []
-#        print row["locus_" + str(1) + "_h1"]
-#        print row["locus_" + str(1) + "_h2"]
         for loc in range(1,locus):
-            print row
+            print(row)
             fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
                                         ["locus_" + str(loc) + "_h1"])]
                                         ['selS'][dfSel["locus"] == loc])
@@ -48,7 +45,6 @@ def fitness_fx(locus,
         fitF.append(round(np.mean(fitF_ind), 5))
     dfAdult_mf["fitS"] = fitS
     dfAdult_mf["fitF"] = fitF
-#    print(dfAdult_mf.head())
     return(dfAdult_mf)
 
 def selection_fx(dfAdult_mf,
