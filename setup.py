@@ -42,12 +42,12 @@ if use_cython:
 
 metadata = {'name': name,
             'version': version,
-            'packages': find_packages(),
             'ext_modules' : cythonize(ext_modules),
-            'scripts': glob.glob('scripts/*.py'),
             'author': 'Scott Smalls',
             'packages': ['figs',
-                ]
+                ],
+            'package_data': {'figs' : ['data/']},
+            'scripts': glob.glob('scripts/*.py'),
             }
 
 

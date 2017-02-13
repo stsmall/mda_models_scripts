@@ -16,8 +16,10 @@ import pickle
 
 from figs.agehost import agehost_fx
 from figs.filtercoords import filtercoords_fx
-from figs.worm import Worm
+from .figs.worm import Worms
 from IPython import embed
+
+
 
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -38,7 +40,7 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     -------
     dfHost : dataframe
     '''
-    deathdict = pickle.load( open( "../acttable.p", "rb" ) )
+    deathdict = pickle.load( open( "../figs/data/acttable.p", "rb" ) )
     assert villages == len(infhost)
     coordinates = []
     host_idx = []
@@ -178,9 +180,8 @@ def parse_coalsims_fx(msout, ploidy, nind):
             try:
                 gt_array[cix, :] = hap
                 hap2 = next(iter(msout.stdout.readline, ''))
-                gt_array2[cix, :] =  np.array(list(hap2_temp.strip()),
+                gt_array2[cix, :] =  np.array(list(hap2.strip()),
                         dtype=np.bool)
-                gt_array2.append(gt2)
                 cix += 1
             except ValueError:
                 # End of output
@@ -486,8 +487,6 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
              dfAdult.h2["locus_" + str(loc) + "_h2"] = gt_array2
              posSel.append(mutations)
      # Create dfSel
-     from IPython import embed
-     embed()
      if selection:
           dfSel, cds_coordinates = sel_fx(locus, posSel, basepairs, 
                   perc_locus, cds_length, intgen_length)
@@ -617,8 +616,8 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
 
         cds_coordinates = []
 
-    dfJuv = pd.DataFrame({}, columns = dfAdult.columns)
-    dfMF = pd.DataFrame({}, columns = dfAdult.columns)
+    dfJuv = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
+    dfMF = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
     return(dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates)
 
 ##3 loci, 2 villages, with selection
