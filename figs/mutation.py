@@ -38,7 +38,7 @@ def mutation_fx(locus,
          list of positions of new mutations
     '''
     #dfAdult_mf.reset_index(drop=True, inplace=True)
-    positions = []
+    new_positions = []
     nworms = dfAdult_mf.meta.shape[0]
     for loc in range(locus):
         if recombination_rate[loc] == 0:
@@ -48,33 +48,24 @@ def mutation_fx(locus,
         num_muts = np.random.binomial(mut_coef * nworms, 
                 basepairs[loc] * mutation_rate[loc])
         #print num_muts
+        positions = dfAdult_mf.pos["locus_" + loc]
         for mut in range(num_muts):
-            iix = 0
             randmf = np.random.randint(0, nworms)
             narray = np.zeros(nworms, np.uint8)
             narray[randmf] = 1
             newsite = np.random.randint(1, basepairs[loc])
-            newhap = np.append(dfAdult_mf.iloc[randmf]["locus_" + str(loc)], newsite)
-            dfAdult_mf.h1["locus_" + str(loc)] =\
-                    np.insert(dfAdult_mf.h1["locus_" + str(loc)], 
-                            iix, narray, axis=1)
-            positions.append(newsite)
-        else:
-            num_muts = np.random.binomial(2 * nworms, 
-                    basepairs[loc] * mutation_rate[loc])
-            #print num_muts
-            mutpos = []
-            for mut in range(num_muts):
-                randmf = np.random.randint(0,nworms)
-                newsite = np.random.randint(1,basepairs[loc])
-                mutpos.append(newsite)
-                randhap = random.choice("12")
-                newhap = np.append(dfAdult_mf.iloc[randmf]["locus_" + str(loc) + "_h" + randhap], 
-                        newsite)
-                dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + randhap, newhap.sort())
-            positions.append(mutpos)
-
-    return(dfAdult_mf, positions)
+            iix = np.argmax(positions > newsite)
+            if recombination_rate[loc] == 0:
+                dfAdult_mf.h1["locus_" + str(loc)] =\
+                        np.insert(dfAdult_mf.h1["locus_" + str(loc)], 
+                                iix, narray, axis=1)
+            else:
+                hap =\
+                        getattr(dfAdult_mf,"h"+\
+                        random.choic("12"))["locus_"+str(loc)]  
+                hap = np.insert(hap, iix, narray, axis=1)
+            new_positions.append(newsite)
+    return(dfAdult_mf, new_positions)
 
 
 

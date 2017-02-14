@@ -410,6 +410,7 @@ def fit_fx(locus, dfAdult, dfSel):
     fitF = []
     from IPython import embed
     for loc in dfAdult.h1.keys():
+        matching_pos = np.intersect1d()
         pass
     embed()
     """
