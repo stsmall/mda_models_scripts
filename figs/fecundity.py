@@ -8,9 +8,11 @@
 """
 import numpy as np
 
-from figs.recombination import recombination_fx
+from .recombination import recombination_fx
 from .mutation import mutation_fx
 from .selection import selection_fx
+
+from IPython import embed
 
 
 def fecunditybase_fx(fecund,
@@ -23,14 +25,14 @@ def fecunditybase_fx(fecund,
                      dfSel,
                      cds_coordinates,
                      densitydep_fec):
-     '''base fecundity function, simpliest scenario
+    '''Base fecundity function, simpliest scenario
 
     Parameters
     ---------
     fecund: int
-         rate of the poisson distribution for offspring number
-    dfAdult: pandas dataframe
-          dataframe containing adult parasites
+        rate of the poisson distribution for offspring number
+    dfAdult: figs.Worms 
+        dataframe containing adult parasites
     locus : int
     mutation_rate : list, float
     recombination_rate : list, float
@@ -45,22 +47,21 @@ def fecunditybase_fx(fecund,
          deep copy of adult genotypes
     dfSel : df
 
-     '''
-     #all locations where age is less than 6
-     dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(fecund,
-               len(dfAdult[dfAdult.age < 6]))
-     #linear function defining decline in fecundity with age
-     m = float(0 - fecund) / (21 - 6)
-     b = 0 - m * 21
-     #assign fecundity value based on age function
-     dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m
-               * dfAdult.loc[dfAdult.age >= 6,"age"] + b)
+    '''
+    dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(fecund,
+           len(dfAdult[dfAdult.age < 6]))
+    #linear function defining decline in fecundity with age
+    m = float(0 - fecund) / (21 - 6)
+    b = 0 - m * 21
+    #assign fecundity value based on age function
+    dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m
+           * dfAdult.loc[dfAdult.age >= 6,"age"] + b)
+    #sex, recombination, mutation
+    dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
+    dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf, 
+         mutation_rate, recombination_rate, basepairs)
 
-     #sex, recombination, mutation
-     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
-     dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
+    if selection:
+     dfAdult_mf, dfSel = selection_fx(dfAdult_mf, positions, dfSel, locus, cds_coordinates)
 
-     if selection:
-         dfAdult_mf, dfSel = selection_fx(dfAdult_mf, positions, dfSel, locus, cds_coordinates)
-
-     return(dfAdult_mf, dfSel)
+    return(dfAdult_mf, dfSel)

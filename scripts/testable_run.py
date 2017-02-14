@@ -157,7 +157,8 @@ def wb_sims(numberGens, config_file):
             from figs.survival_mda import survivalmda_fx as survfx
         else:
             from figs.survival import survivalbase_fx as survfx
-    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_micro, mda_sterile, mda_clear]
+    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, 
+            mda_micro, mda_sterile, mda_clear]
     bnlist = [bednets, bnstart, bnstop, bncoverage]
     cdslist = [perc_locus, cds_length, intgen_length]
     # set counters
@@ -183,9 +184,8 @@ def wb_sims(numberGens, config_file):
                                time_join,
                                selection,
                                cdslist)
-
+    embed()
     ## after intialize run main loop
-    fig = plot_coordinates_host(dfHost)
     #print("\nUniqHaps : %i\n" %hapcount(dfAdult.locus_0))
     for month in range(sim_time):
         print("month is %i\n\n" %month)

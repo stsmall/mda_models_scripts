@@ -385,42 +385,48 @@ def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
 
 
 def fit_fx(locus, dfAdult, dfSel):
-     ''' Calculates mean fitness for each individual by summing fitness effects
-     from dfSel for each position across all loci
+    ''' Calculates mean fitness for each individual by summing fitness effects
+    from dfSel for each position across all loci
 
-     Parameters
-     ----------
-     dfAdult : df
-          data frame of adult worms containing genotype information
-     dfSel : df
-          data fram of fitness benefit for each allele
+    Parameters
+    ----------
+    dfAdult : df
+      data frame of adult worms containing genotype information
+    dfSel : df
+      data fram of fitness benefit for each allele
 
-     Returns
-     -------
-     fitF : array
-          array filling selF column for fecundity fitness
-     fitS : array
-          array filling selS column for survival fitness
+    Returns
+    -------
+    fitF : array
+      array filling selF column for fecundity fitness
+    fitS : array
+      array filling selS column for survival fitness
 
-     '''
-     ##fitness of individual in dfAdult from values in dfSel
-     fitS_ind = []
-     fitF_ind = []
-     fitS = []
-     fitF = []
-     for index, row in dfAdult.iterrows():
-          for loc in range(1, locus):
-               fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                         ["locus_" + str(loc) + "_h1"])]
-                                         ['selS'][dfSel["locus"] == loc])
+    '''
+    ##fitness of individual in dfAdult from values in dfSel
+    fitS_ind = []
+    fitF_ind = []
+    fitS = []
+    fitF = []
+    from IPython import embed
+    for loc in dfAdult.h1.keys():
+        pass
+    embed()
+    """
+    for index, row in dfAdult.iterrows():
+        for loc in range(1, locus):
+           fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
+                                     ["locus_" + str(loc) + "_h1"])]
+                                     ['selS'][dfSel["locus"] == loc])
 
-               fitF_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                         ["locus_" + str(loc) + "_h1"])]
-                                         ['selF'][dfSel["locus"] == loc])
-          fitS.append(round(np.mean(fitS_ind), 5))
-          fitF.append(round(np.mean(fitF_ind), 5))
+           fitF_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
+                                     ["locus_" + str(loc) + "_h1"])]
+                                     ['selF'][dfSel["locus"] == loc])
+        fitS.append(round(np.mean(fitS_ind), 5))
+        fitF.append(round(np.mean(fitF_ind), 5))
+    """
 
-     return(fitS, fitF)
+    return(fitS, fitF)
 
 
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
