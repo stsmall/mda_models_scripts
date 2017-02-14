@@ -404,7 +404,6 @@ def fit_fx(locus, dfAdult, dfSel):
 
     '''
     ##fitness of individual in dfAdult from values in dfSel
-    fitS_ind = []
     fitF_ind = []
     fitS = []
     fitF = []
@@ -426,7 +425,6 @@ def fit_fx(locus, dfAdult, dfSel):
         fitS.append(round(np.mean(fitS_ind), 5))
         fitF.append(round(np.mean(fitF_ind), 5))
     """
-
     return(fitS, fitF)
 
 
@@ -485,7 +483,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
                      recombination[loc], time2Ancestral, thetaRegional, 
                      time_join)
              dfAdult.h1["locus_" + str(loc)] = gt_array
-             dfAdult.positions["locus_" + str(loc)] = mutations
+             dfAdult.pos["locus_" + str(loc)] = mutations
          elif recombination[loc] > 0:
              gt_array, gt_array2, mutations = coalsims_fx(wormpopsize, 
                      villages, initial_migration, initial_distance_m, 
@@ -493,7 +491,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
                      recombination[loc], time2Ancestral, thetaRegional, time_join)
              dfAdult.h1["locus_" + str(loc) + "_h1"] = gt_array
              dfAdult.h2["locus_" + str(loc) + "_h2"] = gt_array2
-             dfAdult.positions["locus_" + str(loc)] = mutations
+             dfAdult.pos["locus_" + str(loc)] = mutations
              posSel.append(mutations)
      # Create dfSel
      if selection:

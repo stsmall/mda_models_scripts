@@ -32,8 +32,8 @@ def mutation_fx(locus,
 
     Returns
     ------
-    dfAdult_mf : pandas df
-         df of larval parasites with mutated positions
+    dfAdult_mf : fig.Worms object
+         larval parasites with mutated positions
     mutations : int, list
          list of positions of new mutations
     '''
@@ -60,10 +60,18 @@ def mutation_fx(locus,
                         np.insert(dfAdult_mf.h1["locus_" + str(loc)], 
                                 iix, narray, axis=1)
             else:
+                oarray = np.zeros(nworms, np.uint8)
+                whap = random.choice([1,2])
+                if whap == 1: whap2 = 2
+                else: whap2 = 1
                 hap =\
                         getattr(dfAdult_mf,"h"+\
-                        random.choic("12"))["locus_"+str(loc)]  
+                        str(whap))["locus_"+str(loc)]  
                 hap = np.insert(hap, iix, narray, axis=1)
+                ohap =\
+                        getattr(dfAdult_mf, "h"+\
+                        str(whap2))["locus_"+str(loc)]
+                ohap = np.insert(ohap, iix, oarray, axis=1)
             new_positions.append(newsite)
     return(dfAdult_mf, new_positions)
 
