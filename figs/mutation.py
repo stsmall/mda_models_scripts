@@ -77,10 +77,3 @@ def mutation_fx(locus,
                 getattr(dfAdult_mf, "h"+ whap2)["locus_"+str(loc)] = ohap
             new_positions.append(newsite)
     return(dfAdult_mf, new_positions)
-
-
-
-
-
-
-
