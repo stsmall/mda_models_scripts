@@ -11,11 +11,11 @@ cimport numpy as np
 import random
 import pandas as pd
 import cython
-from cython.parallel import parallel, prange
-from libc.stdlib cimport abort, malloc, free
+#from cython.parallel import parallel, prange
+#from libc.stdlib cimport abort, malloc, free
 
-DTYPE = np.int
-ctypedef np.int DTYPE_t
+DTYPE = np.uint8
+ctypedef np.uint8_t DTYPE_t
 
 
 def recombination_locus(np.ndarray[np.int64_t, ndim=1] h1,
@@ -43,6 +43,20 @@ def recombination_locus(np.ndarray[np.int64_t, ndim=1] h1,
     h1_new = np.append(h1[0:h1_ix], h2[h2_ix:])
     h2_new = np.append(h2[0:h2_ix], h1[h1_ix:])
     return(h1_new, h2_new)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef mate_worms(np.ndarray[DTYPE_t, ndim=1] fem, 
+        np.ndarray[DTYPE_t, ndim = 1] fec,
+        np.ndarray[DTYPE_t, ndim=2] h1, 
+        np.ndarray[DTYPE_t, ndim=2] h2):
+    """ Mates and recombines at a given loci
+    """
+    # :TODO need to check max integer
+    cdef Py_ssize_t i
+    cdef np.ndarray[DTYPE_t] mate_array 
+    for i in len(fem):
+        pass
 
 
 def _temp(df, loci):
@@ -119,9 +133,9 @@ def recombination_fx(locus,
     ---------
     locus: int
         number of loci
-    dfAdult_mf : pandas dataframe
-        dataframe containing new larval parasites
-    dfAdult : pd df
+    dfAdult_mf : figs.worm.Worms object
+        Worms containing new larval parasites
+    dfAdult : figs.worm.Worms object
         dataframe containing reproducing adults
     recombination_rate : float, list
         recombination rate for each locus
@@ -134,13 +148,27 @@ def recombination_fx(locus,
 
     """
     hosts = dfAdult.meta.hostidx.unique()
+
+    cdef np.ndarray[DTYPE_t] chost
+    cdef Py_ssize_t loc
+    cdef int recombining_loci
+
+    cdef np.ndarray bounderies = np.zeros([3])
+    for loc in range(locus):
+        if recombination_rate[loc] != 0:
+            pass
+        else: pass
     for host in hosts:
-        pass
+        chost = dfAdult.meta.index[dfAdult.meta.hostidx == host].values
+        print(chost[0:5])
+        #ixmales = (dfAdult.meta.sex == 'M').values
+        ixfemalse = (dfAdult.meta.sex == 'F').values
+        #hdf = dfAdult.meta.ix[chost == host,:]
+    '''
     for loc in locus:
         ls = "locus_{0}".format(loc_string)
         new_recombination(dfAdult.h1[ls], dfAdult.h2[ls], 
                 basepairs[loc], recombination_rate[loc])
-    '''
     cdef int N
     cdef int i
     lid = "locus_{0!s}"
@@ -155,4 +183,4 @@ def recombination_fx(locus,
     dfAdult_mf = pd.concat(dout)
     dfAdult_mf.reset_index(drop=True, inplace=True)
     '''
-    return dfAdult_mf
+    return(dfAdult)

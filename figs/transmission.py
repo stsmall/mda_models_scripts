@@ -223,7 +223,6 @@ def transmission_fx(month,
                                  bnstart[vill], bnstop[vill], bncoverage[vill])
         print("village is %i transmitted is %i" %(vill,L3trans))
         if L3trans != 0:
-            #new_rows=[]
             if L3trans > (dfMF.meta.village == vill).sum():  #more transmision events than possible MF
                   transMF = dfMF.meta[dfMF.meta.village == vill]
             else:
@@ -240,7 +239,8 @@ def transmission_fx(month,
                 dfdistHost = dfHost[dfHost.village == vill].reset_index(drop=True)
                 disthost = np.where(dfdistHost["hostidx"] == row.hostidx)[0]
                 if len(dfHost[dfHost.village == vill]) < hostpopsize[vill]:
-                     prob_newinfection = 1.0/(len(np.where(distMat[disthost][0] <= dispersal)[0]) + 1)
+                     prob_newinfection = 1.0/(len(
+                         np.where(distMat[disthost][0] <= dispersal)[0]) + 1)
                 else: #everyone is already infected
                      prob_newinfection = 0
                 if np.random.random() < prob_newinfection:
@@ -248,9 +248,11 @@ def transmission_fx(month,
                      dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
                      new_rows.append((new_hostidx, index))  
                      #need to update distMat to include new host
-                     distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
+                     distMat = pairwise_distances(
+                             np.vstack(dfHost[dfHost.village == vill].coordinates))
                 else: #reinfection
-                     rehost = dfdistHost.ix[random.choice(np.where(distMat[disthost][0] <= dispersal)[0])]
+                     rehost = dfdistHost.ix[
+                             random.choice(np.where(distMat[disthost][0] <= dispersal)[0])]
                      #print(distMat[disthost])
                      #print(np.where(distMat[disthost][0] <= dispersal)[0])
                      new_rows.append((rehost['hostidx'], row))

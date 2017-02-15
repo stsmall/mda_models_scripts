@@ -75,5 +75,7 @@ def mutation_fx(locus,
                 ohap = getattr(dfAdult_mf, "h"+ whap2)["locus_"+str(loc)]
                 ohap = np.insert(ohap, iix, oarray, axis=1)
                 getattr(dfAdult_mf, "h"+ whap2)["locus_"+str(loc)] = ohap
+            positions = np.insert(positions, iix, newsite)
             new_positions.append(newsite)
+        dfAdult_mf.pos["locus_" + str(loc)] = positions
     return(dfAdult_mf, new_positions)
