@@ -20,7 +20,6 @@ from .filtercoords import filtercoords_fx
 #from filtercoords import filtercoords_fx
 from .worm import Worms
 #from worm import Worms
-from IPython import embed
 
 
 
@@ -249,7 +248,7 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     if rho == 0:
         ploidy = 1
     else:
-        worm_popsize = [x * 2 for x in worm_popsize]
+        worm_popsize = [x for x in worm_popsize]
         ploidy = 2
     # parameters for ms or scrm
     ms_params = {
@@ -428,13 +427,13 @@ def fit_fx(totalcds, dfAdult, dfSel):
         #+ np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selF"]) 
         cds_sites = np.dot(dfAdult.h1[locus], np.ones(len(dfAdult.pos[locus]))) + np.dot(dfAdult.h2[locus],np.ones(len(dfAdult.pos[locus])))        
         
-        print len(dfAdult.h1["0"])
-        print len(dfAdult.h1[locus])
-        print len(dfAdult.meta)
-        print len(dfAdult.pos[locus])
-        print len(sum_selsites_F)
-        print len(sum_selsites_S)
-        print len(cds_sites)
+        print(len(dfAdult.h1["0"]))
+        print(len(dfAdult.h1[locus]))
+        print(len(dfAdult.meta))
+        print(len(dfAdult.pos[locus]))
+        print(len(sum_selsites_F))
+        print(len(sum_selsites_S))
+        print(len(cds_sites))
         
         fitF_ind = (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_F) / (totalcds[int(locus) - 1] * 2)
         fitS_ind = (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_S) / (totalcds[int(locus) - 1] * 2)
@@ -509,14 +508,14 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
              posSel.append(mutations)
      # Create dfSel
      if selection:
-          dfSel, cds_coordinates, totalcds = sel_fx(dfAdult, basepairs,
-                  perc_locus, cds_length, intgen_length)
-          fitS, fitF = fit_fx(totalcds, dfAdult, dfSel)
-          dfAdult.meta["fitF"] = fitF
-          dfAdult.meta["fitS"] = fitS
-          return(dfAdult, dfSel, cds_coordinates)
+         dfSel, cds_coordinates, totalcds = sel_fx(dfAdult, basepairs,
+                 perc_locus, cds_length, intgen_length)
+         fitS, fitF = fit_fx(totalcds, dfAdult, dfSel)
+         dfAdult.meta["fitF"] = fitF
+         dfAdult.meta["fitS"] = fitS
+         return(dfAdult, dfSel, cds_coordinates)
      else:
-          return(dfAdult)
+         return(dfAdult)
 
 
 def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurden,
@@ -627,6 +626,7 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
                     locus, initial_migration, initial_distance_m, theta,
                     basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                     time_join, selection, perc_locus, cds_length, intgen_length)
+        
 
         dfSel = pd.DataFrame({
             'locus' : [],
