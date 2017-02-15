@@ -184,11 +184,11 @@ def parse_coalsims_fx(msout, ploidy, nind):
                 hap2 = next(iter(msout.stdout.readline, ''))
                 gt_array2[cix, :] =  np.array(list(hap2.strip()),
                         dtype=np.uint8)
-                #cix += 1
+                cix += 1
             except ValueError:
                 # End of output
                 break
-            cix += 1
+            #cix += 1
         return(gt_array, gt_array2, pos)
 
 
