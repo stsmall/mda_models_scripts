@@ -14,11 +14,8 @@ import cython
 from cython.parallel import parallel, prange
 from libc.stdlib cimport abort, malloc, free
 
-
 DTYPE = np.int
 ctypedef np.int DTYPE_t
-
-from .locus import Locus
 
 
 def recombination_locus(np.ndarray[np.int64_t, ndim=1] h1,
@@ -101,8 +98,16 @@ def _temp(df, loci):
     outdf = pd.concat(outs, axis=1, ignore_index=True).T
     return(outdf)
 
+cpdef host_mating():
+    """
+    """
 
-@cython.boundscheck(False)
+cpdef new_recombination(np.ndarray[np.uint8_t, ndim=2] h1, 
+        np.ndarray[np.uint8_t, ndim=2] h2,
+        float rec_rate, int basepairs):
+    pass
+
+
 def recombination_fx(locus,
                      dfAdult,
                      list recombination_rate,
@@ -128,6 +133,14 @@ def recombination_fx(locus,
     dfAdult_mf : pd df
 
     """
+    hosts = dfAdult.meta.hostidx.unique()
+    for host in hosts:
+        pass
+    for loc in locus:
+        ls = "locus_{0}".format(loc_string)
+        new_recombination(dfAdult.h1[ls], dfAdult.h2[ls], 
+                basepairs[loc], recombination_rate[loc])
+    '''
     cdef int N
     cdef int i
     lid = "locus_{0!s}"
@@ -141,4 +154,5 @@ def recombination_fx(locus,
         dout.append(_temp(dfAdult[dfAdult.hostidx == hosts[i]], loci))
     dfAdult_mf = pd.concat(dout)
     dfAdult_mf.reset_index(drop=True, inplace=True)
+    '''
     return dfAdult_mf

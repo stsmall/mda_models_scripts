@@ -73,12 +73,3 @@ def mutation_fx(locus,
                         newsite)
                 dfAdult_mf.set_value(randmf, "locus_" + str(loc) + "_h" + randhap, newhap.sort())
             positions.append(mutpos)
-
-    return(dfAdult_mf, positions)
-
-
-
-
-
-
-
