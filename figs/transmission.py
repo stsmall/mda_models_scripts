@@ -214,7 +214,6 @@ def transmission_fx(month,
     bncoverage = bnlist[3]
     dispersal = 2 * sigma
     new_rows = []
-    nix = []
     for vill in range(villages):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(hostpopsize[vill])
@@ -247,14 +246,14 @@ def transmission_fx(month,
                 if np.random.random() < prob_newinfection:
                      #print("new host")
                      dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                     newrow.append((new_hostidx, index))  
+                     new_rows.append((new_hostidx, index))  
                      #need to update distMat to include new host
                      distMat = pairwise_distances(np.vstack(dfHost[dfHost.village == vill].coordinates))
                 else: #reinfection
                      rehost = dfdistHost.ix[random.choice(np.where(distMat[disthost][0] <= dispersal)[0])]
                      #print(distMat[disthost])
                      #print(np.where(distMat[disthost][0] <= dispersal)[0])
-                     newrow.append((rehost['hostidx'], row))
+                     new_rows.append((rehost['hostidx'], row))
         else:
             print("dfMF is empty")
     prev_size = dfJuv.meta.shape[0]

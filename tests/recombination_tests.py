@@ -55,10 +55,8 @@ class Test_Recombination_Fx(unittest.TestCase):
         hostidx = ['v0h1', 'v0h1', 'v0h1']
         R0net = [0.5299222, 0.658231, 0.444]
         fec = [0, 10, 2]
-
         M_hap1= [1, 3, 9]
         M_hap2= [2, 4, 6]
-
         F_hap1 = [2,7]
         F_hap2 = [5,9]
 

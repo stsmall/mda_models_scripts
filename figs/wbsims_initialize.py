@@ -385,42 +385,47 @@ def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
 
 
 def fit_fx(locus, dfAdult, dfSel):
-     ''' Calculates mean fitness for each individual by summing fitness effects
-     from dfSel for each position across all loci
+    ''' Calculates mean fitness for each individual by summing fitness effects
+    from dfSel for each position across all loci
 
-     Parameters
-     ----------
-     dfAdult : df
-          data frame of adult worms containing genotype information
-     dfSel : df
-          data fram of fitness benefit for each allele
+    Parameters
+    ----------
+    dfAdult : df
+      data frame of adult worms containing genotype information
+    dfSel : df
+      data fram of fitness benefit for each allele
 
-     Returns
-     -------
-     fitF : array
-          array filling selF column for fecundity fitness
-     fitS : array
-          array filling selS column for survival fitness
+    Returns
+    -------
+    fitF : array
+      array filling selF column for fecundity fitness
+    fitS : array
+      array filling selS column for survival fitness
 
-     '''
-     ##fitness of individual in dfAdult from values in dfSel
-     fitS_ind = []
-     fitF_ind = []
-     fitS = []
-     fitF = []
-     for index, row in dfAdult.iterrows():
-          for loc in range(1, locus):
-               fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                         ["locus_" + str(loc) + "_h1"])]
-                                         ['selS'][dfSel["locus"] == loc])
+    '''
+    ##fitness of individual in dfAdult from values in dfSel
+    fitF_ind = []
+    fitS = []
+    fitF = []
+    from IPython import embed
+    for loc in dfAdult.h1.keys():
+        matching_pos = np.intersect1d()
+        pass
+    embed()
+    """
+    for index, row in dfAdult.iterrows():
+        for loc in range(1, locus):
+           fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
+                                     ["locus_" + str(loc) + "_h1"])]
+                                     ['selS'][dfSel["locus"] == loc])
 
-               fitF_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                         ["locus_" + str(loc) + "_h1"])]
-                                         ['selF'][dfSel["locus"] == loc])
-          fitS.append(round(np.mean(fitS_ind), 5))
-          fitF.append(round(np.mean(fitF_ind), 5))
-
-     return(fitS, fitF)
+           fitF_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
+                                     ["locus_" + str(loc) + "_h1"])]
+                                     ['selF'][dfSel["locus"] == loc])
+        fitS.append(round(np.mean(fitS_ind), 5))
+        fitF.append(round(np.mean(fitF_ind), 5))
+    """
+    return(fitS, fitF)
 
 
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
@@ -478,6 +483,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
                      recombination[loc], time2Ancestral, thetaRegional, 
                      time_join)
              dfAdult.h1["locus_" + str(loc)] = gt_array
+             dfAdult.pos["locus_" + str(loc)] = mutations
          elif recombination[loc] > 0:
              gt_array, gt_array2, mutations = coalsims_fx(wormpopsize, 
                      villages, initial_migration, initial_distance_m, 
@@ -485,6 +491,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
                      recombination[loc], time2Ancestral, thetaRegional, time_join)
              dfAdult.h1["locus_" + str(loc) + "_h1"] = gt_array
              dfAdult.h2["locus_" + str(loc) + "_h2"] = gt_array2
+             dfAdult.pos["locus_" + str(loc)] = mutations
              posSel.append(mutations)
      # Create dfSel
      if selection:
