@@ -47,14 +47,18 @@ def mutation_fx(locus,
             mut_coef = 2
         num_muts = np.random.binomial(mut_coef * nworms, 
                 basepairs[loc] * mutation_rate[loc])
-        #print num_muts
-        positions = dfAdult_mf.pos["locus_" + loc]
+        positions = dfAdult_mf.pos["locus_" + str(loc)]
+        # Need to make sure it is sorted
+        max_seg = positions[-1]
         for mut in range(num_muts):
             randmf = np.random.randint(0, nworms)
             narray = np.zeros(nworms, np.uint8)
             narray[randmf] = 1
             newsite = np.random.randint(1, basepairs[loc])
-            iix = np.argmax(positions > newsite)
+            if newsite > max_seg:
+                iix = len(positions)
+            else:
+                iix = np.argmax(positions > newsite) 
             if recombination_rate[loc] == 0:
                 dfAdult_mf.h1["locus_" + str(loc)] =\
                         np.insert(dfAdult_mf.h1["locus_" + str(loc)], 
@@ -62,16 +66,15 @@ def mutation_fx(locus,
             else:
                 oarray = np.zeros(nworms, np.uint8)
                 whap = random.choice([1,2])
-                if whap == 1: whap2 = 2
-                else: whap2 = 1
-                hap =\
-                        getattr(dfAdult_mf,"h"+\
-                        str(whap))["locus_"+str(loc)]  
+                if whap == 1: whap2 =str(2)
+                else: whap2 = str(1)
+                whap = str(whap)
+                hap = getattr(dfAdult_mf,"h"+ whap)["locus_"+str(loc)]  
                 hap = np.insert(hap, iix, narray, axis=1)
-                ohap =\
-                        getattr(dfAdult_mf, "h"+\
-                        str(whap2))["locus_"+str(loc)]
+                getattr(dfAdult_mf,"h"+ whap)["locus_"+str(loc)] = hap  
+                ohap = getattr(dfAdult_mf, "h"+ whap2)["locus_"+str(loc)]
                 ohap = np.insert(ohap, iix, oarray, axis=1)
+                getattr(dfAdult_mf, "h"+ whap2)["locus_"+str(loc)] = ohap
             new_positions.append(newsite)
     return(dfAdult_mf, new_positions)
 
