@@ -15,9 +15,11 @@ import random
 import pickle
 
 from .agehost import agehost_fx
+#from agehost import agehost_fx
 from .filtercoords import filtercoords_fx
+#from filtercoords import filtercoords_fx
 from .worm import Worms
-from IPython import embed
+#from worm import Worms
 
 
 
@@ -136,7 +138,7 @@ def parse_coalsims_fx(msout, ploidy, nind):
     pos
          list of positions for the mutaitons
     """
-    print('NINDVS' + str(nind)) 
+    print('NINDVS ' + str(nind))
     # Parsing positions
     for line in iter(msout.stdout.readline, ''):
         line = line.decode('utf-8')
@@ -181,11 +183,12 @@ def parse_coalsims_fx(msout, ploidy, nind):
                 gt_array[cix, :] = hap
                 hap2 = next(iter(msout.stdout.readline, ''))
                 gt_array2[cix, :] =  np.array(list(hap2.strip()),
-                        dtype=np.bool)
-                cix += 1
+                        dtype=np.uint8)
+                #cix += 1
             except ValueError:
                 # End of output
                 break
+            cix += 1
         return(gt_array, gt_array2, pos)
 
 
@@ -317,7 +320,7 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
         return(gt, gt2, positions)
 
 
-def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
+def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
     '''Initializes the distribution of fitness effects for each mutation
 
     Parameters
@@ -333,58 +336,68 @@ def sel_fx(locus, positions, basepairs, perc_locus, cds_length, intgen_length):
         coordinates (start, end) of coding sequences
 
     '''
-    cds_positions, cds_coordinates = filtercoords_fx(positions, basepairs, perc_locus,
-                                        cds_length, intgen_length)
-    selF =[]
-    selS =[]
-    #cds_positions = [item for sublist in cds_positions for item in sublist]
-    #below functs assume the list of cds_positions contains mutliple loci
-    if locus > 2:
-        numpos = [len(i) for i in cds_positions]
-        pos = 0
-        while pos < sum(numpos):
-            if random.choice("SF") is "F":
-                 #shape = 4, mean = 1, scale = mean/shape
-                 #here mean is mean_fitness, wildtype is assumed to be 1
-                 selF.append(np.random.gamma(4, scale=0.25))
-                 selS.append(1)
+    cds_coordinates = []
+    totalcds = []
+    selS = []
+    selF = []
+    newloc = []
+    newpos = []
+    #size parameter
+    size = 3
+    #average distance between in bp
+    mu = intgen_length
+    #last coordinate is approx num_cds * mu; so if num_cds is too large or mu is too long
+    #genes will run over the locus length
+    #dfAdult.pos
+    for loc in range(1, len(basepairs)):
+        num_cds = int(round((perc_locus[loc]*basepairs[loc]) /
+            cds_length))
+        size_cds = np.round(np.random.gamma(4, 0.25, num_cds) *
+                cds_length)
+        totalcds.append(sum(size_cds))
+        #r = size
+        #m = mean
+        #p = r / (  r + m )
+        cds_between = np.random.negative_binomial(size, size/float(mu+size), num_cds)
+        cds_stop = 0
+        cds_coords = []
+        for i, j in zip(map(np.int, cds_between), map(np.int,size_cds)):
+            #[i + cds_stop, i + cds_stop + j]
+            if (i + cds_stop > basepairs[loc]) or (i + j + cds_stop > basepairs[loc]):
+                break
             else:
-                 selS.append(np.random.gamma(4, scale=0.25))
-                 selF.append(1)
-            pos += 1
-        dfSel = pd.DataFrame({
-                            'locus' : np.repeat(range(1, locus), numpos),
-                            'position' : [item for sub in cds_positions for item in sub],
-                            'selF' : selF,
-                            'selS' : selS
-                            })
-        dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-             'selS']]
-    else: #list only contains a single locus
-        numpos = len(cds_positions[0])
-        pos = 0
-        while pos < numpos:
-            if random.choice("SF") is "F":
-                #shape = 4, mean = 1, scale = mean/shape
-                #here mean is mean_fitness, wildtype is assumed to be 1
-                selF.append(np.random.gamma(4, scale=0.25))
-                selS.append(1)
-            else:
-                selS.append(np.random.gamma(4, scale=0.25))
-                selF.append(1)
-            pos += 1
-        dfSel = pd.DataFrame({
-                            'locus' : np.repeat(range(1, locus), numpos),
-                            'position' : cds_positions[0],
-                            'selF' : selF,
-                            'selS' : selS,
-                             })
-        dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-             'selS']]
-    return(dfSel, cds_coordinates)
+                cds_coords.append([i + cds_stop, i + j + cds_stop])
+                cds_stop += (i + j)          
+        for position in dfAdult.pos[str(loc)]:
+            if any([i <= position <= j for i,j in cds_coords]):
+                if random.choice("SF") is "F":
+                     #shape = 4, mean = 1, scale = mean/shape
+                     #here mean is mean_fitness, wildtype is assumed to be 1
+                     selF.append(np.random.gamma(4, scale=0.25))
+                     selS.append(1)
+                else:
+                     selS.append(np.random.gamma(4, scale=0.25))
+                     selF.append(1)
+            else: #not in a cds
+                selS.append(0)
+                selF.append(0)
+                
+        cds_coordinates.append(cds_coords) #this is a nested list for each locus of cds locations
+        newloc.extend(np.repeat(loc,len(dfAdult.pos[str(loc)])))
+        newpos.extend(dfAdult.pos[str(loc)])       
+    dfSel = pd.DataFrame({
+                        'locus' : newloc,
+                        'position' : newpos,
+                        'selF' : selF,
+                        'selS' : selS
+                        })
+    dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
+         'selS']]
+
+    return(dfSel, cds_coordinates, totalcds)
 
 
-def fit_fx(locus, dfAdult, dfSel):
+def fit_fx(totalcds, dfAdult, dfSel):
     ''' Calculates mean fitness for each individual by summing fitness effects
     from dfSel for each position across all loci
 
@@ -403,27 +416,29 @@ def fit_fx(locus, dfAdult, dfSel):
       array filling selS column for survival fitness
 
     '''
-    ##fitness of individual in dfAdult from values in dfSel
-    fitF_ind = []
-    fitS = []
-    fitF = []
-    for loc in dfAdult.h1.keys():
-        matching_pos = np.intersect1d()
-        pass
-    """
-    for index, row in dfAdult.iterrows():
-        for loc in range(1, locus):
-           fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                     ["locus_" + str(loc) + "_h1"])]
-                                     ['selS'][dfSel["locus"] == loc])
+    avg_over = len(dfAdult.h2.keys())
+    ninds = len(dfAdult.meta)
+    fitF_ind = np.zeros(ninds)
+    fitS_ind = np.zeros(ninds)
+    for locus in dfAdult.h2.keys():
+        sum_selsites_S = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selS"]) 
+        #+ np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selS"]) 
+        sum_selsites_F = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selF"]) 
+        #+ np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selF"]) 
+        cds_sites = np.dot(dfAdult.h1[locus], np.ones(len(dfAdult.pos[locus]))) + np.dot(dfAdult.h2[locus],np.ones(len(dfAdult.pos[locus])))        
+        
+        print(len(dfAdult.h1["0"]))
+        print(len(dfAdult.h1[locus]))
+        print(len(dfAdult.meta))
+        print(len(dfAdult.pos[locus]))
+        print(len(sum_selsites_F))
+        print(len(sum_selsites_S))
+        print(len(cds_sites))
+        
+        fitF_ind = (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_F) / (totalcds[int(locus) - 1] * 2)
+        fitS_ind = (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_S) / (totalcds[int(locus) - 1] * 2)
 
-           fitF_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                     ["locus_" + str(loc) + "_h1"])]
-                                     ['selF'][dfSel["locus"] == loc])
-        fitS.append(round(np.mean(fitS_ind), 5))
-        fitF.append(round(np.mean(fitF_ind), 5))
-    """
-    return(fitS, fitF)
+    return(fitF_ind / avg_over, fitS_ind / avg_over)
 
 
 def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
@@ -475,29 +490,29 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      posSel = []
      for loc in range(locus):
          if recombination[loc] == 0:
-             gt_array, mutations = coalsims_fx(wormpopsize, villages, 
-                     initial_migration, initial_distance_m, 
+             gt_array, mutations = coalsims_fx(wormpopsize, villages,
+                     initial_migration, initial_distance_m,
                      theta[loc], basepairs[loc], mutation[loc],
-                     recombination[loc], time2Ancestral, thetaRegional, 
+                     recombination[loc], time2Ancestral, thetaRegional,
                      time_join)
-             dfAdult.h1["locus_" + str(loc)] = gt_array
-             dfAdult.pos["locus_" + str(loc)] = mutations
+             dfAdult.h1[str(loc)] = gt_array
+             dfAdult.pos[str(loc)] = mutations
          elif recombination[loc] > 0:
-             gt_array, gt_array2, mutations = coalsims_fx(wormpopsize, 
-                     villages, initial_migration, initial_distance_m, 
+             gt_array, gt_array2, mutations = coalsims_fx(wormpopsize,
+                     villages, initial_migration, initial_distance_m,
                      theta[loc], basepairs[loc], mutation[loc],
                      recombination[loc], time2Ancestral, thetaRegional, time_join)
-             dfAdult.h1["locus_" + str(loc) + "_h1"] = gt_array
-             dfAdult.h2["locus_" + str(loc) + "_h2"] = gt_array2
-             dfAdult.pos["locus_" + str(loc)] = mutations
+             dfAdult.h1[str(loc)] = gt_array
+             dfAdult.h2[str(loc)] = gt_array2
+             dfAdult.pos[str(loc)] = mutations
              posSel.append(mutations)
      # Create dfSel
      if selection:
-         dfSel, cds_coordinates = sel_fx(locus, posSel, basepairs, 
+         dfSel, cds_coordinates, totalcds = sel_fx(dfAdult, basepairs,
                  perc_locus, cds_length, intgen_length)
-         fitS, fitF = fit_fx(locus, dfAdult, dfSel)
-         dfAdult["fitF"] = fitF
-         dfAdult["fitS"] = fitS
+         fitS, fitF = fit_fx(totalcds, dfAdult, dfSel)
+         dfAdult.meta["fitF"] = fitF
+         dfAdult.meta["fitS"] = fitS
          return(dfAdult, dfSel, cds_coordinates)
      else:
          return(dfAdult)
@@ -627,10 +642,10 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
     return(dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates)
 
 ##3 loci, 2 villages, with selection
-if __name__ == '__main__':
-    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates=wbsims_init(2, [100, 200],
-    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
-    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
-    True, [[0, 0.18, 0.20], 1100, 2500])
-    from IPython import embed
-    embed()
+#if __name__ == '__main__':
+#    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates=wbsims_init(2, [100, 200],
+#    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
+#    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
+#    True, [[0, 0.18, 0.20], 1100, 2500])
+    #from IPython import embed
+    #embed()

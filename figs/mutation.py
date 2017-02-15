@@ -32,8 +32,8 @@ def mutation_fx(locus,
 
     Returns
     ------
-    dfAdult_mf : fig.Worms object
-         larval parasites with mutated positions
+    dfAdult_mf : pandas df
+         df of larval parasites with mutated positions
     mutations : int, list
          list of positions of new mutations
     '''
@@ -47,10 +47,11 @@ def mutation_fx(locus,
             mut_coef = 2
         num_muts = np.random.binomial(mut_coef * nworms, 
                 basepairs[loc] * mutation_rate[loc])
-        positions = dfAdult_mf.pos["locus_" + str(loc)]
-        # Need to make sure it is sorted
+        positions = dfAdult_mf.pos["locus_" + str(loc)]    
         max_seg = positions[-1]
+        #print num_muts
         for mut in range(num_muts):
+            iix = 0
             randmf = np.random.randint(0, nworms)
             narray = np.zeros(nworms, np.uint8)
             narray[randmf] = 1
