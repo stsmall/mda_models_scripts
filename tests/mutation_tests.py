@@ -33,22 +33,30 @@ class Test_Mutation(unittest.TestCase):
             'sex': sex, 
             'hostidx': hostidx, 
             'fec': fec})
-        hname = "locus_" + str(0)
+        hname = str(0)
         worms = Worms(meta, haplotype1 = {hname : hap1},
             haplotype2 = {hname : hap2}, positions={hname : positions})
         self.worms = worms
 
 
-    def test_mutation(self):
+    def test_one_mutation(self):
         # New position should be 138 with seed
-        # Mutation is in first worm and on hap2
-        orig_shape = self.worms.h1['locus_0'].shape[1]
+        # Mutation is in first worm and on hap1
+        orig_shape = self.worms.h1['0'].shape[1]
         worms, newpositions = mutation_fx(1, self.worms, [0.001],
             [1e-9], [200])
+        embed()
         self.assertEqual(len(newpositions), 
-                worms.h1['locus_0'].shape[1] - orig_shape) 
-        np.testing.assert_equal(worms.h1['locus_0'][:, -1],
+                worms.h1['0'].shape[1] - orig_shape) 
+        np.testing.assert_equal(worms.h1['0'][:, -1],
                 np.array([1, 0, 0], dtype=np.uint8))
+
+    def test_multiple_mutations(self):
+        # Mainly test speed and insertion orders
+        orig_nsegsites = self.worms.h1['0'].shape[1]
+        worms, newpositions = mutation_fx(1, self.worms, [0.005],
+            [1e-9], [200])
+        print(orig_segsites)
 
 
 if __name__ == '__main__':

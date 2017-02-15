@@ -47,7 +47,7 @@ def mutation_fx(locus,
             mut_coef = 2
         num_muts = np.random.binomial(mut_coef * nworms, 
                 basepairs[loc] * mutation_rate[loc])
-        positions = dfAdult_mf.pos["locus_" + str(loc)]    
+        positions = dfAdult_mf.pos[str(loc)]    
         max_seg = positions[-1]
         #print num_muts
         for mut in range(num_muts):
@@ -61,22 +61,22 @@ def mutation_fx(locus,
             else:
                 iix = np.argmax(positions > newsite) 
             if recombination_rate[loc] == 0:
-                dfAdult_mf.h1["locus_" + str(loc)] =\
-                        np.insert(dfAdult_mf.h1["locus_" + str(loc)], 
+                dfAdult_mf.h1[str(loc)] =\
+                        np.insert(dfAdult_mf.h1[str(loc)], 
                                 iix, narray, axis=1)
             else:
                 oarray = np.zeros(nworms, np.uint8)
-                whap = random.choice([1,2])
+                whap = np.random.randint(1, 3)
                 if whap == 1: whap2 =str(2)
                 else: whap2 = str(1)
                 whap = str(whap)
-                hap = getattr(dfAdult_mf,"h"+ whap)["locus_"+str(loc)]  
+                hap = getattr(dfAdult_mf,"h"+ whap)[str(loc)]  
                 hap = np.insert(hap, iix, narray, axis=1)
-                getattr(dfAdult_mf,"h"+ whap)["locus_"+str(loc)] = hap  
-                ohap = getattr(dfAdult_mf, "h"+ whap2)["locus_"+str(loc)]
+                getattr(dfAdult_mf,"h"+ whap)[str(loc)] = hap  
+                ohap = getattr(dfAdult_mf, "h"+ whap2)[str(loc)]
                 ohap = np.insert(ohap, iix, oarray, axis=1)
-                getattr(dfAdult_mf, "h"+ whap2)["locus_"+str(loc)] = ohap
+                getattr(dfAdult_mf, "h"+ whap2)[str(loc)] = ohap
             positions = np.insert(positions, iix, newsite)
             new_positions.append(newsite)
-        dfAdult_mf.pos["locus_" + str(loc)] = positions
+        dfAdult_mf.pos[str(loc)] = positions
     return(dfAdult_mf, new_positions)
