@@ -15,13 +15,7 @@ import random
 import pickle
 
 from .agehost import agehost_fx
-#from agehost import agehost_fx
-from .filtercoords import filtercoords_fx
-#from filtercoords import filtercoords_fx
 from .worm import Worms
-#from worm import Worms
-
-
 
 def host_fx(villages, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -421,23 +415,16 @@ def fit_fx(totalcds, dfAdult, dfSel):
     fitF_ind = np.zeros(ninds)
     fitS_ind = np.zeros(ninds)
     for locus in dfAdult.h2.keys():
-        sum_selsites_S = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selS"]) 
-        #+ np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selS"]) 
-        sum_selsites_F = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selF"]) 
-        #+ np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selF"]) 
-        cds_sites = np.dot(dfAdult.h1[locus], np.ones(len(dfAdult.pos[locus]))) + np.dot(dfAdult.h2[locus],np.ones(len(dfAdult.pos[locus])))        
-        
-        print(len(dfAdult.h1["0"]))
-        print(len(dfAdult.h1[locus]))
-        print(len(dfAdult.meta))
-        print(len(dfAdult.pos[locus]))
-        print(len(sum_selsites_F))
-        print(len(sum_selsites_S))
-        print(len(cds_sites))
-        
-        fitF_ind = (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_F) / (totalcds[int(locus) - 1] * 2)
-        fitS_ind = (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_S) / (totalcds[int(locus) - 1] * 2)
-
+        sum_selsites_S = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selS"]) \
+            + np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selS"]) 
+        sum_selsites_F = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selF"]) \
+            + np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selF"]) 
+        intsites = dfSel[dfSel.locus == int(locus)]["selS"].values
+        intsites[intsites > 0] = 1
+        cds_sites = np.dot(dfAdult.h1[locus], intsites) \
+            + np.dot(dfAdult.h2[locus], intsites)        
+        fitF_ind += (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_F) / (totalcds[int(locus) - 1] * 2)
+        fitS_ind += (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_S) / (totalcds[int(locus) - 1] * 2)
     return(fitF_ind / avg_over, fitS_ind / avg_over)
 
 
@@ -641,11 +628,11 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
     dfMF = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
     return(dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates)
 
-##3 loci, 2 villages, with selection
+###3 loci, 2 villages, with selection
 #if __name__ == '__main__':
 #    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates=wbsims_init(2, [100, 200],
 #    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
 #    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
 #    True, [[0, 0.18, 0.20], 1100, 2500])
-    #from IPython import embed
+#    #from IPython import embed
     #embed()
