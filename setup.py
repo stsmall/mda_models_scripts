@@ -32,11 +32,12 @@ if use_cython:
             Extension("figs.recombination",
                 ["figs/recombination.pyx"],
                 include_dirs=includes,
-            extra_compile_args = ["-O3", 
+                extra_compile_args = ["-O3", 
                     "-ffast-math", 
                     "-march=native",
                     "-fopenmp" ],
-                extra_link_args=['-fopenmp']),
+                extra_link_args=['-fopenmp'], 
+                language="c++"),
             ]
     cmdclass.update({'build_ext': build_ext})
 

@@ -11,6 +11,7 @@ cimport numpy as np
 import random
 import pandas as pd
 import cython
+from libcpp.list cimport list as cpplist
 #from cython.parallel import parallel, prange
 #from libc.stdlib cimport abort, malloc, free
 
@@ -148,22 +149,26 @@ def recombination_fx(locus,
 
     """
     hosts = dfAdult.meta.hostidx.unique()
-
-    cdef np.ndarray[DTYPE_t] chost
+    cdef str host
+    #cdef np.ndarray[long] chost
     cdef Py_ssize_t loc
-    cdef int recombining_loci
-
-    cdef np.ndarray bounderies = np.zeros([3])
+    cdef cpplist[int] boundry_list
     for loc in range(locus):
         if recombination_rate[loc] != 0:
-            pass
+            boundry_list.push_back(dfAdult.h1[str(loc)].shape[1])
         else: pass
+
     for host in hosts:
-        chost = dfAdult.meta.index[dfAdult.meta.hostidx == host].values
-        print(chost[0:5])
+        #chost = dfAdult.meta.index[dfAdult.meta.hostidx == host].values
+        df.meta.hostidx == host
         #ixmales = (dfAdult.meta.sex == 'M').values
-        ixfemalse = (dfAdult.meta.sex == 'F').values
+        #chost = dfAdult.meta.query('hostidx == @host')
+        '''
+        ixfemales = (dfAdult.meta.sex == 'F').values
+        print(ixfemales)
+        print(ixfemales.dtype)
         #hdf = dfAdult.meta.ix[chost == host,:]
+        '''
     '''
     for loc in locus:
         ls = "locus_{0}".format(loc_string)
