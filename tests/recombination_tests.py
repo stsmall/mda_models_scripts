@@ -8,7 +8,7 @@ import pandas as pd
 from pstats import Stats
 import cProfile
 
-from figs.recombination import recombination_locus, recombination_fx
+from figs.recombination import recombination_fx
 from figs.worm import Worms
 np.random.seed(20)
 
