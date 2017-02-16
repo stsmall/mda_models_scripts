@@ -18,7 +18,7 @@ import copy
 from .agehost import agehost_fx
 from .worm import Worms
 
-def host_fx(villages, infhost, muTrans, sizeTrans):
+def host_fx(villages, infhost, muTrans, sizeTrans, initial_distance_m):
     '''Creates a transmission matrix for locations of infected hosts
        default_test : host_fx(2, [100, 300], 100, 1)
 
@@ -41,11 +41,17 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     assert villages == len(infhost)
     coordinates = []
     host_idx = []
+
+    dist = [0]
+    dist.extend(initial_distance_m)
+    distvill = [sum(dist[:i+1]) for i in range(len(dist))]
+
     for vill in range(villages):
          #list of host positions
-         coordinates.extend(np.random.negative_binomial(sizeTrans, sizeTrans
+         coordinates.extend( np.random.negative_binomial(sizeTrans, sizeTrans
                              / float((sizeTrans+muTrans)), (infhost[vill],
-                                                           2)))
+                                                           2)) + distvill[vill])
+
          for host in range(infhost[vill]):
              host_idx.append("v" + str(vill) + "h" + str(host + 1))
     sex = [random.choice("01") for i in range(sum(infhost))]
@@ -89,10 +95,8 @@ def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
 
     if villages > 4:
         raise ValueError("only handles 4 villages ATM")
-    elif villages < 4:
-        if len(initial_distance_m) != ((villages) * (villages - 1) / 2):
-            raise ValueError(("there are not adequate pairwise comparisons in"
-                              "distance_m to match villages"))
+    elif villages <= 4:
+        assert len(initial_distance_m) == ((villages) * (villages - 1) / 2)
         mig = []  # initiate blank migration list
         for meters in initial_distance_m:
             mig.append((initial_migration) / (np.random.exponential(meters)))
@@ -608,7 +612,7 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
     hostpopsize = np.array(hostpopsize)
     prevalence = np.array(prevalence)
     infhost = np.round(hostpopsize * prevalence).astype(np.int64)
-    dfHost = host_fx(villages, infhost, muTrans, sizeTrans)
+    dfHost = host_fx(villages, infhost, muTrans, sizeTrans, initial_distance_m)
     perc_locus = cdslist[0]
     cds_length = cdslist[1]
     intgen_length = cdslist[2]
