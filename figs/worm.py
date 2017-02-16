@@ -8,8 +8,8 @@ import pandas as pd
 
 class Worms(object):
     def __init__(self, meta, haplotype1=None, haplotype2=None,
-            positions = None):
-        self.meta = meta 
+            positions = None, selection=None, cds_coords=None):
+        self.meta = meta
         if haplotype1:
             self.h1 = haplotype1
         else:
@@ -20,8 +20,16 @@ class Worms(object):
             self.h2 = {}
         if positions:
             self.pos = positions
-        else: 
+        else:
             self.pos = {}
+        if selection:
+            self.sel = selection
+        else:
+            self.sel = {}
+        if cds_coords:
+            self.coord = cds_coords
+        else:
+            self.coord = {}
 
     def add_worms(self, df, index):
         """
@@ -47,4 +55,4 @@ class Worms(object):
             self.h1[i] = ndelete(self.h1[i], index, axis=0)
         for i in self.h2.keys():
             self.h2[i] = ndelete(self.h2[i], index, axis=0)
-        
+
