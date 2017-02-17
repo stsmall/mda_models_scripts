@@ -17,7 +17,7 @@ from scipy.spatial import cKDTree
 from .agehost import agehost_fx
 from .village import Villages
 
-deathdict = pickle.load( open( "../acttable.p", "rb" ) )
+deathdict = pickle.load(open('../figs/data/acttable.p', "rb"))
 
 def vectorbite_fx(vill,
                   month,
