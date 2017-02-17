@@ -20,7 +20,7 @@ ctypedef np.uint8_t DTYPE_t
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef long[: ,::1] mate_worms(
+cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
         long[:] mate_array, 
         np.ndarray[np.int64_t, ndim=1] fec,
         np.ndarray[np.uint64_t, ndim=1] pos,
@@ -31,10 +31,11 @@ cdef long[: ,::1] mate_worms(
     """ Mates and recombines at a given loci
     """
     # :TODO need to check max integer
-    cdef np.intp_t i, outsize 
-    outssize = np.sum(fec) 
+    cdef np.intp_t i, j 
+    cdef np.int64_t outsize
+    outsize = np.sum(fec) 
     cdef int mnworms, fnworms
-    cdef int mhapc, fhapc 
+    cdef int mhapc, fhapc, recomb_pos 
     cdef np.ndarray iix_ma = np.repeat(mate_array, 
             fec)
     cdef np.ndarray femindex = np.arange(fem.shape[0]/2)
@@ -46,19 +47,24 @@ cdef long[: ,::1] mate_worms(
     # Haplotype chooser
     mnworms = males.shape[0]/2
     fnworms = fem.shape[0]/2
-    h1 = np.zeros((outssize, fem.shape[1]), dtype=np.uint8)
-    h2 = np.zeros((outssize, fem.shape[1]), dtype=np.uint8)
+    h1 = np.zeros((outsize, fem.shape[1]), dtype=np.uint8)
+    h2 = np.zeros((outsize, fem.shape[1]), dtype=np.uint8)
     for i in range(outsize):
         if mnum_recomb[i] == 0:
             mhapc = int(rand()/RAND_MAX)
             print(str(mhapc))
             h1[i, :] = males[iix_ma[i] + mnworms * mhapc, :]
-        elif fnum_recomb[i] == 0:
+        else:
+            for j in range(mnum_recomb[i]): 
+                recomb_pos = int(rand()/RAND_MAX*basepairs)
+            #h1[i, :] = 
+        if fnum_recomb[i] == 0:
             fhapc = int(rand()/RAND_MAX)
             print(str(fhapc))
             h2[i, :] = fem[iix_fem[i] + fnworms * fhapc, :]
         else: 
-            pass
+            for j in range(fnum_recomb[i]): 
+                recomb_pos = int(rand()/RAND_MAX*basepairs)
     return(h1)
 
 
@@ -66,7 +72,7 @@ def recombination_fx(locus,
                      dfAdult,
                      list recombination_rate,
                      list basepairs):
-    """calculate number of recombination events and rearranges haplotypes
+    """Calculate number of recombination events and rearranges haplotypes
     :TODO add for recombination map
 
     Parameters
@@ -91,6 +97,7 @@ def recombination_fx(locus,
     cdef str host
     # How to type this?
     #cdef bool[:] ahost, females, males
+    cdef np.ndarray out_array
     cdef Py_ssize_t loc
     #cdef np.ndarray fec 
     cdef float rr
@@ -117,7 +124,7 @@ def recombination_fx(locus,
                         dfAdult.h2[str(loc)][females, :]))
                     cmales = np.vstack((dfAdult.h1[str(loc)][males, :],
                         dfAdult.h2[str(loc)][males, :]))
-                    mate_worms(mate_array, 
+                    out_array = mate_worms(mate_array, 
                             fec, 
                             dfAdult.pos[str(loc)],
                             basepairs[loc],
