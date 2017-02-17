@@ -219,7 +219,7 @@ def transmission_fx(month,
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(hostpopsize[vill])
         avgMF = (dfMF.meta.village == vill).sum()/float(infhost)
-        L3trans = vectorbite_fx(month, bitesPperson[vill], hours2bite[vill], 
+        L3trans = vectorbite_fx(month, bitesPperson[vill], hours2bite[vill],
                 hostpopsize[vill], prev_t, densitydep_uptake, avgMF, bednets,
                                  bnstart[vill], bnstop[vill], bncoverage[vill])
         print("village is %i transmitted is %i" %(vill,L3trans))
@@ -247,7 +247,7 @@ def transmission_fx(month,
                 if np.random.random() < prob_newinfection:
                      #print("new host")
                      dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                     newrow.append((new_hostidx, index))  
+                     new_rows.append((new_hostidx, index))
                      #need to update distMat to include new host
                      distMat = pairwise_distances(
                              np.vstack(dfHost[dfHost.village == vill].coordinates))
@@ -256,7 +256,7 @@ def transmission_fx(month,
                              random.choice(np.where(distMat[disthost][0] <= dispersal)[0])]
                      #print(distMat[disthost])
                      #print(np.where(distMat[disthost][0] <= dispersal)[0])
-                     newrow.append((rehost['hostidx'], row))
+                     new_rows.append((rehost['hostidx'], row))
         else:
             print("dfMF is empty")
     prev_size = dfJuv.meta.shape[0]

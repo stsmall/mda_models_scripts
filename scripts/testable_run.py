@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import figs.wbsims_initialize as wbinit
 import figs.transmission as trans
 from figs.village import Village
+from figs.village import Villages
 #from figs.counthaps import hapcount
 
 from figs.calc_outstats import allelefreq_fx
@@ -157,15 +158,22 @@ def wb_sims(numberGens, config_file):
             from figs.survival_mda import survivalmda_fx as survfx
         else:
             from figs.survival import survivalbase_fx as survfx
-    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, 
+
+    dist = [0]
+    dist.extend(initial_distance_m)
+    distvill = [sum(dist[:i+1]) for i in range(len(dist))]
+    village=[]
+    for i in Villages(villages):
+        village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
+                               bitesPperson[i],bednets[i], bnstart[i], bnstop[i], bncoverage[i]))
+    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro,
             mda_micro, mda_sterile, mda_clear]
-    bnlist = [bednets, bnstart, bnstop, bncoverage]
     cdslist = [perc_locus, cds_length, intgen_length]
     # set counters
     sim_time = numberGens
 
-    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates =\
-             wbinit.wbsims_init(villages,
+    dfHost, dfAdult, dfJuv, dfMF =\
+             wbinit.wbsims_init(village,
                                hostpopsize,
                                prevalence,
                                muTrans,
@@ -184,24 +192,18 @@ def wb_sims(numberGens, config_file):
                                time_join,
                                selection,
                                cdslist)
-    embed()
-    ## after intialize run main loop
-    #print("\nUniqHaps : %i\n" %hapcount(dfAdult.locus_0))
+
     for month in range(sim_time):
         print("month is %i\n\n" %month)
-        dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
-                                                            villages,
-                                                            hostpopsize,
+        village, dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
+                                                            village,
                                                             sigma,
-                                                            bitesPperson,
-                                                            hours2bite,
                                                             densitydep_uptake,
-                                                            bnlist,
                                                             dfHost,
                                                             dfJuv,
                                                             dfMF)
-        dfHost, dfAdult, dfJuv, dfMF, dfSel = survfx(month,
-                                                    villages, 
+        dfHost, dfAdult, dfJuv, dfMF = survfx(month,
+                                                    village,
                                                     surv_Juv,
                                                     shapeMF,
                                                     scaleMF,
@@ -213,8 +215,6 @@ def wb_sims(numberGens, config_file):
                                                     recombination_rate,
                                                     basepairs,
                                                     selection,
-                                                    dfSel,
-                                                    cds_coordinates,
                                                     hostmigrate,
                                                     mdalist,
                                                     densitydep_surv,
@@ -224,16 +224,16 @@ def wb_sims(numberGens, config_file):
                                                     dfJuv,
                                                     dfMF)
         if month > burn_in:
-                  allelefreq_fx(dfAdult, dfSel)
+                  allelefreq_fx(dfAdult)
                   dfAdult.groupby("village").describe()
                   dfJuv.groupby("village").describe()
                   dfMF.groupby("village").describe()
                   dfHost.groupby("village").describe()
 
-    return(dfHost,dfAdult,dfJuv,dfMF,dfSel)
+    return(village,dfHost,dfAdult,dfJuv,dfMF)
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     dfHost, dfAdult, dfJuv, dfMF, dfSel = wb_sims(10, '../tests/wbsims.cfg')
+     dfHost, dfAdult, dfJuv, dfMF= wb_sims(10, '../tests/wbsims.cfg')
 #     embed()
 

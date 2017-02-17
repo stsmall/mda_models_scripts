@@ -13,11 +13,14 @@ import numpy as np
 import pandas as pd
 import random
 import pickle
+import copy
 
 from .agehost import agehost_fx
 from .worm import Worms
+from .village import Villages
 
-def host_fx(villages, infhost, muTrans, sizeTrans):
+
+def host_fx(village, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
        default_test : host_fx(2, [100, 300], 100, 1)
 
@@ -37,21 +40,23 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     dfHost : dataframe
     '''
     deathdict = pickle.load( open( "../figs/data/acttable.p", "rb" ) )
-    assert villages == len(infhost)
+    assert len(village) == len(infhost)
     coordinates = []
     host_idx = []
-    for vill in range(villages):
+
+    for vill in Villages(len(village)):
          #list of host positions
-         coordinates.extend(np.random.negative_binomial(sizeTrans, sizeTrans
+         coordinates.extend( np.random.negative_binomial(sizeTrans, sizeTrans
                              / float((sizeTrans+muTrans)), (infhost[vill],
-                                                           2)))
+                                                           2)) + village[vill].dist)
+
          for host in range(infhost[vill]):
              host_idx.append("v" + str(vill) + "h" + str(host + 1))
     sex = [random.choice("01") for i in range(sum(infhost))]
     age_death = [agehost_fx(i, deathdict) for i in sex]
 
     dfHost = pd.DataFrame({
-        'village': np.repeat(range(villages), infhost),
+        'village': np.repeat(range(len(village)), infhost),
         'hostidx': host_idx,
         'sex': sex,
         'age': [i[0] for i in age_death],
@@ -65,7 +70,7 @@ def host_fx(villages, infhost, muTrans, sizeTrans):
     return(dfHost)
 
 
-def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
+def coalsims_migmat_fx(numvillages, initial_migration, initial_distance_m, thetaN0,
                      basepairs, mutation_rate):
     '''Creates a string that represents a migration matrix between
     metapopulations. Migration here is a stepping stone not island model
@@ -86,26 +91,24 @@ def coalsims_migmat_fx(villages, initial_migration, initial_distance_m, thetaN0,
     '''
     ne = thetaN0 / (4 * mutation_rate * basepairs)
 
-    if villages > 4:
+    if numvillages > 4:
         raise ValueError("only handles 4 villages ATM")
-    elif villages < 4:
-        if len(initial_distance_m) != ((villages) * (villages - 1) / 2):
-            raise ValueError(("there are not adequate pairwise comparisons in"
-                              "distance_m to match villages"))
+    elif numvillages <= 4:
+        assert len(initial_distance_m) == ((numvillages * (numvillages - 1)) / 2)
         mig = []  # initiate blank migration list
         for meters in initial_distance_m:
             mig.append((initial_migration) / (np.random.exponential(meters)))
-        if villages == 2:
+        if numvillages == 2:
             m1 = 4 * ne * mig[0]  # 4Nm
             return("{}".format(m1))  # mig_matrix is symmetrical and island
-        elif villages == 3:
+        elif numvillages == 3:
             m1 = 4 * ne * mig[0]
             m2 = 4 * ne * mig[1]
             m3 = 4 * ne * mig[2]
             # mig_matrix is symmetrical
             return("{} {} {} {} {} {} {} {} {}".format(
                 0, m1, m2, m1, 0, m3, m2, m3, 0))
-        elif villages == 4:
+        elif numvillages == 4:
             m1 = 4 * ne * mig[0]
             m2 = 4 * ne * mig[1]
             m3 = 4 * ne * mig[2]
@@ -186,7 +189,7 @@ def parse_coalsims_fx(msout, ploidy, nind):
         return(gt_array, gt_array2, pos)
 
 
-def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
+def coalsims_fx(worm_popsize, numvillages, initial_migration, initial_distance_m,
         theta, basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
         time_join):
     '''External call to ms (Hudson 2000) or scrm.
@@ -256,7 +259,7 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
     }
 
     # order matters for the command call
-    if villages == 1:
+    if numvillages == 1:
         scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
                      "-G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
                      " {sig_digits} ")
@@ -265,13 +268,13 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
         num_subpops = len(worm_popsize)  # -I num_pops
         sub_pop = " ".join(map(str, worm_popsize))  # -I X i j ...
         mm = coalsims_migmat_fx(
-           villages,
+           numvillages,
            initial_migration,
            initial_distance_m,
            thetaN0,
            basepairs,
            mutation_rate)
-        if villages == 2:
+        if numvillages == 2:
             scrm_base = ("scrm {nhaps} 1 -t {theta} -r {rho} {basepair} "
                          "{sub_pop} {present_pop} {join} -G {exp_growth} -eG {time_growth} 0.0 -SC abs -p"
                          " {sig_digits} ")
@@ -290,10 +293,10 @@ def coalsims_fx(worm_popsize, villages, initial_migration, initial_distance_m,
             joinstr = ''
             subpopstr = ''
 
-            for village_ix in range(villages):
+            for village_ix in Villages(numvillages):
                 present_pop = float(theta[village_ix]) / thetaN0
                 subpopstr += '-n {} {} '.format(village_ix + 1, present_pop)
-                if village_ix != villages - 1:
+                if village_ix != numvillages - 1:
                     joinstr += '-ej {0} {1} {2} '.format(
                         tjoin,
                         village_ix + 1,
@@ -330,12 +333,6 @@ def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
         coordinates (start, end) of coding sequences
 
     '''
-    cds_coordinates = []
-    totalcds = []
-    selS = []
-    selF = []
-    newloc = []
-    newpos = []
     #size parameter
     size = 3
     #average distance between in bp
@@ -343,55 +340,61 @@ def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
     #last coordinate is approx num_cds * mu; so if num_cds is too large or mu is too long
     #genes will run over the locus length
     #dfAdult.pos
-    for loc in range(1, len(basepairs)):
-        num_cds = int(round((perc_locus[loc]*basepairs[loc]) /
+    for locus in dfAdult.h2.keys():
+        num_cds = int(round((perc_locus[int(locus)]*basepairs[int(locus)]) /
             cds_length))
         size_cds = np.round(np.random.gamma(4, 0.25, num_cds) *
                 cds_length)
-        totalcds.append(sum(size_cds))
+
+         #clustered
+#        cds_F = range(0, int(round(num_cds / 2.0)) + 1)
+#        cds_S = range(cds_F.pop(), num_cds)
+
+        #random
+        rand_cds = np.arange(num_cds)
+        np.random.shuffle(rand_cds)
+        cds_F = rand_cds[0:int(round(num_cds / 2.0))]
+        cds_S = rand_cds[len(cds_F): num_cds]
+
+        dfAdult.sel[locus + "Ft"] = sum(size_cds[cds_F])
+        dfAdult.sel[locus + "St"] = sum(size_cds[cds_S])
         #r = size
         #m = mean
         #p = r / (  r + m )
         cds_between = np.random.negative_binomial(size, size/float(mu+size), num_cds)
         cds_stop = 0
         cds_coords = []
+
         for i, j in zip(map(np.int, cds_between), map(np.int,size_cds)):
             #[i + cds_stop, i + cds_stop + j]
-            if (i + cds_stop > basepairs[loc]) or (i + j + cds_stop > basepairs[loc]):
+            if (i + cds_stop > basepairs[int(locus)]) or (i + j + cds_stop > basepairs[int(locus)]):
                 break
             else:
                 cds_coords.append([i + cds_stop, i + j + cds_stop])
-                cds_stop += (i + j)          
-        for position in dfAdult.pos[str(loc)]:
-            if any([i <= position <= j for i,j in cds_coords]):
-                if random.choice("SF") is "F":
-                     #shape = 4, mean = 1, scale = mean/shape
-                     #here mean is mean_fitness, wildtype is assumed to be 1
-                     selF.append(np.random.gamma(4, scale=0.25))
-                     selS.append(1)
-                else:
+                cds_stop += (i + j)
+        dfAdult.coord[locus + "F"] = [cds_coords[i] for i in cds_F]
+        dfAdult.coord[locus + "S"] = [cds_coords[i] for i in cds_S]
+        selS = []
+        selF = []
+        for position in dfAdult.pos[locus]:
+            if any([i <= position <= j for i,j in dfAdult.coord[locus + "F"]]):
+                 #shape = 4, mean = 1, scale = mean/shape
+                 #here mean is mean_fitness, wildtype is assumed to be 1
+                 selF.append(np.random.gamma(4, scale=0.25))
+                 selS.append(0)
+            elif any([i <= position <= j for i,j in dfAdult.coord[locus + "S"]]):
                      selS.append(np.random.gamma(4, scale=0.25))
-                     selF.append(1)
+                     selF.append(0)
             else: #not in a cds
                 selS.append(0)
                 selF.append(0)
-                
-        cds_coordinates.append(cds_coords) #this is a nested list for each locus of cds locations
-        newloc.extend(np.repeat(loc,len(dfAdult.pos[str(loc)])))
-        newpos.extend(dfAdult.pos[str(loc)])       
-    dfSel = pd.DataFrame({
-                        'locus' : newloc,
-                        'position' : newpos,
-                        'selF' : selF,
-                        'selS' : selS
-                        })
-    dfSel = dfSel.loc[:, ['locus', 'position', 'selF',
-         'selS']]
+        dfAdult.sel[locus + "F"] = np.array(selS)
+        dfAdult.sel[locus + "S"] = np.array(selF)
 
-    return(dfSel, cds_coordinates, totalcds)
+    return(dfAdult)
 
 
-def fit_fx(totalcds, dfAdult, dfSel):
+def fit_fx(dfAdult):
     ''' Calculates mean fitness for each individual by summing fitness effects
     from dfSel for each position across all loci
 
@@ -414,21 +417,29 @@ def fit_fx(totalcds, dfAdult, dfSel):
     ninds = len(dfAdult.meta)
     fitF_ind = np.zeros(ninds)
     fitS_ind = np.zeros(ninds)
+
     for locus in dfAdult.h2.keys():
-        sum_selsites_S = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selS"]) \
-            + np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selS"]) 
-        sum_selsites_F = np.dot(dfAdult.h1[locus], dfSel[dfSel.locus == int(locus)]["selF"]) \
-            + np.dot(dfAdult.h2[locus], dfSel[dfSel.locus == int(locus)]["selF"]) 
-        intsites = dfSel[dfSel.locus == int(locus)]["selS"].values
-        intsites[intsites > 0] = 1
-        cds_sites = np.dot(dfAdult.h1[locus], intsites) \
-            + np.dot(dfAdult.h2[locus], intsites)        
-        fitF_ind += (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_F) / (totalcds[int(locus) - 1] * 2)
-        fitS_ind += (( (totalcds[int(locus) - 1] * 2) - cds_sites) + sum_selsites_S) / (totalcds[int(locus) - 1] * 2)
+        sum_selsites_S = np.dot(dfAdult.h1[locus], dfAdult.sel[locus + "S"]) \
+            + np.dot(dfAdult.h2[locus], dfAdult.sel[locus + "S"])
+        sum_selsites_F = np.dot(dfAdult.h1[locus], dfAdult.sel[locus + "F"]) \
+            + np.dot(dfAdult.h2[locus], dfAdult.sel[locus + "F"])
+####
+        intsites_S = copy.copy(dfAdult.sel[locus + "S"])
+        intsites_S[intsites_S > 0] = 1
+        intsites_F = copy.copy(dfAdult.sel[locus + "F"])
+        intsites_F[intsites_F > 0] = 1
+        cds_sites_S = np.dot(dfAdult.h1[locus], intsites_S) \
+            + np.dot(dfAdult.h2[locus], intsites_S)
+        cds_sites_F = np.dot(dfAdult.h1[locus], intsites_F) \
+            + np.dot(dfAdult.h2[locus], intsites_F)
+####
+        fitS_ind += (( (dfAdult.sel[locus + "St"] * 2) - cds_sites_S) + sum_selsites_S) / (dfAdult.sel[locus + "St"] * 2)
+        fitF_ind += (( (dfAdult.sel[locus + "Ft"] * 2) - cds_sites_F) + sum_selsites_F) / (dfAdult.sel[locus + "Ft"] * 2)
+####
     return(fitF_ind / avg_over, fitS_ind / avg_over)
 
 
-def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
+def wormdf_fx(village, infhost, muWormBurden, sizeWormBurden, locus,
               initial_migration, initial_distance_m, theta, basepairs, mutation,
               recombination, time2Ancestral, thetaRegional, time_join, selection,
               perc_locus, cds_length, intgen_length):
@@ -458,12 +469,12 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      #total worms per villages
      wormpopsize = [sum(i) for i in popinit]
      host_idx = []
-     for vill in range(villages):
+     for vill in Villages(len(village)):
           for host in range(len(popinit[vill])):
                host_idx.extend(["v" + str(vill) + "h" + str(host + 1)] * popinit[vill][host])
 
      dfAdult = pd.DataFrame({
-                      'village' : np.repeat(range(villages), wormpopsize),
+                      'village' : np.repeat(range(len(village)), wormpopsize),
                       'hostidx' : host_idx,
                       'age' : 1,
                       'sex' : [random.choice("MF") for i in range(sum(wormpopsize))],
@@ -477,7 +488,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
      posSel = []
      for loc in range(locus):
          if recombination[loc] == 0:
-             gt_array, mutations = coalsims_fx(wormpopsize, villages,
+             gt_array, mutations = coalsims_fx(wormpopsize, len(village),
                      initial_migration, initial_distance_m,
                      theta[loc], basepairs[loc], mutation[loc],
                      recombination[loc], time2Ancestral, thetaRegional,
@@ -486,7 +497,7 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
              dfAdult.pos[str(loc)] = mutations
          elif recombination[loc] > 0:
              gt_array, gt_array2, mutations = coalsims_fx(wormpopsize,
-                     villages, initial_migration, initial_distance_m,
+                     len(village), initial_migration, initial_distance_m,
                      theta[loc], basepairs[loc], mutation[loc],
                      recombination[loc], time2Ancestral, thetaRegional, time_join)
              dfAdult.h1[str(loc)] = gt_array
@@ -495,17 +506,17 @@ def wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden, locus,
              posSel.append(mutations)
      # Create dfSel
      if selection:
-         dfSel, cds_coordinates, totalcds = sel_fx(dfAdult, basepairs,
+         dfAdult = sel_fx(dfAdult, basepairs,
                  perc_locus, cds_length, intgen_length)
-         fitS, fitF = fit_fx(totalcds, dfAdult, dfSel)
+         fitS, fitF = fit_fx(dfAdult)
          dfAdult.meta["fitF"] = fitF
          dfAdult.meta["fitS"] = fitS
-         return(dfAdult, dfSel, cds_coordinates)
+         return(dfAdult)
      else:
          return(dfAdult)
 
 
-def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurden,
+def wbsims_init(village, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurden,
                 sizeWormBurden, locus, initial_migration, initial_distance_m, theta,
                 basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                 time_join, selection, cdslist):
@@ -595,42 +606,31 @@ def wbsims_init(villages, hostpopsize, prevalence, muTrans, sizeTrans, muWormBur
     cds_length = 1100
     intgen_length = 2500
     '''
-
     hostpopsize = np.array(hostpopsize)
     prevalence = np.array(prevalence)
     infhost = np.round(hostpopsize * prevalence).astype(np.int64)
-    dfHost = host_fx(villages, infhost, muTrans, sizeTrans)
+    dfHost = host_fx(village, infhost, muTrans, sizeTrans)
     perc_locus = cdslist[0]
     cds_length = cdslist[1]
     intgen_length = cdslist[2]
     if selection:
-         dfAdult, dfSel, cds_coordinates= wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden,
+         dfAdult = wormdf_fx(village, infhost, muWormBurden, sizeWormBurden,
                               locus, initial_migration, initial_distance_m, theta,
                               basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                               time_join, selection, perc_locus, cds_length, intgen_length)
     else: #no selection
-        dfAdult = wormdf_fx(villages, infhost, muWormBurden, sizeWormBurden,
+        dfAdult = wormdf_fx(village, infhost, muWormBurden, sizeWormBurden,
                     locus, initial_migration, initial_distance_m, theta,
                     basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                     time_join, selection, perc_locus, cds_length, intgen_length)
-        
-
-        dfSel = pd.DataFrame({
-            'locus' : [],
-            'position' : [],
-            'selF' : [],
-            'selS' : [],
-            })
-
-        cds_coordinates = []
 
     dfJuv = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
     dfMF = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
-    return(dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates)
+    return(dfHost, dfAdult, dfJuv, dfMF)
 
-###3 loci, 2 villages, with selection
+####3 loci, 2 villages, with selection
 #if __name__ == '__main__':
-#    dfHost, dfAdult, dfJuv, dfMF, dfSel, cds_coordinates=wbsims_init(2, [100, 200],
+#    village, dfHost, dfAdult, dfJuv, dfMF=wbsims_init(2, [100, 200],
 #    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
 #    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
 #    True, [[0, 0.18, 0.20], 1100, 2500])

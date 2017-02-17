@@ -8,29 +8,22 @@
 """
 import math
 import random
-import copy
 import pickle
 
 import numpy as np
 import pandas as pd
-from scipy.spatial import KDTree
+from scipy.spatial import cKDTree
 
-from figs.agehost import agehost_fx
+from .agehost import agehost_fx
+from .village import Villages
 
 deathdict = pickle.load( open( "../acttable.p", "rb" ) )
 
-def vectorbite_fx(month,
-                  bitesPperson,
-                  hours2bite,
-                  hostpopsize,
-                  prev_t,
+def vectorbite_fx(vill,
+                  month,
+                  village,
                   densitydep_uptake,
-                  avgMF,
-                  bednets,
-                  bnstart,
-                  bnstop,
-                  bncoverage):
-
+                  avgMF):
 
     '''Counts the number of successful infectious mosquito bites
 
@@ -63,6 +56,15 @@ def vectorbite_fx(month,
     L3trans : int
          all new juv are age class 0
     '''
+
+    bitesPperson = village[vill].bpp
+    hours2bite = village[vill].h2b
+    hostpopsize = village[vill].hostpopsize
+    prev_t = village[vill].prev
+    bednets = village[vill].bn
+    bnstart = village[vill].bnstr
+    bnstop = village[vill].bnstp
+    bncoverage =  village[vill].bncov
     #print("vectorbite")
     if bednets:
         if month > bnstart and month < bnstop:
@@ -149,13 +151,9 @@ def new_infection_fx(dispersal,
     return(dfHost, new_hostidx)
 
 def transmission_fx(month,
-                    villages,
-                    hostpopsize,
+                    village,
                     sigma,
-                    bitesPperson,
-                    hours2bite,
                     densitydep_uptake,
-                    bnlist,
                     dfHost,
                     dfJuv,
                     dfMF):
@@ -204,57 +202,55 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
-    bednets = bnlist[0]
-    bnstart = bnlist[1]
-    bnstop = bnlist[2]
-    bncoverage = bnlist[3]
     dispersal = 2 * sigma
     new_rows = []
-    for vill in range(villages):
+    tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
+    distset = cKDTree.query_pairs(tree, dispersal)
+    for vill in Villages(len(village)):
         infhost = (dfHost.village == vill).sum()
-        prev_t = infhost / float(hostpopsize[vill])
-        avgMF = (dfMF.village == vill).sum()/float(infhost)
-        L3trans = vectorbite_fx(month, bitesPperson[vill], hours2bite[vill], hostpopsize[vill],
-                                 prev_t, densitydep_uptake, avgMF, bednets,
-                                 bnstart[vill], bnstop[vill], bncoverage[vill])
+        prev_t = infhost / float(village[vill].hostpopsize)
+        village[vill].prev = prev_t
+        avgMF = (dfMF.meta.village == vill).sum()/float(infhost)
+        L3trans = vectorbite_fx(vill, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill,L3trans))
         if L3trans != 0:
-            #new_rows=[]
-            if L3trans > (dfMF.village == vill).sum():  #more transmision events than possible MF
+            if L3trans > (dfMF.meta.village == vill).sum():  #more transmision events than possible MF
                   transMF = dfMF[dfMF.village == vill]
             else:
-                transMF = dfMF[dfMF.village == vill].sample(L3trans)
-            #KDTree
-            tree = KDTree(np.vstack(dfHost[dfHost.village == vill].coordinates),10)
-            distMat = tree.sparse_distance_matrix(tree, dispersal)
-            #query, query_ball_points, query_ball_tree, query_pairs
-            #cKDTree for Cython, NearestNeighbor
-
+                transMF = dfMF.meta[dfMF.meta.village == vill].sample(L3trans)
+            pd.transMF.sort_values("hostidx",inplace=True)
+            tcount = ''
             for index, row in transMF.iterrows():
-                #index of keys where the tuple contains a pair that is less than dispersal distance
-                transhost = [i for i, x in enumerate(distMat.keys()) if x[0] == row.hostidx]
-
-                if len(dfHost[dfHost.village == vill]) < hostpopsize[vill]:
-                     prob_newinfection = 1.0/(len(transhost) + 1)
+                if row.hostidx != tcount:
+                    transhostidx = dfHost[dfHost.hostidx == row.hostidx].index #index of donating host
+                    transhost = [i for i in distset if transhostidx in i]
+                    tcount = row.hostidx
+                else:
+                    pass
+                if len(dfHost[dfHost.village == vill]) < village[vill].hostpopsize:
+                     prob_newinfection = 1.0 / (len(transhost) + 1)
                 else: #everyone is already infected
                      prob_newinfection = 0
-
                 if np.random.random() < prob_newinfection:
-                    #print("new host")
                     dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                    newrow = copy.deepcopy(row)
-                    newrow['hostidx'] = new_hostidx
-                    newrow['age'] = 0
-#################################need to update KDtree to include new host
-                else: #reinfection
-################################this does not include self reinfection
-                    rehost = dfHost[dfHost.village == vill].iloc[distMat.keys()[random.choice(transhost)][1]] #info on the host
-                    newrow = copy.deepcopy(row)
-                    newrow['hostidx'] = rehost['hostidx']
-                    newrow['age'] = 0
-                dfMF.drop(index, inplace=True) #need to remove the transmitted MF from the dfMF
-                new_rows.append(newrow.values)
+                    new_rows.append((new_hostidx, index))
+                    #new host so have to resort and rebuild KDTree
+                    pd.dfHost.sort_values("village", inplace=True)
+                    pd.dfHost.reset_index(inplace=True,drop=True)
+                    tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
+                    distset = cKDTree.query_pairs(tree, dispersal)
+                else:
+                    try: #allow self infection
+                        rehostidx = transhost[np.random.randint(len(transhost) + 1)][1] #random choice of host within dispersal
+                    except IndexError:
+                        rehostidx = transhostidx
+                    new_rows.append((dfHost.ix[rehostidx,'hostidx'],row))
         else:
             print("dfMF is empty")
-    dfJuv = pd.concat([dfJuv, pd.DataFrame(new_rows, columns=dfJuv.columns)],ignore_index=True)
-    return(dfHost, dfJuv, dfMF, L3trans)
+
+    prev_size = dfJuv.meta.shape[0]
+    dfJuv.add_worms(dfMF, [i[1] for i in new_rows])
+    dfMF.drop_worms([i[1] for i in new_rows])
+    dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
+    dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
+    return(village, dfHost, dfJuv, dfMF, L3trans)
