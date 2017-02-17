@@ -15,7 +15,7 @@ from figs.fecundity import fecunditybase_fx
 from figs.host_migration import hostmigration_fx
 
 def survivalbase_fx(month,
-                    villages,
+                    village,
                     surv_Juv,
                     shapeMF,
                     scaleMF,
@@ -27,8 +27,6 @@ def survivalbase_fx(month,
                     recombination_rate,
                     basepairs,
                     selection,
-                    dfSel,
-                    cds_coordinates,
                     hostmigrate,
                     mdalist,
                     densitydep_surv,
@@ -88,21 +86,21 @@ def survivalbase_fx(month,
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
-        surv_adultrand = np.random.random(len(dfAdult))
+        surv_adultrand = np.random.random(len(dfAdult.meta))
         try:
-            surv_adultfxage = weibull_min.cdf(dfAdult.age, shapeAdult,loc=0,scale=scaleAdult)
+            surv_adultfxage = weibull_min.cdf(dfAdult.meta.age, shapeAdult,loc=0,scale=scaleAdult)
         except TypeError:
             surv_adultfxage = weibull_min.cdf(0, shapeAdult,loc=0,scale=scaleAdult)
         surviveAdult = np.where(surv_adultrand <= (1 - surv_adultfxage))
-        dfAdult = dfAdult.iloc[surviveAdult]
-        dfAdult.age = dfAdult.age + 1 #2 - 21
+        dfAdult.meta = dfAdult.meta.iloc[surviveAdult]
+        dfAdult.meta.age = dfAdult.meta.age + 1 #2 - 21
 
         ##host survival is from act table
         dfHost = dfHost[dfHost.age < dfHost.agedeath]
         #remove all worms with dead host.hostidx from all dataframes
-        dfAdult = dfAdult.loc[dfAdult["hostidx"].isin(dfHost.hostidx)]
-        dfJuv = dfJuv.loc[dfJuv["hostidx"].isin(dfHost.hostidx)]
-        dfMF = dfMF.loc[dfMF["hostidx"].isin(dfHost.hostidx)]
+        dfAdult.meta = dfAdult.meta.loc[dfAdult.meta["hostidx"].isin(dfHost.hostidx)]
+        dfJuv.meta = dfJuv.meta.loc[dfJuv.meta["hostidx"].isin(dfHost.hostidx)]
+        dfMF.meta = dfMF.meta.loc[dfMF.meta["hostidx"].isin(dfHost.hostidx)]
         #add 1 year to all ages of hosts
         dfHost.age = dfHost.age + 1
         if hostmigrate != 0:
@@ -110,42 +108,42 @@ def survivalbase_fx(month,
 
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
-    dfJuv.age += 1
-    surv_juvrand = np.random.random(len(dfJuv))
+    dfJuv.meta.age += 1
+    surv_juvrand = np.random.random(len(dfJuv.meta))
     surviveJuv = np.where(surv_juvrand <= surv_Juv)
-    dfJuv = dfJuv.iloc[surviveJuv]
+    dfJuv.meta = dfJuv.meta.iloc[surviveJuv]
 
     ##MF is weibull cdf
-    surv_mfrand = np.random.random(len(dfMF))
+    surv_mfrand = np.random.random(len(dfMF.meta))
     try:
-        surv_mffxage = weibull_min.cdf(dfMF.age,shapeMF,loc=0,scale=scaleMF)
+        surv_mffxage = weibull_min.cdf(dfMF.meta.age,shapeMF,loc=0,scale=scaleMF)
     except TypeError:
         surv_mffxage = weibull_min.cdf(0,shapeMF,loc=0,scale=scaleMF)
     surviveMF = np.where(surv_mfrand <= (1 - surv_mffxage))
-    dfMF = dfMF.loc[surviveMF]
-    dfMF.age = dfMF.age + 1 #2 - 12
-    dfMF = dfMF[dfMF.age < 13] #hard cutoff at 12 months
+    dfMF.meta = dfMF.meta.loc[surviveMF]
+    dfMF.meta.age = dfMF.meta.age + 1 #2 - 12
+    dfMF.meta = dfMF.meta[dfMF.meta.age < 13] #hard cutoff at 12 months
 
     ##move Juv age 13 to adult age 1
     #dfJuv_new = pd.DataFrame({})
-    dfJuv_new = dfJuv[dfJuv.age > 12].copy()
+    dfJuv_new = dfJuv.meta[dfJuv.meta.age > 12].copy()
     #reset age to adult
     dfJuv_new.age = 1
     #increase R0net for next gen
     dfJuv_new.R0net = dfJuv_new.R0net + 1
     #append to adults
-    dfAdult = pd.concat([dfAdult, dfJuv_new], ignore_index=True)
+    dfAdult.meta = pd.concat([dfAdult.meta, dfJuv_new], ignore_index=True)
     #remove Juv age 13 from dfJuv
-    dfJuv = dfJuv[dfJuv.age <= 12]
+    dfJuv.meta = dfJuv.meta[dfJuv.meta.age <= 12]
 
     ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
-    dfAdult_mf, dfSel = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
+    dfAdult_mf = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
-                                         dfSel, cds_coordinates, densitydep_fec)
-    dfAdult_mf.age = 1
-    dfAdult_mf.fec = 0
-    dfAdult_mf.sex = [random.choice("MF") for i in range(len(dfAdult_mf))]
-    dfMF = pd.concat([dfMF, dfAdult_mf], ignore_index=True)
+                                         densitydep_fec)
+    dfAdult_mf.meta.age = 1
+    dfAdult_mf.meta.fec = 0
+    dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
+    dfMF.meta = pd.concat([dfMF.meta, dfAdult_mf.meta], ignore_index=True)
 
-    return(dfHost, dfAdult, dfJuv, dfMF, dfSel)
+    return(dfHost, dfAdult, dfJuv, dfMF)

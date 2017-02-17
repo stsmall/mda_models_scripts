@@ -14,7 +14,6 @@ from .selection import selection_fx
 
 from IPython import embed
 
-
 def fecunditybase_fx(fecund,
                      dfAdult,
                      locus,
@@ -22,8 +21,6 @@ def fecunditybase_fx(fecund,
                      recombination_rate,
                      basepairs,
                      selection,
-                     dfSel,
-                     cds_coordinates,
                      densitydep_fec):
     '''Base fecundity function, simpliest scenario
 
@@ -31,7 +28,7 @@ def fecunditybase_fx(fecund,
     ---------
     fecund: int
         rate of the poisson distribution for offspring number
-    dfAdult: figs.Worms 
+    dfAdult: figs.Worms
         dataframe containing adult parasites
     locus : int
     mutation_rate : list, float
@@ -40,7 +37,7 @@ def fecunditybase_fx(fecund,
     selection : boolean
     dfSel : df
     cds_coordinates : [list], int
-    
+
     Returns
     ------
     dfAdult_mf : df
@@ -48,20 +45,20 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-    dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(fecund,
-           len(dfAdult[dfAdult.age < 6]))
+    dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(fecund,
+           len(dfAdult.meta[dfAdult.meta.age < 6]))
     #linear function defining decline in fecundity with age
     m = float(0 - fecund) / (21 - 6)
     b = 0 - m * 21
     #assign fecundity value based on age function
-    dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m
-           * dfAdult.loc[dfAdult.age >= 6,"age"] + b)
+    dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
+           * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b)
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
-    dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf, 
+    dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf,
          mutation_rate, recombination_rate, basepairs)
 
     if selection:
-     dfAdult_mf, dfSel = selection_fx(dfAdult_mf, positions, dfSel, locus, cds_coordinates)
+     dfAdult_mf = selection_fx(dfAdult_mf, positions, locus)
 
-    return(dfAdult_mf, dfSel)
+    return(dfAdult_mf)
