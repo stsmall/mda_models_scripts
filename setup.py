@@ -37,7 +37,7 @@ if use_cython:
                     "-march=native",
                     "-fopenmp" ],
                 extra_link_args=['-fopenmp'], 
-                language="c++"),
+                ),
             ]
     cmdclass.update({'build_ext': build_ext})
 

@@ -54,29 +54,32 @@ class Test_Recombination_Locus(unittest.TestCase):
 
 class Test_Recombination_Fx(unittest.TestCase):
     def setUp(self):
-        villages = [0, 0, 0]
-        sex = ['M', 'F', 'F']
-        hostidx = ['v0h1', 'v0h1', 'v0h1']
-        R0net = [0.5299222, 0.658231, 0.444]
-        fec = [0, 10, 2]
+        villages = [0, 0, 0, 0]
+        sex = ['M', 'M', 'F', 'F']
+        hostidx = ['v0h1', 'v0h1', 'v0h1', 'v0h1']
+        R0net = [0.66, 0.5299222, 0.658231, 0.444]
+        fec = [0, 0, 10, 2]
         positions = {
                 '0' : np.array([20, 30], dtype=np.uint64),
                 '1' : np.array([1, 10, 50, 100], dtype=np.uint64)
                 }
 
-        loc0 = np.array([[0, 0],
-                         [1, 1], 
-                         [1, 0]],
-                         dtype=np.uint8)
+        loc0 = np.array([
+            [0, 1],
+            [0, 0],
+            [1, 1],
+            [1, 0]], dtype=np.uint8)
 
-        hap1 = np.array([[0, 1, 0, 1], 
-                         [0, 0, 1, 0], 
-                         [1, 0, 0 , 0]], 
-                         dtype = np.uint8)
-        hap2 = np.array([[0, 0, 0, 0], 
-                         [0, 1, 0, 1], 
-                         [1, 1, 0 , 0]], 
-                         dtype = np.uint8)
+        hap1 = np.array([
+            [0, 0, 0, 0],
+            [0, 1, 0, 1], 
+            [0, 0, 1, 0],
+            [1, 0, 0 , 0]], dtype = np.uint8)
+        hap2 = np.array([
+            [1, 1, 0, 1],
+            [0, 0, 0, 0], 
+            [0, 1, 0, 1], 
+            [1, 1, 0 , 0]], dtype = np.uint8)
 
         meta = pd.DataFrame({
             'village': villages, 
@@ -95,7 +98,6 @@ class Test_Recombination_Fx(unittest.TestCase):
         p.strip_dirs()
         p.sort_stats('cumtime')
         #p.print_stats()
-
         
 
     def test_recombination_fx(self):
