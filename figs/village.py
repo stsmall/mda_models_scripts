@@ -10,7 +10,7 @@ class Villages(object):
         """
         Parameters
         ----------
-        villages : a list of figs.Village 
+        villages : a list of figs.Village
         """
         self.villages = villages
         self.current = 0
@@ -18,26 +18,35 @@ class Villages(object):
     def __iter__(self):
         return self
 
-    def __next__(self):
-        if self.current >= len(self.villages):
+    def next(self):
+        if self.current >= self.villages:
             raise StopIteration
         else:
-            self.current
-
+            self.current += 1
+            return self.current - 1
 
 
 class Village(object):
     """ Basic parameters for the village
     """
 
-    def __init__(self, identifier, hostpopsize = 100,
-            prevalence = 0.1):
+    def __init__(self, identifier, hostpopsize = None,
+            prevalence = None, distance = None, hours2bite = None, bitesPperson = None,
+            bednets = None, bnstart = None, bnstop = None, bncoverage = None):
         """
         """
         self.id =  identifier
-        self.hostpopsize = 100
-        self.prevalence = prevalence
+        self.hostpopsize = hostpopsize
+        self.prev = prevalence
+        self.dist = distance #this is distance from village 0
+        self.h2b = hours2bite
+        self.bpp = bitesPperson
+        self.bn = bednets
+        self.bnstr = bnstart
+        self.bnstp = bnstop
+        self.cov = bncoverage
 
-if __name__ == '__main__':
-    t = [Village(1, hostpopsize=1000), Village(2, hostpopsize=200)]
-    
+#if __name__ == '__main__':
+#    t = [Village(0, hostpopsize=1000, prevalence=0.2, distance=0),
+#         Village(1, hostpopsize=200, prevalence=0.1, distance=1000)]
+
