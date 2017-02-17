@@ -44,7 +44,7 @@ class Village(object):
         self.bn = bednets
         self.bnstr = bnstart
         self.bnstp = bnstop
-        self.cov = bncoverage
+        self.bncov = bncoverage
 
 #if __name__ == '__main__':
 #    t = [Village(0, hostpopsize=1000, prevalence=0.2, distance=0),
