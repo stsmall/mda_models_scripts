@@ -11,6 +11,7 @@ cimport numpy as np
 import random
 import pandas as pd
 import cython
+from cpython cimport array
 from libc.stdlib cimport rand, RAND_MAX
 #from cython.parallel import parallel, prange
 #from libc.stdlib cimport abort, malloc, free
@@ -18,8 +19,10 @@ from libc.stdlib cimport rand, RAND_MAX
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
 
-@cython.boundscheck(False)
+#@cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.cdivision(True)
+@cython.nonecheck(False)
 cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
         long[:] mate_array,
         np.ndarray[np.int64_t, ndim=1] fec,
@@ -31,41 +34,48 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     """ Mates and recombines at a given loci
     """
     # :TODO need to check max integer
-    cdef np.intp_t i, j
+    cdef np.intp_t i, j, l 
     cdef np.int64_t outsize
-    outsize = np.sum(fec)
+    cdef int k 
+    outsize = np.sum(fec) 
     cdef int mnworms, fnworms
-    cdef int mhapc, fhapc, recomb_pos
-    cdef np.ndarray iix_ma = np.repeat(mate_array,
-            fec)
-    cdef np.ndarray femindex = np.arange(fem.shape[0]/2)
+    cdef int mhapc, fhapc, recomb_pos 
+    cdef long[:] iix_ma = np.repeat(mate_array, fec)
+    cdef long[:] femindex = np.arange(fem.shape[0]/2, dtype=np.int64)
     cdef np.ndarray iix_fem = np.repeat(femindex, fec)
     cdef np.ndarray mnum_recomb = np.random.poisson(
             recomb_rate * basepairs, outsize)
     cdef np.ndarray fnum_recomb = np.random.poisson(
             recomb_rate * basepairs, outsize)
-    # Haplotype chooser
+    cdef DTYPE_t[:, ::1] hout = np.empty((2*outsize, fem.shape[1]), dtype=np.uint8)
     mnworms = males.shape[0]/2
     fnworms = fem.shape[0]/2
-    h1 = np.zeros((outsize, fem.shape[1]), dtype=np.uint8)
-    h2 = np.zeros((outsize, fem.shape[1]), dtype=np.uint8)
     for i in range(outsize):
+        print(mnum_recomb[i])
         if mnum_recomb[i] == 0:
             mhapc = int(rand()/RAND_MAX)
-            print(str(mhapc))
-            h1[i, :] = males[iix_ma[i] + mnworms * mhapc, :]
+            hout[i, :] = males[iix_ma[i] + mnworms * mhapc, :]
         else:
-            for j in range(mnum_recomb[i]):
+            k = 0
+            while k <= mnum_recomb[i]:
+                k += 1
                 recomb_pos = int(rand()/RAND_MAX*basepairs)
-            #h1[i, :] =
+                pos_ix = 0
+                for l in range(len(pos)):
+                    if recomb_pos > pos[l]:
+                        pos_ix = l
         if fnum_recomb[i] == 0:
             fhapc = int(rand()/RAND_MAX)
-            print(str(fhapc))
-            h2[i, :] = fem[iix_fem[i] + fnworms * fhapc, :]
-        else:
-            for j in range(fnum_recomb[i]):
+            hout[i + outsize, :] = fem[iix_fem[i] + fnworms * fhapc, :]
+        else: 
+            k = 0
+            while k <= mnum_recomb[i]:
+                k += 1
                 recomb_pos = int(rand()/RAND_MAX*basepairs)
-    return(h1)
+                for l in range(len(pos)):
+                    if recomb_pos > pos[l]:
+                        break
+    return(hout)
 
 
 def recombination_fx(locus,
@@ -113,7 +123,7 @@ def recombination_fx(locus,
         else:
             fec = dfAdult.meta.fec[females].values
             mate_array = np.random.randint(0, np.sum(males), np.sum(females),
-                    dtype=np.int)
+                    dtype=np.int64)
             # Parallelize this
             for loc in range(locus):
                 rr = recombination_rate[loc]
@@ -131,4 +141,6 @@ def recombination_fx(locus,
                             rr,
                             cfemales,
                             cmales)
-    return(dfAdult)
+    #new_meta = pd.DataFrame({})
+    #dfAdult_mf = Worms(meta = pd
+    return(out_array)
