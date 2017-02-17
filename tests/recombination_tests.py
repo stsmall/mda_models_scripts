@@ -101,7 +101,7 @@ class Test_Recombination_Fx(unittest.TestCase):
         
 
     def test_recombination_fx(self):
-        df_adult_mf = recombination_fx(2, self.worms, [0, 0.5], [100, 200])
+        df_adult_mf = recombination_fx(2, self.worms, [0, 0.005], [100, 200])
         #np.testing.assert_equal(self.adult.locus_0_h1[0] , [1, 3, 9])
         #np.testing.assert_equal(self.adult.locus_0_h2[0] , [2, 4, 6])
         #np.testing.assert_equal(df_adult_mf.shape[0], 12)
