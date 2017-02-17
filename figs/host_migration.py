@@ -9,8 +9,11 @@
 import numpy as np
 
 
-def hostmigration_fx(dfHost,
-                     hostmigrate):
+def hostmigration_fx(village,
+                     dfHost,
+                     hostmigrate,
+                     sizeTrans,
+                     muTrans):
      ''' allows host to move between villages
      Parameters
      ---------
@@ -34,6 +37,9 @@ def hostmigration_fx(dfHost,
              elif dfHost.ix[migrant, "village"] == max(dfHost.village):
                   dfHost.ix[migrant, "village"] -= 1
              else: #at max can only go down
-                 dfHost.loc[migrant, "village"] += np.random.choice([1,-1])
+                 dfHost.ix[migrant, "village"] += np.random.choice([1,-1])
+         #new coordinates
+         dfHost.ix[migrant, "coordinates"] = (np.random.negative_binomial(sizeTrans,
+                  sizeTrans / float((sizeTrans+muTrans)), (1, 2)) + village[dfHost.ix[migrant,"village"]].dist)
          i += 1
      return(dfHost)
