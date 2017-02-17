@@ -11,122 +11,68 @@ cimport numpy as np
 import random
 import pandas as pd
 import cython
+from libc.stdlib cimport rand, RAND_MAX
 #from cython.parallel import parallel, prange
 #from libc.stdlib cimport abort, malloc, free
 
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
 
-
-def recombination_locus(np.ndarray[np.int64_t, ndim=1] h1,
-        np.ndarray[np.int64_t, ndim=1] h2,
-        int crossover_pos):
-    """Calculates the recombination at a given locus
-    """
-    cdef int h1_ix = h1.shape[0]
-    cdef int h2_ix = h2.shape[0]
-    cdef unsigned i = 0
-    cdef int j
-    for j in h1:
-        if j > crossover_pos:
-            h1_ix = i
-            break
-        else:pass
-        i += 1
-    i = 0
-    for j in h2:
-        if j > crossover_pos:
-            h2_ix = i
-            break
-        else:pass
-        i += 1
-    h1_new = np.append(h1[0:h1_ix], h2[h2_ix:])
-    h2_new = np.append(h2[0:h2_ix], h1[h1_ix:])
-    return(h1_new, h2_new)
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef mate_worms(np.ndarray[DTYPE_t, ndim=1] fem, 
-        np.ndarray[DTYPE_t, ndim = 1] fec,
-        np.ndarray[DTYPE_t, ndim=2] h1, 
-        np.ndarray[DTYPE_t, ndim=2] h2):
+cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
+        long[:] mate_array, 
+        np.ndarray[np.int64_t, ndim=1] fec,
+        np.ndarray[np.uint64_t, ndim=1] pos,
+        int basepairs,
+        float recomb_rate,
+        np.ndarray[DTYPE_t, ndim=2, mode='c'] fem, 
+        np.ndarray[DTYPE_t, ndim=2, mode='c'] males):
     """ Mates and recombines at a given loci
     """
     # :TODO need to check max integer
-    cdef Py_ssize_t i
-    cdef np.ndarray[DTYPE_t] mate_array 
-    for i in len(fem):
-        pass
-
-
-def _temp(df, loci):
-    """
-    Parameter
-    ---------
-    df : pandas dataframe
-    loci : figs.Locus list
-
-    Returns
-    -------
-    """
-    cdef int num_recomb
-
-    females = df.query('sex == "F" and fec > 0')
-    males = df.ix[df.sex == "M", :]
-
-    if males.shape[0] == 0:
-        return(males)
-    elif females.shape[0] == 0:
-        return(females)
-    outs = []
-    for _, f_row in females.iterrows():
-        nr = f_row.copy()
-        male = males.sample(1).iloc[0, :]
-        for mf in range(f_row.fec):
-            for loc in loci:
-                lid = loc.idx + '_h{0!s}'
-                num_recomb = np.random.poisson(
-                        loc.recombination_rate * loc.basepairs * 2)
-
-                if num_recomb == 0:
-                    nr[lid.format(1)] = f_row[lid.format(random.choice("12"))]
-                    nr[lid.format(2)] = male[lid.format(random.choice("12"))]
-                else:
-                    sex_xing = random.choice("MF")
-                    h1m = male[lid.format(1)]
-                    h2m = male[lid.format(2)]
-                    h1f = f_row[lid.format(1)]
-                    h2f = f_row[lid.format(2)]
-                    for _ in range(num_recomb):
-                        crossover_pos = random.randint(0,
-                                loc.basepairs)
-                        if sex_xing == "M":
-                            h1m, h2m = recombination_locus(h1m, h2m,
-                                    crossover_pos)
-                        elif sex_xing == "F":
-                            h1f, h2f = recombination_locus(h1f, h2f,
-                                    crossover_pos)
-                    nr[lid.format(1)] = random.choice([h1f, h2f])
-                    nr[lid.format(2)] = random.choice([h1m, h2m])
-            outs.append(nr)
-    outdf = pd.concat(outs, axis=1, ignore_index=True).T
-    return(outdf)
-
-cpdef host_mating():
-    """
-    """
-
-cpdef new_recombination(np.ndarray[np.uint8_t, ndim=2] h1, 
-        np.ndarray[np.uint8_t, ndim=2] h2,
-        float rec_rate, int basepairs):
-    pass
+    cdef np.intp_t i, j 
+    cdef np.int64_t outsize
+    outsize = np.sum(fec) 
+    cdef int mnworms, fnworms
+    cdef int mhapc, fhapc, recomb_pos 
+    cdef np.ndarray iix_ma = np.repeat(mate_array, 
+            fec)
+    cdef np.ndarray femindex = np.arange(fem.shape[0]/2)
+    cdef np.ndarray iix_fem = np.repeat(femindex, fec)
+    cdef np.ndarray mnum_recomb = np.random.poisson(
+            recomb_rate * basepairs, outsize)
+    cdef np.ndarray fnum_recomb = np.random.poisson(
+            recomb_rate * basepairs, outsize)
+    # Haplotype chooser
+    mnworms = males.shape[0]/2
+    fnworms = fem.shape[0]/2
+    h1 = np.zeros((outsize, fem.shape[1]), dtype=np.uint8)
+    h2 = np.zeros((outsize, fem.shape[1]), dtype=np.uint8)
+    for i in range(outsize):
+        if mnum_recomb[i] == 0:
+            mhapc = int(rand()/RAND_MAX)
+            print(str(mhapc))
+            h1[i, :] = males[iix_ma[i] + mnworms * mhapc, :]
+        else:
+            for j in range(mnum_recomb[i]): 
+                recomb_pos = int(rand()/RAND_MAX*basepairs)
+            #h1[i, :] = 
+        if fnum_recomb[i] == 0:
+            fhapc = int(rand()/RAND_MAX)
+            print(str(fhapc))
+            h2[i, :] = fem[iix_fem[i] + fnworms * fhapc, :]
+        else: 
+            for j in range(fnum_recomb[i]): 
+                recomb_pos = int(rand()/RAND_MAX*basepairs)
+    return(h1)
 
 
 def recombination_fx(locus,
                      dfAdult,
                      list recombination_rate,
                      list basepairs):
-    """calculate number of recombination events and rearranges haplotypes
+    """Calculate number of recombination events and rearranges haplotypes
     :TODO add for recombination map
 
     Parameters
@@ -148,39 +94,41 @@ def recombination_fx(locus,
 
     """
     hosts = dfAdult.meta.hostidx.unique()
-
-    cdef np.ndarray[DTYPE_t] chost
+    cdef str host
+    # How to type this?
+    #cdef bool[:] ahost, females, males
+    cdef np.ndarray out_array
     cdef Py_ssize_t loc
-    cdef int recombining_loci
-
-    cdef np.ndarray bounderies = np.zeros([3])
-    for loc in range(locus):
-        if recombination_rate[loc] != 0:
-            pass
-        else: pass
+    #cdef np.ndarray fec 
+    cdef float rr
+    #cdef int[:] mate_array = np.empty(np.sum(females))
     for host in hosts:
-        chost = dfAdult.meta.index[dfAdult.meta.hostidx == host].values
-        print(chost[0:5])
-        #ixmales = (dfAdult.meta.sex == 'M').values
-        ixfemalse = (dfAdult.meta.sex == 'F').values
-        #hdf = dfAdult.meta.ix[chost == host,:]
-    '''
-    for loc in locus:
-        ls = "locus_{0}".format(loc_string)
-        new_recombination(dfAdult.h1[ls], dfAdult.h2[ls], 
-                basepairs[loc], recombination_rate[loc])
-    cdef int N
-    cdef int i
-    lid = "locus_{0!s}"
-    dout = []
-    loci = [Locus(lid.format(i), recombination_rate = j, basepairs = k)
-            for i, j, k in zip(range(locus), recombination_rate, basepairs) if
-            j != 0]
-    hosts = dfAdult.hostidx.unique()
-    N = hosts.shape[0]
-    for i in range(N):
-        dout.append(_temp(dfAdult[dfAdult.hostidx == hosts[i]], loci))
-    dfAdult_mf = pd.concat(dout)
-    dfAdult_mf.reset_index(drop=True, inplace=True)
-    '''
+        #chost = dfAdult.meta.index[dfAdult.meta.hostidx == host].values
+        ahost = dfAdult.meta.hostidx == host
+        females = np.logical_and(ahost, dfAdult.meta.sex == 'F').values
+        males = np.logical_and(ahost, dfAdult.meta.sex == 'M').values
+        if np.sum(males) == 0 or np.sum(females) == 0:
+            print('Either there are 0 males in host or zero females in host')
+            continue
+        else:
+            fec = dfAdult.meta.fec[females].values
+            mate_array = np.random.randint(0, np.sum(males), np.sum(females),
+                    dtype=np.int)
+            # Parallelize this
+            for loc in range(locus):
+                rr = recombination_rate[loc]
+                if rr == 0:
+                    pass
+                else:
+                    cfemales = np.vstack((dfAdult.h1[str(loc)][females, :],
+                        dfAdult.h2[str(loc)][females, :]))
+                    cmales = np.vstack((dfAdult.h1[str(loc)][males, :],
+                        dfAdult.h2[str(loc)][males, :]))
+                    out_array = mate_worms(mate_array, 
+                            fec, 
+                            dfAdult.pos[str(loc)],
+                            basepairs[loc],
+                            rr,
+                            cfemales, 
+                            cmales)
     return(dfAdult)

@@ -18,6 +18,7 @@
 *.png
 *.prof
 *.egg-info
+*.cpp
 /figs/*.html
 /tests/*.txt
 
