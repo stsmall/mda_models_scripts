@@ -18,7 +18,8 @@ from scipy.stats import weibull_min
 import matplotlib.pyplot as plt
 
 import figs.wbsims_initialize as wbinit
-import figs.transmission as trans
+#import figs.transmission as trans
+import figs.transmissionKDtree as trans
 from figs.village import Village
 from figs.village import Villages
 #from figs.counthaps import hapcount
@@ -165,7 +166,7 @@ def wb_sims(numberGens, config_file):
     village=[]
     for i in Villages(villages):
         village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
-                               bitesPperson[i],bednets[i], bnstart[i], bnstop[i], bncoverage[i]))
+                               bitesPperson[i],bednets, bnstart[i], bnstop[i], bncoverage[i]))
     mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro,
             mda_micro, mda_sterile, mda_clear]
     cdslist = [perc_locus, cds_length, intgen_length]
