@@ -34,12 +34,12 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     """ Mates and recombines at a given loci
     """
     # :TODO need to check max integer
-    cdef np.intp_t i, j, l 
+    cdef np.intp_t i, j, l
     cdef np.int64_t outsize
-    cdef int k 
-    outsize = np.sum(fec) 
+    cdef int k
+    outsize = np.sum(fec)
     cdef int mnworms, fnworms
-    cdef int mhapc, fhapc, recomb_pos 
+    cdef int mhapc, fhapc, recomb_pos
     cdef long[:] iix_ma = np.repeat(mate_array, fec)
     cdef long[:] femindex = np.arange(fem.shape[0]/2, dtype=np.int64)
     cdef np.ndarray iix_fem = np.repeat(femindex, fec)
@@ -53,7 +53,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     for i in range(outsize):
         print(mnum_recomb[i])
         if mnum_recomb[i] == 0:
-            mhapc = int(rand()/RAND_MAX)
+            mhapc = np.int(rand()/RAND_MAX)
             hout[i, :] = males[iix_ma[i] + mnworms * mhapc, :]
         else:
             k = 0
@@ -65,13 +65,13 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                     if recomb_pos > pos[l]:
                         pos_ix = l
         if fnum_recomb[i] == 0:
-            fhapc = int(rand()/RAND_MAX)
+            fhapc = np.int(rand()/RAND_MAX)
             hout[i + outsize, :] = fem[iix_fem[i] + fnworms * fhapc, :]
-        else: 
+        else:
             k = 0
             while k <= mnum_recomb[i]:
                 k += 1
-                recomb_pos = int(rand()/RAND_MAX*basepairs)
+                recomb_pos = np.int(rand()/RAND_MAX*basepairs)
                 for l in range(len(pos)):
                     if recomb_pos > pos[l]:
                         break
