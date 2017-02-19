@@ -35,7 +35,7 @@ cdef float[:] weighted_random_index(int basepairs, unsigned long[:] pos):
         print(pos[i] - prev_value)
         weight_array[i] = (pos[i] - prev_value)/float(basepairs)  
         prev_value = pos[i]
-    jj
+    weight_array[pos.shape[0] + 1] = (basepairs - pos[pos.shape[0]])
     return(np.sort(weight_array))
 
 @cython.boundscheck(False)
