@@ -19,14 +19,31 @@ from libc.stdlib cimport rand, RAND_MAX
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
 
-#@cython.boundscheck(False)
+cdef long[:] sorted_random_ints(int pos, int size, float[:] weight_array):
+    cdef long[:] random_ints = np.random.randchoic(pos, size=size, p=weight_array)
+    return(np.sort(random_ints))
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef float[:] weighted_random_index(int basepairs, unsigned long[:] pos):
+    cdef np.intp_t i
+    cdef float[:] weight_array
+    cdef int prev_value
+    prev_value = 0
+    for i in pos.shape[0]:
+        weight_array[i] = (pos[i] - prev_value)/float(basepairs)  
+        prev_value = pos[i]
+    return(np.sort(weight_array))
+
+@cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
 cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
         long[:] mate_array,
-        np.ndarray[np.int64_t, ndim=1] fec,
-        np.ndarray[np.int64_t, ndim=1] pos,
+        long[:] fec,
+        unsigned long[:] pos,
         int basepairs,
         float recomb_rate,
         np.ndarray[DTYPE_t, ndim=2, mode='c'] fem,
@@ -34,14 +51,16 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     """ Mates and recombines at a given loci
     """
     # :TODO need to check max integer
-    cdef np.intp_t i, j, l
+    cdef np.intp_t i, j, l, prev_break, c_break
     cdef np.int64_t outsize
     cdef int k
     outsize = np.sum(fec)
     cdef int mnworms, fnworms
-    cdef int mhapc, fhapc, recomb_pos
+    cdef int hapc, recomb_pos, ohapc 
     cdef long[:] iix_ma = np.repeat(mate_array, fec)
     cdef long[:] femindex = np.arange(fem.shape[0]/2, dtype=np.int64)
+    cdef float[:] weight_array 
+    cdef long[:] posarray = np.arange(fem.shape[1], dtype=np.int64)
     cdef np.ndarray iix_fem = np.repeat(femindex, fec)
     cdef np.ndarray mnum_recomb = np.random.poisson(
             recomb_rate * basepairs, outsize)
@@ -50,23 +69,41 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     cdef DTYPE_t[:, ::1] hout = np.empty((2*outsize, fem.shape[1]), dtype=np.uint8)
     mnworms = males.shape[0]/2
     fnworms = fem.shape[0]/2
+    # Pos must be sorted
+    weight_array = weighted_random_index(basepairs, pos)
     for i in range(outsize):
+        print('Number of recombinations')
         print(mnum_recomb[i])
+        print(fnum_recomb[i])
+        hapc = np.int(rand()/RAND_MAX)
+        if hapc == 0: 
+            ohapc = 1
         if mnum_recomb[i] == 0:
-            mhapc = np.int(rand()/RAND_MAX)
-            hout[i, :] = males[iix_ma[i] + mnworms * mhapc, :]
+            hout[i, :] = males[iix_ma[i] + mnworms * hapc, :]
         else:
             k = 0
-            while k <= mnum_recomb[i]:
+            cpos = sorted_random_ints(posarray, mnum_recomb[i], weight_array)
+            mhapc = np.int(rand()/RAND_MAX)
+            prev_break = 0
+            c_break = 0
+            while k < mnum_recomb[i]:
+                c_break = cpos[k]
+                hout[i, prev_break:c_break] = males[iix_ma[i] + mnworms *
+                        hapc, prev_break:c_break]
+                hout[i, c_break: ] = males[iix_ma[i] + mnworms * ohapc, :]
+                prev_break = c_break
+                hapc = ohapc
+                if hapc == 1:
+                    ohapc = 0
+                else:
+                    ohapc = 1
                 k += 1
-                recomb_pos = int(rand()/RAND_MAX*basepairs)
-                pos_ix = 0
-                for l in range(len(pos)):
-                    if recomb_pos > pos[l]:
-                        pos_ix = l
+        '''        
+        hapc = np.int(rand()/RAND_MAX)
+        if hapc == 0: 
+            ohapc = 1
         if fnum_recomb[i] == 0:
-            fhapc = np.int(rand()/RAND_MAX)
-            hout[i + outsize, :] = fem[iix_fem[i] + fnworms * fhapc, :]
+            hout[i + outsize, :] = fem[iix_fem[i] + fnworms * hapc, :]
         else:
             k = 0
             while k <= mnum_recomb[i]:
@@ -75,6 +112,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                 for l in range(len(pos)):
                     if recomb_pos > pos[l]:
                         break
+        '''
     return(hout)
 
 

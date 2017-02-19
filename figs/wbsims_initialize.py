@@ -620,10 +620,10 @@ def wbsims_init(village, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurd
 
     dfJuv = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
     dfMF = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
-    print len(dfAdult.h1["1"])
-    print len(dfAdult.h2["1"])
-    print len(dfAdult.h1["0"])
-    print dfAdult.meta.head()
+    print(len(dfAdult.h1["1"]))
+    print(len(dfAdult.h2["1"]))
+    print(len(dfAdult.h1["0"]))
+    print(dfAdult.meta.head())
     return(dfHost, dfAdult, dfJuv, dfMF)
 
 ####3 loci, 2 villages, with selection
