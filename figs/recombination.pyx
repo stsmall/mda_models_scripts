@@ -82,6 +82,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     # Pos must be sorted
     weight_array = weighted_random_index(basepairs, pos)
     print(np.sum(weight_array))
+    print(weight_array[
     for i in range(outsize):
         print('Number of recombinations')
         print(mnum_recomb[i])
