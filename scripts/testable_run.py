@@ -29,6 +29,7 @@ from figs.plotting import (plot_allele_frequency,
         plot_coordinates_host)
 
 from IPython import embed
+#import ipdb; ipdb.set_trace()
 
 
 
@@ -236,5 +237,4 @@ def wb_sims(numberGens, config_file):
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
      dfHost, dfAdult, dfJuv, dfMF= wb_sims(10, '../tests/wbsims.cfg')
-#     embed()
 

@@ -6,6 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
+import ipdb
 import math
 import random
 import pickle
@@ -202,6 +203,7 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
+    #ipdb.set_trace()
     dispersal = 2 * sigma
     new_rows = []
     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
@@ -247,7 +249,6 @@ def transmission_fx(month,
                     new_rows.append((dfHost.ix[rehostidx,'hostidx'],row))
         else:
             print("dfMF is empty")
-
     prev_size = dfJuv.meta.shape[0]
     dfJuv.add_worms(dfMF, [i[1] for i in new_rows])
     dfMF.drop_worms([i[1] for i in new_rows])
