@@ -19,8 +19,8 @@ from libc.stdlib cimport rand, RAND_MAX
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
 
-cdef long[:] sorted_random_ints(int pos, int size, float[:] weight_array):
-    cdef long[:] random_ints = np.random.randchoic(pos, size=size, p=weight_array)
+cdef long[:] sorted_random_ints(long[:] pos, int size, float[:] weight_array):
+    cdef long[:] random_ints = np.random.choice(pos, size=size, p=weight_array)
     return(np.sort(random_ints))
 
 @cython.boundscheck(False)
@@ -28,12 +28,14 @@ cdef long[:] sorted_random_ints(int pos, int size, float[:] weight_array):
 @cython.cdivision(True)
 cdef float[:] weighted_random_index(int basepairs, unsigned long[:] pos):
     cdef np.intp_t i
-    cdef float[:] weight_array
+    cdef float[:] weight_array = np.empty(pos.shape[0] + 1, dtype=np.float32)
     cdef int prev_value
     prev_value = 0
-    for i in pos.shape[0]:
+    for i in range(pos.shape[0]):
+        print(pos[i] - prev_value)
         weight_array[i] = (pos[i] - prev_value)/float(basepairs)  
         prev_value = pos[i]
+    jj
     return(np.sort(weight_array))
 
 @cython.boundscheck(False)
@@ -41,14 +43,21 @@ cdef float[:] weighted_random_index(int basepairs, unsigned long[:] pos):
 @cython.cdivision(True)
 @cython.nonecheck(False)
 cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
-        long[:] mate_array,
-        long[:] fec,
+        long[:] mate_array, 
+        long[:] fec, 
         unsigned long[:] pos,
         int basepairs,
         float recomb_rate,
         np.ndarray[DTYPE_t, ndim=2, mode='c'] fem,
         np.ndarray[DTYPE_t, ndim=2, mode='c'] males):
     """ Mates and recombines at a given loci
+
+    Parameters
+    ----------
+    mate_array : array of longs
+        matches females with males
+    fec : number of children each female has
+    pos : array
     """
     # :TODO need to check max integer
     cdef np.intp_t i, j, l, prev_break, c_break
@@ -86,6 +95,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
             mhapc = np.int(rand()/RAND_MAX)
             prev_break = 0
             c_break = 0
+            male_index = i
             while k < mnum_recomb[i]:
                 c_break = cpos[k]
                 hout[i, prev_break:c_break] = males[iix_ma[i] + mnworms *
