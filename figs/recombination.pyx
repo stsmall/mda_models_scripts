@@ -19,14 +19,14 @@ from libc.stdlib cimport rand, RAND_MAX
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
 
-cdef long[:] sorted_random_ints(int pos, int high, int size, float[:] weight_array):
-    cdef long[:] random_ints = np.random.randchoic(pos, size=size, weight_array)
+cdef long[:] sorted_random_ints(int pos, int size, float[:] weight_array):
+    cdef long[:] random_ints = np.random.randchoic(pos, size=size, p=weight_array)
     return(np.sort(random_ints))
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef float[:] weighted_random_index(int baspairs, unsigned long[:] pos):
+cdef float[:] weighted_random_index(int basepairs, unsigned long[:] pos):
     cdef np.intp_t i
     cdef float[:] weight_array
     cdef int prev_value
@@ -60,6 +60,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     cdef long[:] iix_ma = np.repeat(mate_array, fec)
     cdef long[:] femindex = np.arange(fem.shape[0]/2, dtype=np.int64)
     cdef float[:] weight_array 
+    cdef long[:] posarray = np.arange(fem.shape[1], dtype=np.int64)
     cdef np.ndarray iix_fem = np.repeat(femindex, fec)
     cdef np.ndarray mnum_recomb = np.random.poisson(
             recomb_rate * basepairs, outsize)
@@ -81,7 +82,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
             hout[i, :] = males[iix_ma[i] + mnworms * hapc, :]
         else:
             k = 0
-            cpos = sorted_random_ints(basepairs, mnum_recomb[i], weight_array)
+            cpos = sorted_random_ints(posarray, mnum_recomb[i], weight_array)
             mhapc = np.int(rand()/RAND_MAX)
             prev_break = 0
             c_break = 0
@@ -92,7 +93,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                 hout[i, c_break: ] = males[iix_ma[i] + mnworms * ohapc, :]
                 prev_break = c_break
                 hapc = ohapc
-                if hapc = 1:
+                if hapc == 1:
                     ohapc = 0
                 else:
                     ohapc = 1
