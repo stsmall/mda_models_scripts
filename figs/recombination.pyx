@@ -28,7 +28,7 @@ cdef long[:] sorted_random_ints(long[:] pos, int size, double[:] weight_array):
 #@cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double[:] weighted_random_index(int basepairs, unsigned long[:] pos):
+cdef double[:] weighted_random_index(int basepairs, long[:] pos):
     cdef np.intp_t i
     cdef size_t weight_shape = pos.shape[0] + 1
     cdef size_t pos_len = pos.shape[0]
@@ -49,7 +49,7 @@ cdef double[:] weighted_random_index(int basepairs, unsigned long[:] pos):
 cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
         long[:] mate_array, 
         long[:] fec, 
-        unsigned long[:] pos,
+        long[:] pos,
         int basepairs,
         float recomb_rate,
         np.ndarray[DTYPE_t, ndim=2, mode='c'] fem,

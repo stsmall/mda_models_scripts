@@ -136,6 +136,7 @@ def parse_coalsims_fx(msout, ploidy, nind):
          list of positions for the mutaitons
     """
     print('NINDVS ' + str(nind))
+    nind = int(nind)
     # Parsing positions
     for line in iter(msout.stdout.readline, ''):
         line = line.decode('utf-8')
@@ -171,21 +172,18 @@ def parse_coalsims_fx(msout, ploidy, nind):
         return(gt_array, pos)
     elif ploidy == 2:
         cix = 0
-        gt_array = np.zeros((nind, pos.shape[0]) , dtype=np.uint8)
+        gt_array = np.zeros((nind, pos.shape[0]), dtype=np.uint8)
         gt_array2 = np.zeros((nind, pos.shape[0]) , dtype=np.uint8)
         for line in iter(msout.stdout.readline, ''):
             line = line.decode('utf-8')
             hap = np.array(list(line.strip()), dtype=np.uint8)
-            try:
-                gt_array[cix, :] = hap
-                hap2 = next(iter(msout.stdout.readline, ''))
-                gt_array2[cix, :] =  np.array(list(hap2.strip()),
-                        dtype=np.uint8)
-                cix += 1
-            except ValueError:
-                # End of output
+            gt_array[cix, :] = hap
+            hap2 = next(iter(msout.stdout.readline, ''))
+            gt_array2[cix, :] =  np.array(list(hap2.strip()),
+                    dtype=np.uint8)
+            cix += 1
+            if cix == nind:
                 break
-            #cix += 1
         return(gt_array, gt_array2, pos)
 
 
