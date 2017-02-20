@@ -237,8 +237,8 @@ def transmission_fx(month,
                     dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
                     new_rows.append((new_hostidx, index))
                     #new host so have to resort and rebuild KDTree
-                    pd.dfHost.sort_values("village", inplace=True)
-                    pd.dfHost.reset_index(inplace=True,drop=True)
+#                    pd.dfHost.sort_values("village", inplace=True)
+#                    pd.dfHost.reset_index(inplace=True,drop=True)
                     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
                     distset = cKDTree.query_pairs(tree, dispersal)
                 else:
@@ -254,4 +254,7 @@ def transmission_fx(month,
     dfMF.drop_worms([i[1] for i in new_rows])
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
     dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
+#    pd.dfHost.sort_values("village", inplace=True)
+#    pd.dfHost.reset_index(inplace=True,drop=True)
+
     return(village, dfHost, dfJuv, dfMF, L3trans)
