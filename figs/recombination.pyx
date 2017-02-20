@@ -35,7 +35,8 @@ cdef float[:] weighted_random_index(int basepairs, unsigned long[:] pos):
         print(pos[i] - prev_value)
         weight_array[i] = (pos[i] - prev_value)/float(basepairs)  
         prev_value = pos[i]
-    jj
+    # The last interval
+    weight_array[pos.shape[0] + 1] = (basepairs - pos[pos.shape[0]])
     return(np.sort(weight_array))
 
 @cython.boundscheck(False)
@@ -69,7 +70,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     cdef long[:] iix_ma = np.repeat(mate_array, fec)
     cdef long[:] femindex = np.arange(fem.shape[0]/2, dtype=np.int64)
     cdef float[:] weight_array 
-    cdef long[:] posarray = np.arange(fem.shape[1], dtype=np.int64)
+    cdef long[:] posarray = np.arange(fem.shape[1] + 1, dtype=np.int64)
     cdef np.ndarray iix_fem = np.repeat(femindex, fec)
     cdef np.ndarray mnum_recomb = np.random.poisson(
             recomb_rate * basepairs, outsize)
@@ -80,6 +81,8 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     fnworms = fem.shape[0]/2
     # Pos must be sorted
     weight_array = weighted_random_index(basepairs, pos)
+    print(np.sum(weight_array))
+    print(weight_array[0:2])
     for i in range(outsize):
         print('Number of recombinations')
         print(mnum_recomb[i])
@@ -98,16 +101,19 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
             male_index = i
             while k < mnum_recomb[i]:
                 c_break = cpos[k]
-                hout[i, prev_break:c_break] = males[iix_ma[i] + mnworms *
-                        hapc, prev_break:c_break]
-                hout[i, c_break: ] = males[iix_ma[i] + mnworms * ohapc, :]
-                prev_break = c_break
-                hapc = ohapc
-                if hapc == 1:
-                    ohapc = 0
+                if c_break == posarray[pos.shape[0] + 1]:
+                    continue
                 else:
-                    ohapc = 1
-                k += 1
+                    hout[i, prev_break:c_break] = males[iix_ma[i] + mnworms *
+                            hapc, prev_break:c_break]
+                    hout[i, c_break: ] = males[iix_ma[i] + mnworms * ohapc, :]
+                    prev_break = c_break
+                    hapc = ohapc
+                    if hapc == 1:
+                        ohapc = 0
+                    else:
+                        ohapc = 1
+                    k += 1
         '''        
         hapc = np.int(rand()/RAND_MAX)
         if hapc == 0: 
