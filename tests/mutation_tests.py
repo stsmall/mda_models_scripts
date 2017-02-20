@@ -45,7 +45,6 @@ class Test_Mutation(unittest.TestCase):
         orig_shape = self.worms.h1['0'].shape[1]
         worms, newpositions = mutation_fx(1, self.worms, [0.001],
             [1e-9], [200])
-        embed()
         self.assertEqual(len(newpositions), 
                 worms.h1['0'].shape[1] - orig_shape) 
         np.testing.assert_equal(worms.h1['0'][:, -1],
