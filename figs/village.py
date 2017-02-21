@@ -18,7 +18,7 @@ class Villages(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.current >= self.villages:
             raise StopIteration
         else:

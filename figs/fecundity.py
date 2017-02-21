@@ -12,8 +12,6 @@ from .recombination import recombination_fx
 from .mutation import mutation_fx
 from .selection import selection_fx
 
-from IPython import embed
-
 def fecunditybase_fx(fecund,
                      dfAdult,
                      locus,
@@ -57,8 +55,7 @@ def fecunditybase_fx(fecund,
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
     dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf,
          mutation_rate, recombination_rate, basepairs)
-
     if selection:
-     dfAdult_mf = selection_fx(dfAdult_mf, positions, locus)
+        dfAdult_mf = selection_fx(dfAdult_mf, positions, locus)
 
     return(dfAdult_mf)

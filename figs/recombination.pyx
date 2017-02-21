@@ -28,7 +28,7 @@ cdef long[:] sorted_random_ints(long[:] pos, int size, double[:] weight_array):
 #@cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double[:] weighted_random_index(int basepairs, unsigned long[:] pos):
+cdef double[:] weighted_random_index(int basepairs, long[:] pos):
     cdef np.intp_t i
     cdef size_t weight_shape = pos.shape[0] + 1
     cdef size_t pos_len = pos.shape[0]
@@ -49,7 +49,7 @@ cdef double[:] weighted_random_index(int basepairs, unsigned long[:] pos):
 cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
         long[:] mate_array, 
         long[:] fec, 
-        unsigned long[:] pos,
+        long[:] pos,
         int basepairs,
         float recomb_rate,
         np.ndarray[DTYPE_t, ndim=2, mode='c'] fem,
@@ -167,17 +167,23 @@ def recombination_fx(locus,
     """
     hosts = dfAdult.meta.hostidx.unique()
     cdef str host
-    # How to type this?
-    #cdef bool[:] ahost, females, males
     cdef np.ndarray out_array
     cdef Py_ssize_t loc
     cdef np.ndarray[long, ndim=1] fec
-    cdef long total_offspring, nmatings
-    cdef float rr
+    cdef long nmatings
+    cdef double rr
     new_metas = []
     h1t = defaultdict(list)
     h2t = defaultdict(list)
+    cdef np.ndarray[long, ndim=1] mate_array
+    cdef np.ndarray[np.uint8_t, cast=True] fem_bool =\
+            (dfAdult.meta.sex == 'F').values
+    cdef np.ndarray[np.uint8_t, cast=True] mal_bool =\
+            (dfAdult.meta.sex == 'M').values
+    #cdef long total_offspring = dfAdult.meta['fec'][fem_bool].values
     #cdef int[:] mate_array = np.empty(np.sum(females))
+    for host in hosts:
+        pass
     # Generate mate array
     # :TODO Remove iteration over hosts
     for host in hosts:
@@ -185,7 +191,7 @@ def recombination_fx(locus,
         females = np.logical_and(ahost, dfAdult.meta.sex == 'F').values
         males = np.logical_and(ahost, dfAdult.meta.sex == 'M').values
         if np.sum(males) == 0 or np.sum(females) == 0:
-            print('Either there are 0 males in host or zero females in host')
+            print('Either there are 0 males/females in host {0!s}'.format(host))
             continue
         else:
             fec = dfAdult.meta.fec[females].values
@@ -195,7 +201,6 @@ def recombination_fx(locus,
                 np.sum(females),
                     dtype=np.int64)
             total_offspring= np.sum(fec)
-            # Parallelize this
             for loc in range(locus):
                 rr = recombination_rate[loc]
                 if rr == 0:
@@ -221,7 +226,8 @@ def recombination_fx(locus,
                 'sex' : np.random.choice(['M', 'F'], size = total_offspring),
                 'hostidx' : np.repeat(host, total_offspring),
                 'fec' : np.repeat(0, total_offspring),
-                'R0net' : np.repeat(dfAdult.meta['R0net'][females], fec)
+                'R0net' : np.repeat(dfAdult.meta['R0net'][females], fec),
+                'age' : np.repeat(0, total_offspring),
                 }))
     meta = pd.concat(new_metas)
     new_h1 = {}
@@ -230,6 +236,7 @@ def recombination_fx(locus,
         new_h1[i] = np.concatenate(h1t[i], axis=0)
     for i in h2t.keys():
         new_h2[i] = np.concatenate(h2t[i], axis=0)
-    dfAdult_mf = Worms(meta = meta, haplotype1=new_h1, haplotype2=new_h2,
+    dfAdult_mf = Worms(meta = meta.ix[:, dfAdult.meta.columns], 
+            haplotype1=new_h1, haplotype2=new_h2,
             positions=dfAdult.pos)
     return(dfAdult_mf)
