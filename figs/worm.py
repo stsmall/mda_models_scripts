@@ -56,3 +56,18 @@ class Worms(object):
         for i in self.h2.keys():
             self.h2[i] = ndelete(self.h2[i], index, axis=0)
 
+
+    def calc_allele_frequencies(self, host=None, village=None):
+        """ Calculate allele frequencies
+        """
+        all_loci_shape = [i.shape[0] for _, i in self.h1.iteritems()] 
+        allele_freqs = np.empty(np.sum(all_loci_shape), dtype=np.float64)
+        for loc in self.h1.keys():
+            if loc in self.h2.keys():
+                allele_freq[loc] = np.sum(self.h1[loc] +\
+                        self.h2[loc])/float(self.h1[loc].shape[0])
+            else:
+                allele_freq[loc] = np.sum(self.h1[loc])
+
+        
+
