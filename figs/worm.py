@@ -43,7 +43,7 @@ class Worms(object):
             numerical index from the other Worms object to add
         """
         self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
-        self.meta.reset_index(drop=True)
+        self.meta.reset_index(drop=True) #inplace=True
         # :TODO Make sure both self and df
         for i in df.h1.keys():
             try:
