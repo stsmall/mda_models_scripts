@@ -271,6 +271,7 @@ def recombination_fx(locus,
         'R0net' : np.repeat(dfAdult.meta['R0net'][g_fem_ix], fec),
         'age' : np.repeat(0, total_offspring),
         })
+    new_meta.reset_index(drop=True, inplace=True)
     dfAdult_mf = Worms(meta = new_meta.ix[:, dfAdult.meta.columns], 
             haplotype1 = h1t, haplotype2=h2t,
             positions=dfAdult.pos)
