@@ -42,7 +42,7 @@ cdef double[:] weighted_random_index(int basepairs, long[:] pos):
     weight_array[i + 1] = (basepairs - pos[i])/float(basepairs)
     return(np.sort(weight_array))
 
-#@cython.boundscheck(False)
+@cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
