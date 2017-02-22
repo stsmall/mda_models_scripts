@@ -194,7 +194,7 @@ def wb_sims(numberGens, config_file):
                                selection,
                                cdslist)
 
-    for month in range(1,sim_time):
+    for month in range(0,sim_time):
         print("month is %i\n\n" %month)
         village, dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
                                                             village,

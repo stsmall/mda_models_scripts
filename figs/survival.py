@@ -87,7 +87,7 @@ def survivalbase_fx(month,
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
-
+        ipdb.set_trace()
         kill_adultrand = np.random.random(dfAdult.meta.shape[0])
         try:
             kill_adultfxage = weibull_min.cdf(dfAdult.meta.age, shapeAdult,loc=0,scale=scaleAdult)
@@ -97,15 +97,14 @@ def survivalbase_fx(month,
         dfAdult.drop_worms(dieAdult)
 
         dfAdult.meta.age = dfAdult.meta.age + 1 #2 - 21
-
         ##host survival is from act table
         dfHost = dfHost[dfHost.age < dfHost.agedeath]
         #remove all worms with dead host.hostidx from all dataframes
-        dfAdult.drop_worms(dfAdult.meta.ix[~dfAdult.meta.hostidx].isin(dfHost.hostidx).index.values)
-        dfJuv.drop_worms(dfJuv.meta.ix[~dfJuv.meta.hostidx].isin(dfHost.hostidx).index.values)
-        dfMF.drop_worms(dfMF.meta.ix[~dfMF.meta.hostidx].isin(dfHost.hostidx).index.values)
+        dfAdult.drop_worms(dfAdult.meta[~dfAdult.meta.hostidx.isin(dfHost.hostidx)].index.values)
+        dfJuv.drop_worms(dfJuv.meta[~dfJuv.meta.hostidx.isin(dfHost.hostidx)].index.values)
+        dfMF.drop_worms(dfMF.meta[~dfMF.meta.hostidx.isin(dfHost.hostidx)].index.values)
         #add 1 year to all ages of hosts
-        dfHost.meta.age = dfHost.meta.age + 1
+        dfHost.age = dfHost.age + 1
         if hostmigrate != 0:
             dfHost = hostmigration_fx(village, dfHost, hostmigrate, sizeTrans, muTrans)
 
@@ -117,7 +116,7 @@ def survivalbase_fx(month,
     dfJuv.drop_worms(dieJuv)
 
     ##MF is weibull cdf
-    kill_mfrand = np.random.random(dfMF.meta.shape)
+    kill_mfrand = np.random.random(dfMF.meta.shape[0])
     try:
         kill_mffxage = weibull_min.cdf(dfMF.meta.age,shapeMF,loc=0,scale=scaleMF)
     except TypeError:
