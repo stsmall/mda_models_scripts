@@ -71,7 +71,9 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     outsize = np.sum(fec)
     cdef int mnworms, fnworms
     cdef size_t pos_len = pos.shape[0]
-    cdef int hapc, recomb_pos, ohapc 
+    # Haplotype chooser 
+    cdef int hapc, ohapc 
+    # Father mate array
     cdef long[:] iix_ma = np.repeat(mate_array, fec)
     cdef long[:] femindex = np.arange(fem.shape[0]/2, dtype=np.int64)
     cdef double[:] weight_array 
@@ -138,7 +140,6 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                     if hapc == 1: ohapc = 0
                     else: ohapc = 1
                     k += 1
-    print('Done')
     return(hout)
 
 
@@ -257,7 +258,6 @@ def recombination_fx(locus,
                     cmales)
             h1t[str(loc)] = out_array[0:total_offspring, :]
             h2t[str(loc)] = out_array[total_offspring:, :]
-            print('Done')
     new_meta = pd.DataFrame({
         'village' : np.repeat(dfAdult.meta.village[g_fem_ix], fec),
         'sex' : np.random.choice(['M', 'F'], size = total_offspring),
