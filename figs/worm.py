@@ -31,6 +31,7 @@ class Worms(object):
         else:
             self.coord = {}
 
+
     def add_worms(self, df, index):
         """
         Parameters
@@ -42,10 +43,17 @@ class Worms(object):
         """
         self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
         self.meta.reset_index(drop=True, inplace=True)
+        # :TODO Make sure both self and df
         for i in df.h1.keys():
-            self.h1[i] = vstack(self.h1[i], df.h1[i][index,:])
+            try:
+                self.h1[i] = vstack(self.h1[i], df.h1[i][index,:])
+            except KeyError:
+                self.h1[i] = df.h1[i][index, :]
         for i in df.h2.keys():
-            self.h2[i] = vstack(self.h2[i], df.h2[i][index,:])
+            try:
+                self.h2[i] = vstack(self.h2[i], df.h2[i][index,:])
+            except KeyError:
+                self.h2[i] = df.h2[i][index, :]
 
 
     def drop_worms(self, index):
