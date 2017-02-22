@@ -42,20 +42,22 @@ class Worms(object):
         index : int list
             numerical index from the other Worms object to add
         """
-        self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
-        self.meta.reset_index(drop=True) #inplace=True
-        # :TODO Make sure both self and df
-        for i in df.h1.keys():
-            try:
-                self.h1[i] = vstack((self.h1[i], df.h1[i][index,:]))
-            except KeyError:
-                self.h1[i] = df.h1[i][index, :]
-        for i in df.h2.keys():
-            try:
-                self.h2[i] = vstack((self.h2[i], df.h2[i][index,:]))
-            except KeyError:
-                self.h2[i] = df.h2[i][index, :]
-
+        try:
+            self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
+            self.meta.reset_index(drop=True) #inplace=True
+            # :TODO Make sure both self and df
+            for i in df.h1.keys():
+                try:
+                    self.h1[i] = vstack((self.h1[i], df.h1[i][index,:]))
+                except KeyError:
+                    self.h1[i] = df.h1[i][index, :]
+            for i in df.h2.keys():
+                try:
+                    self.h2[i] = vstack((self.h2[i], df.h2[i][index,:]))
+                except KeyError:
+                    self.h2[i] = df.h2[i][index, :]
+        except ValueError:
+            print("nothing to remove")
 
     def drop_worms(self, index):
         try:

@@ -243,13 +243,13 @@ def transmission_fx(month,
                     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
                     distset = cKDTree.query_pairs(tree, dispersal)
                 else:
-                    print(new_rows)
+                    #print(new_rows)
                     try: #allow self infection
                         rehostidx = transhost[np.random.randint(len(transhost) + 1)][1] #random choice of host within dispersal
                     except IndexError:
-                        rehostidx = transhostidx
+                        rehostidx = transhostidx.values
                     new_rows.append((dfHost.ix[rehostidx,'hostidx'],index))
-                    print(new_rows)
+
         else:
             print("dfMF is empty")
     prev_size = dfJuv.meta.shape[0]
@@ -257,7 +257,7 @@ def transmission_fx(month,
     dfMF.drop_worms([i[1] for i in new_rows])
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
     dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
-    print(dfJuv.meta)
+    print(dfJuv.meta.head())
 #    pd.dfHost.sort_values("village", inplace=True)
 #    pd.dfHost.reset_index(inplace=True,drop=True)
 
