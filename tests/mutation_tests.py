@@ -18,16 +18,14 @@ class Test_Mutation(unittest.TestCase):
         fec = [0, 10, 2]
         positions = np.array([1, 10, 50, 100],
                 dtype=np.uint64)
-
         hap1 = np.array([[0, 1, 0, 1], 
                          [0, 0, 1, 0], 
-                         [1, 0, 0 , 0]], 
+                         [1, 0, 0, 0]], 
                          dtype = np.uint8)
         hap2 = np.array([[0, 0, 0, 0], 
                          [0, 1, 0, 1], 
-                         [1, 1, 0 , 0]], 
+                         [1, 1, 0, 0]], 
                          dtype = np.uint8)
-
         meta = pd.DataFrame({
             'village': villages, 
             'sex': sex, 
@@ -55,7 +53,7 @@ class Test_Mutation(unittest.TestCase):
         orig_nsegsites = self.worms.h1['0'].shape[1]
         worms, newpositions = mutation_fx(1, self.worms, [0.005],
             [1e-9], [200])
-        print(orig_segsites)
+        print(orig_nsegsites)
 
 
 if __name__ == '__main__':

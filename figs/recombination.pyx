@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 '''
 FiGS Copyright (C) 2017 Scott T. Small
 This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
@@ -237,6 +235,7 @@ def recombination_fx(locus,
     mate_array = mate_array[g_fem_ix[fem_bool]]
     assert np.sum(g_fem_ix) == mate_array.shape[0]
 
+    # :TODO parallelize this
     for loc in range(locus):
         rr = recombination_rate[loc]
         if rr == 0:
@@ -253,8 +252,7 @@ def recombination_fx(locus,
             assert fec.shape[0] == mate_array.shape[0]
             assert np.max(mate_array) <= cmales.shape[0]/2
             '''
-            # :TODO passing in all of male genotypes
-            
+            # :TODO passing in male genotypes instead of all
             out_array = mate_worms(
                     mate_array,
                     fec,
