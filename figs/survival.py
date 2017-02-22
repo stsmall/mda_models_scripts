@@ -144,5 +144,5 @@ def survivalbase_fx(month,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
     dfAdult_mf.meta.age = 1
-    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index)
+    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
     return(dfHost, dfAdult, dfJuv, dfMF)
