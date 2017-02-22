@@ -87,7 +87,6 @@ def survivalbase_fx(month,
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
-        ipdb.set_trace()
         kill_adultrand = np.random.random(dfAdult.meta.shape[0])
         try:
             kill_adultfxage = weibull_min.cdf(dfAdult.meta.age, shapeAdult,loc=0,scale=scaleAdult)
@@ -127,6 +126,7 @@ def survivalbase_fx(month,
     dfMF.drop_worms(dfMF.meta.ix[dfMF.meta.age > 12].index.values) #hard cutoff at 12 months
 
     ##move Juv age 13 to adult age 1
+    ipdb.set_trace()
     juv_rows = dfJuv.meta[dfJuv.meta.age > 12].index.values
     try:
         #reset age to adult
@@ -135,22 +135,16 @@ def survivalbase_fx(month,
         dfJuv.meta.ix[juv_rows, "R0net"] += 1
     except TypeError:
         print("dfJuv empty")
-    #remove Juv age 13 from dfJuv
     dfJuv.drop_worms(juv_rows)
     dfAdult.add_worms(dfJuv, juv_rows)
 
-    ##call to fecundity fx to deepcopy adult to dfMF age 1
     #fecundity calls mutation/recombination
     dfAdult_mf = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
+    ipdb.set_trace()
     dfAdult_mf.meta.age = 1
-    ipdb.set_trace()
-    #dfMF.meta = pd.concat([dfMF.meta, dfAdult_mf.meta], ignore_index=True)
     dfAdult_mf.meta.reset_index(inplace=True)
-    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
-    ipdb.set_trace()
-    print(dfMF.meta.shape)
-    print(dfAdult_mf.meta.shape)
+    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index)
     return(dfHost, dfAdult, dfJuv, dfMF)

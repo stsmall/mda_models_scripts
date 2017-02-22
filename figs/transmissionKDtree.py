@@ -250,7 +250,7 @@ def transmission_fx(month,
                     new_rows.append((dfHost.ix[rehostidx,'hostidx'],index))
         else:
             print("dfMF is empty")
-    #ipdb.set_trace()
+    ipdb.set_trace()
     prev_size = dfJuv.meta.shape[0]
     dfJuv.add_worms(dfMF, [i[1] for i in new_rows])
     dfMF.drop_worms([i[1] for i in new_rows])
