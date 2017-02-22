@@ -113,6 +113,7 @@ def survivalbase_fx(month,
     surviveJuv = np.where(surv_juvrand <= surv_Juv)
     dfJuv.meta = dfJuv.meta.iloc[surviveJuv]
 
+
     ##MF is weibull cdf
     surv_mfrand = np.random.random(len(dfMF.meta))
     try:
@@ -141,9 +142,9 @@ def survivalbase_fx(month,
     dfAdult_mf = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
                                          densitydep_fec)
-    dfAdult_mf.meta.age = 1
-    dfAdult_mf.meta.fec = 0
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
-    dfMF.meta = pd.concat([dfMF.meta, dfAdult_mf.meta], ignore_index=True)
+    #dfMF.meta = pd.concat([dfMF.meta, dfAdult_mf.meta], ignore_index=True)
+    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
+
 
     return(dfHost, dfAdult, dfJuv, dfMF)

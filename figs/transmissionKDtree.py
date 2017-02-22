@@ -246,11 +246,10 @@ def transmission_fx(month,
                         rehostidx = transhost[np.random.randint(len(transhost) + 1)][1] #random choice of host within dispersal
                     except IndexError:
                         rehostidx = transhostidx
-                    new_rows.append((dfHost.ix[rehostidx,'hostidx'],row))
+                    new_rows.append((dfHost.ix[rehostidx,'hostidx'],index))
         else:
             print("dfMF is empty")
     prev_size = dfJuv.meta.shape[0]
-    #ipdb.set_trace()
     dfJuv.add_worms(dfMF, [i[1] for i in new_rows])
     dfMF.drop_worms([i[1] for i in new_rows])
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
