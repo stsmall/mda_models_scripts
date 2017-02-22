@@ -3,6 +3,7 @@
 
 from numpy import delete as ndelete
 from numpy import vstack
+import numpy as np
 import pandas as pd
 
 
@@ -57,18 +58,20 @@ class Worms(object):
 
 
     def drop_worms(self, index):
-        self.meta.drop(index)
-        self.meta = self.meta.reset_index(drop=True)
-        for i in self.h1.keys():
-            self.h1[i] = ndelete(self.h1[i], index, axis=0)
-        for i in self.h2.keys():
-            self.h2[i] = ndelete(self.h2[i], index, axis=0)
-
+        try:
+            self.meta.drop(index,inplace=True)
+            self.meta = self.meta.reset_index(drop=True)
+            for i in self.h1.keys():
+                self.h1[i] = ndelete(self.h1[i], index, axis=0)
+            for i in self.h2.keys():
+                self.h2[i] = ndelete(self.h2[i], index, axis=0)
+        except ValueError:
+            print("df empty")
 
     def calc_allele_frequencies(self, host=None, village=None):
         """ Calculate allele frequencies
         """
-        all_loci_shape = [i.shape[0] for _, i in self.h1.iteritems()] 
+        all_loci_shape = [i.shape[0] for _, i in self.h1.iteritems()]
         allele_freqs = np.empty(np.sum(all_loci_shape), dtype=np.float64)
         for loc in self.h1.keys():
             if loc in self.h2.keys():
@@ -77,5 +80,5 @@ class Worms(object):
             else:
                 allele_freq[loc] = np.sum(self.h1[loc])
 
-        
+
 
