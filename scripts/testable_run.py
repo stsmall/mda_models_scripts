@@ -21,7 +21,6 @@ import figs.wbsims_initialize as wbinit
 #import figs.transmission as trans
 import figs.transmissionKDtree as trans
 from figs.village import Village
-from figs.village import Villages
 #from figs.counthaps import hapcount
 
 from figs.calc_outstats import allelefreq_fx
@@ -165,7 +164,7 @@ def wb_sims(numberGens, config_file):
     dist.extend(initial_distance_m)
     distvill = [sum(dist[:i+1]) for i in range(len(dist))]
     village=[]
-    for i in Villages(villages):
+    for i in range(villages):
         village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
                                bitesPperson[i],bednets, bnstart[i], bnstop[i], bncoverage[i]))
     mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro,

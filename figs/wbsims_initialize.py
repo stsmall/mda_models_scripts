@@ -19,6 +19,7 @@ from .agehost import agehost_fx
 from .worm import Worms
 from .village import Villages
 
+import ipdb
 
 def host_fx(village, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
@@ -44,7 +45,7 @@ def host_fx(village, infhost, muTrans, sizeTrans):
     coordinates = []
     host_idx = []
 
-    for vill in Villages(len(village)):
+    for vill in range(len(village)):
          #list of host positions
          coordinates.extend( np.random.negative_binomial(sizeTrans, sizeTrans
                              / float((sizeTrans+muTrans)), (infhost[vill],
@@ -291,7 +292,7 @@ def coalsims_fx(worm_popsize, numvillages, initial_migration, initial_distance_m
             joinstr = ''
             subpopstr = ''
 
-            for village_ix in Villages(numvillages):
+            for village_ix in range(numvillages):
                 present_pop = float(theta[village_ix]) / thetaN0
                 subpopstr += '-n {} {} '.format(village_ix + 1, present_pop)
                 if village_ix != numvillages - 1:
@@ -468,7 +469,7 @@ def wormdf_fx(village, infhost, muWormBurden, sizeWormBurden, locus,
      #total worms per villages
      worm_popsize = [sum(i) for i in popinit]
      host_idx = []
-     for vill in Villages(len(village)):
+     for vill in range(len(village)):
           for host in range(len(popinit[vill])):
                host_idx.extend(["v" + str(vill) + "h" + str(host + 1)] * popinit[vill][host])
 
@@ -630,5 +631,3 @@ def wbsims_init(village, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurd
 #    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
 #    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
 #    True, [[0, 0.18, 0.20], 1100, 2500])
-#    #from IPython import embed
-    #embed()

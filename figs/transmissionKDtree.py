@@ -16,7 +16,6 @@ import pandas as pd
 from scipy.spatial import cKDTree
 
 from .agehost import agehost_fx
-from .village import Villages
 
 deathdict = pickle.load(open('../figs/data/acttable.p', "rb"))
 
@@ -203,12 +202,11 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
-    #ipdb.set_trace()
     dispersal = 2 * sigma
     new_rows = []
     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
     distset = cKDTree.query_pairs(tree, dispersal)
-    for vill in Villages(len(village)):
+    for vill in range(len(village)):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(village[vill].hostpopsize)
         village[vill].prev = prev_t
@@ -216,11 +214,13 @@ def transmission_fx(month,
         L3trans = vectorbite_fx(vill, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill,L3trans))
         if L3trans != 0:
+
             if L3trans > (dfMF.meta.village == vill).sum():  #more transmision events than possible MF
-                  transMF = dfMF[dfMF.village == vill]
+                  transMF = dfMF.meta[dfMF.meta.village == vill]
             else:
                 transMF = dfMF.meta[dfMF.meta.village == vill].sample(L3trans)
-            pd.transMF.sort_values("hostidx",inplace=True)
+            transMF.sort_values("hostidx",inplace=True)
+
             tcount = ''
             for index, row in transMF.iterrows():
                 if row.hostidx != tcount:
@@ -250,6 +250,7 @@ def transmission_fx(month,
         else:
             print("dfMF is empty")
     prev_size = dfJuv.meta.shape[0]
+    #ipdb.set_trace()
     dfJuv.add_worms(dfMF, [i[1] for i in new_rows])
     dfMF.drop_worms([i[1] for i in new_rows])
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
