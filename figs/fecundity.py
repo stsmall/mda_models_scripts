@@ -39,7 +39,7 @@ def fecunditybase_fx(fecund,
     Returns
     ------
     dfAdult_mf : df
-         deep copy of adult genotypes
+        figs.worms object
     dfSel : df
 
     '''
