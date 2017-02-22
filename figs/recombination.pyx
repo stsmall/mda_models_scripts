@@ -25,7 +25,7 @@ cdef long[:] sorted_random_ints(long[:] pos, int size, double[:] weight_array):
     cdef long[:] random_ints = np.random.choice(pos, size=size, p=weight_array)
     return(np.sort(random_ints))
 
-#@cython.boundscheck(False)
+@cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 cdef double[:] weighted_random_index(int basepairs, long[:] pos):
@@ -64,14 +64,16 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     pos : array
     """
     # :TODO need to check max integer
-    cdef np.intp_t i, j, l, prev_break, c_break
+    cdef np.intp_t i, prev_break, c_break
     cdef np.intp_t hout_index
     cdef np.int64_t outsize
     cdef int k
     outsize = np.sum(fec)
     cdef int mnworms, fnworms
     cdef size_t pos_len = pos.shape[0]
-    cdef int hapc, recomb_pos, ohapc 
+    # Haplotype chooser 
+    cdef int hapc, ohapc 
+    # Father mate array
     cdef long[:] iix_ma = np.repeat(mate_array, fec)
     cdef long[:] femindex = np.arange(fem.shape[0]/2, dtype=np.int64)
     cdef double[:] weight_array 
@@ -113,6 +115,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                     else: ohapc = 1
                     k += 1
         hapc = np.int(rand()/RAND_MAX)
+        
         hout_index = i + outsize
         if hapc == 0: 
             ohapc = 1
@@ -130,7 +133,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                 else:
                     hout[hout_index, prev_break:c_break] = fem[iix_fem[i] + fnworms *
                             hapc, prev_break:c_break]
-                    hout[hout_index, c_break: ] = fem[iix_fem[i] + mnworms * ohapc,
+                    hout[hout_index, c_break: ] = fem[iix_fem[i] + fnworms * ohapc,
                             c_break:]
                     prev_break = c_break
                     hapc = ohapc
@@ -140,6 +143,8 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     return(hout)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def recombination_fx(locus,
                      dfAdult,
                      list recombination_rate,
@@ -165,78 +170,103 @@ def recombination_fx(locus,
     dfAdult_mf : figs.worm.Worms object
         new worms 
     """
-    hosts = dfAdult.meta.hostidx.unique()
+    h1t = {}
+    h2t = {}
     cdef str host
     cdef np.ndarray out_array
     cdef Py_ssize_t loc
     cdef np.ndarray[long, ndim=1] fec
-    cdef long nmatings
     cdef double rr
-    new_metas = []
-    h1t = defaultdict(list)
-    h2t = defaultdict(list)
-    cdef np.ndarray[long, ndim=1] mate_array
+    ###############################################
+    # Size of full meta along axis-0
+    ###############################################
     cdef np.ndarray[np.uint8_t, cast=True] fem_bool =\
             (dfAdult.meta.sex == 'F').values
     cdef np.ndarray[np.uint8_t, cast=True] mal_bool =\
             (dfAdult.meta.sex == 'M').values
-    #cdef long total_offspring = dfAdult.meta['fec'][fem_bool].values
-    #cdef int[:] mate_array = np.empty(np.sum(females))
-    for host in hosts:
-        pass
+
+    # Sex boolean arrays
+    cdef np.ndarray[np.uint8_t, cast=True] m_host_bool 
+    cdef np.ndarray[np.uint8_t, cast=True] f_host_bool 
+    cdef np.ndarray[np.uint8_t, cast=True] bad_host_bool =\
+            np.ones(dfAdult.meta.shape[0], dtype=np.uint8)  
+    
+
+    ###############################################
+    # Size of Females only
+    ###############################################
+    cdef int mother_n = np.sum(fem_bool)
+    cdef np.ndarray[np.int64_t] mate_array = np.empty(np.sum(fem_bool), 
+            dtype=np.int64)
+    cdef np.ndarray[np.uint8_t, cast=True] g_fem_ix
+    cdef long total_offspring = dfAdult.meta['fec'][fem_bool].sum()
+    
+    ###############################################
+    # Input arrays axis-0 and number
+    # of segregating sties
+    ###############################################
+    cdef np.ndarray[DTYPE_t, ndim=2] cmales 
+    cdef np.ndarray[DTYPE_t, ndim=2] cfemales 
     # Generate mate array
-    # :TODO Remove iteration over hosts
+    hosts = dfAdult.meta.hostidx.unique()
     for host in hosts:
-        ahost = dfAdult.meta.hostidx == host
-        females = np.logical_and(ahost, dfAdult.meta.sex == 'F').values
-        males = np.logical_and(ahost, dfAdult.meta.sex == 'M').values
-        if np.sum(males) == 0 or np.sum(females) == 0:
-            print('Either there are 0 males/females in host {0!s}'.format(host))
-            continue
+        m_host_bool = np.logical_and(mal_bool,
+                (dfAdult.meta.hostidx == host).values)
+        f_host_bool = np.logical_and(fem_bool,
+                (dfAdult.meta.hostidx == host).values)
+        if (np.sum(m_host_bool) != 0) and (np.sum(m_host_bool) != 0):
+            mate_array[f_host_bool[fem_bool]] =\
+                    np.random.choice(dfAdult.meta.index[m_host_bool].values, 
+                    size = np.sum(f_host_bool))
+        else: 
+            bad_host_bool[f_host_bool] = False 
+    # :TODO This should be made more simple
+    g_fem_ix = np.logical_and((dfAdult.meta.fec > 0).values, 
+            bad_host_bool)
+    g_fem_ix = np.logical_and(g_fem_ix, fem_bool)
+    fec = dfAdult.meta.fec[g_fem_ix].values
+    total_offspring= np.sum(fec)
+    # Removing bad hosts and zero_fecundity females
+    mate_array = mate_array[g_fem_ix[fem_bool]]
+    assert np.sum(g_fem_ix) == mate_array.shape[0]
+
+    for loc in range(locus):
+        rr = recombination_rate[loc]
+        if rr == 0:
+            h1t[str(loc)] = np.repeat(dfAdult.h1[str(loc)][g_fem_ix,:],
+                        fec, axis=0)
         else:
-            fec = dfAdult.meta.fec[females].values
-            mate_array = np.random.randint(
-                0, 
-                np.sum(males), 
-                np.sum(females),
-                    dtype=np.int64)
-            total_offspring= np.sum(fec)
-            for loc in range(locus):
-                rr = recombination_rate[loc]
-                if rr == 0:
-                    h1t[str(loc)].append(
-                            np.repeat(dfAdult.h1[str(loc)][females,:],
-                                fec, axis=0))
-                else:
-                    cfemales = np.vstack((dfAdult.h1[str(loc)][females, :],
-                        dfAdult.h2[str(loc)][females, :]))
-                    cmales = np.vstack((dfAdult.h1[str(loc)][males, :],
-                        dfAdult.h2[str(loc)][males, :]))
-                    out_array = mate_worms(mate_array,
-                            fec,
-                            dfAdult.pos[str(loc)],
-                            basepairs[loc],
-                            rr,
-                            cfemales,
-                            cmales)
-                    h1t[str(loc)].append(out_array[0:total_offspring, :])
-                    h2t[str(loc)].append(out_array[total_offspring:, :])
-            new_metas.append(pd.DataFrame({
-                'village' : np.repeat(dfAdult.meta.village[females], fec),
-                'sex' : np.random.choice(['M', 'F'], size = total_offspring),
-                'hostidx' : np.repeat(host, total_offspring),
-                'fec' : np.repeat(0, total_offspring),
-                'R0net' : np.repeat(dfAdult.meta['R0net'][females], fec),
-                'age' : np.repeat(0, total_offspring),
-                }))
-    meta = pd.concat(new_metas)
-    new_h1 = {}
-    new_h2 = {}
-    for i in h1t.keys():
-        new_h1[i] = np.concatenate(h1t[i], axis=0)
-    for i in h2t.keys():
-        new_h2[i] = np.concatenate(h2t[i], axis=0)
-    dfAdult_mf = Worms(meta = meta.ix[:, dfAdult.meta.columns], 
-            haplotype1=new_h1, haplotype2=new_h2,
+            cfemales = np.vstack((dfAdult.h1[str(loc)][g_fem_ix, :],
+                dfAdult.h2[str(loc)][g_fem_ix, :]))
+            cmales = np.vstack((dfAdult.h1[str(loc)][:, :],
+                dfAdult.h2[str(loc)][:, :]))
+            '''
+            assert cfemales.shape[0] == 2*np.sum(g_fem_ix)
+            assert cfemales.shape[0] == 2*mate_array.shape[0]
+            assert fec.shape[0] == mate_array.shape[0]
+            assert np.max(mate_array) <= cmales.shape[0]/2
+            '''
+            # :TODO passing in all of male genotypes
+            
+            out_array = mate_worms(
+                    mate_array,
+                    fec,
+                    dfAdult.pos[str(loc)],
+                    basepairs[loc],
+                    rr,
+                    cfemales,
+                    cmales)
+            h1t[str(loc)] = out_array[0:total_offspring, :]
+            h2t[str(loc)] = out_array[total_offspring:, :]
+    new_meta = pd.DataFrame({
+        'village' : np.repeat(dfAdult.meta.village[g_fem_ix], fec),
+        'sex' : np.random.choice(['M', 'F'], size = total_offspring),
+        'hostidx' : np.repeat(dfAdult.meta.hostidx[g_fem_ix], fec),
+        'fec' : np.repeat(0, total_offspring),
+        'R0net' : np.repeat(dfAdult.meta['R0net'][g_fem_ix], fec),
+        'age' : np.repeat(0, total_offspring),
+        })
+    dfAdult_mf = Worms(meta = new_meta.ix[:, dfAdult.meta.columns], 
+            haplotype1 = h1t, haplotype2=h2t,
             positions=dfAdult.pos)
     return(dfAdult_mf)
