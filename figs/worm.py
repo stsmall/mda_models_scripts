@@ -59,7 +59,7 @@ class Worms(object):
 
     def drop_worms(self, index):
         try:
-            self.meta.drop(index,inplace=True)
+            self.meta.drop(index, inplace=True)
             self.meta = self.meta.reset_index(drop=True)
             for i in self.h1.keys():
                 self.h1[i] = ndelete(self.h1[i], index, axis=0)
