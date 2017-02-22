@@ -42,6 +42,7 @@ cdef double[:] weighted_random_index(int basepairs, long[:] pos):
     weight_array[i + 1] = (basepairs - pos[i])/float(basepairs)
     return(np.sort(weight_array))
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -58,11 +59,17 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
 
     Parameters
     ----------
-    mate_array : array of longs
+    mate_array : array long
         matches females with males
-    fec : number of children each female has
-    pos : array
-    """
+    fec : array long 
+        number of children each female has
+    pos : array long
+        genomic positions array same size as axis-1 of fem/males
+    recomb_rate: float
+    fem : np.uint8 ndim 2
+    males : np.uint8 ndim 2
+        this array is actually all genotypes male and females
+     """
     # :TODO need to check max integer
     cdef np.intp_t i, prev_break, c_break
     cdef np.intp_t hout_index
