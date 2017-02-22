@@ -235,7 +235,6 @@ def transmission_fx(month,
                      prob_newinfection = 0
                 if np.random.random() < prob_newinfection:
                     dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                    ipdb.set_trace()
                     new_rows.append((new_hostidx, index))
                     #new host so have to resort and rebuild KDTree
 #                    pd.dfHost.sort_values("village", inplace=True)

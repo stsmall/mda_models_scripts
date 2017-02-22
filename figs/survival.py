@@ -134,7 +134,7 @@ def survivalbase_fx(month,
         dfJuv.meta.ix[juv_rows, "R0net"] += 1
     except TypeError:
         print("dfJuv empty")
-    ipdb.set_trace()
+    #ipdb.set_trace()
     dfJuv.drop_worms(juv_rows)
     dfAdult.add_worms(dfJuv, juv_rows)
 
