@@ -1,8 +1,7 @@
 import unittest
 
 import sys
-import os.path
-import random
+import os.path import random
 import numpy as np
 import pandas as pd
 from pstats import Stats
@@ -18,10 +17,9 @@ class Test_Recombination_Locus(unittest.TestCase):
     """Testing recombination_locus output
     """
     def setUp(self):
-        self.basepairs = 10
-        self.h1 = [1, 5, 6]
-        self.h2 =  [2, 8]
-        self.crossover_pos = 4
+        self.mate_array = np.array([
+            0, 1], dtype=np.int64)
+        self.fec = np.array([3], dtype=np.int64)
 
     '''
     def test_recombination_norm(self):
@@ -111,9 +109,9 @@ class Test_Recombination_Fx(unittest.TestCase):
         self.assertEqual(df_adult_mf.meta.shape[0] , 12)
         self.assertEqual(df_adult_mf.h1['0'].shape[0], 12)
         self.assertEqual(df_adult_mf.h2['1'].shape[0], 12)
+        # Recombination happens at index 3, 4, 4 (but 4 is at end so no
+        # changes)
         np.testing.assert_equal(df_adult_mf.h1['1'][0, :] , [4, 4, 4, 0])
-        #np.testing.assert_equal(self.adult.locus_0_h2[0] , [2, 4, 6])
-        #np.testing.assert_equal(df_adult_mf.shape[0], 12)
 
 
 
