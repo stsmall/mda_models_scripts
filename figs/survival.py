@@ -143,18 +143,16 @@ def survivalbase_fx(month,
         dfJuv.meta.ix[juv_rows, "R0net"] += 1
     except TypeError:
         print("dfJuv empty")
-    #ipdb.set_trace()
-    ipdb.set_trace()
     dfJuv.drop_worms(juv_rows)
     dfAdult.add_worms(dfJuv, juv_rows)
 
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
+    dfAdult_mf, dfAdult = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
     dfAdult_mf.meta.age = 1
     dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
-    
+
     return(dfHost, dfAdult, dfJuv, dfMF)

@@ -245,7 +245,11 @@ def transmission_fx(month,
                     #print(new_rows)
                     try: #allow self infection
                         rehostidx2 = transhost[np.random.randint(len(transhost) + 1)]
-                        rehostidx = rehostidx2[next(i[0] for i in enumerate(rehostidx2) if i[1] != index)]
+                        if rehostidx2[0] == index:
+                            rehostidx = rehostidx2[1]
+                        else:
+                            rehostidx = rehostidx2[0]
+                     #rehostidx = rehostidx2[next(i[0] for i in enumerate(rehostidx2) if i[1] != index)]
                     except IndexError:
                         rehostidx = transhostidx.values[0]
                     new_rows.append((dfHost.ix[rehostidx,'hostidx'],index))
@@ -257,8 +261,6 @@ def transmission_fx(month,
     dfMF.drop_worms([i[1] for i in new_rows])
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
     dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
-    print(dfJuv.meta.head())
-    ipdb.set_trace()
 #    pd.dfHost.sort_values("village", inplace=True)
 #    pd.dfHost.reset_index(inplace=True,drop=True)
 

@@ -7,11 +7,10 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-import random
-import pandas as pd
-def fitness_fx(locus,
-               dfAdult_mf,
-               dfSel):
+import copy
+import ipdb
+def fitness_fx(dfAdult_mf,
+               dfAdult):
     ''' calculates mean fitness for each individual by summing fitness effects
     from dfSel for each position across all loci
     Parameters
@@ -27,31 +26,42 @@ def fitness_fx(locus,
     dfAdult_mf : df
          updated df for mf
     '''
-
-    fitS = []
-    fitF = []
-    for index, row in dfAdult_mf.iterrows():
-        fitS_ind = []
-        fitF_ind = []
-        for loc in range(1,locus):
-            print(row)
-            fitS_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                        ["locus_" + str(loc) + "_h1"])]
-                                        ['selS'][dfSel["locus"] == loc])
-            fitF_ind.extend(dfSel.loc[dfSel["position"].isin(row.ix
-                                        ["locus_" + str(loc) + "_h1"])]
-                                        ['selF'][dfSel["locus"] == loc])
-        fitS.append(round(np.mean(fitS_ind), 5))
-        fitF.append(round(np.mean(fitF_ind), 5))
-    dfAdult_mf["fitS"] = fitS
-    dfAdult_mf["fitF"] = fitF
+    avg_over = len(dfAdult_mf.h2.keys())
+    ninds = dfAdult_mf.meta.shape[0]
+    fitF_ind = np.zeros(ninds)
+    fitS_ind = np.zeros(ninds)
+    #ipdb.set_trace()
+    for locus in dfAdult_mf.h2.keys():
+        #these need to be the same length for the dot mult
+#        assert dfAdult_mf.h1[locus].shape[0] == dfAdult.sel[locus + "F"].shape
+#        assert dfAdult_mf.h2[locus].shape[0] == dfAdult.sel[locus + "F"].shape
+#        assert dfAdult_mf.h1[locus].shape[0] == dfAdult.sel[locus + "S"].shape
+#        assert dfAdult_mf.h2[locus].shape[0] == dfAdult.sel[locus + "S"].shape
+        sum_selsites_S = np.dot(dfAdult_mf.h1[locus], dfAdult.sel[locus + "S"]) \
+            + np.dot(dfAdult_mf.h2[locus], dfAdult.sel[locus + "S"])
+        sum_selsites_F = np.dot(dfAdult_mf.h1[locus], dfAdult.sel[locus + "F"]) \
+            + np.dot(dfAdult_mf.h2[locus], dfAdult.sel[locus + "F"])
+####
+        intsites_S = copy.copy(dfAdult.sel[locus + "S"])
+        intsites_S[intsites_S > 0] = 1
+        intsites_F = copy.copy(dfAdult.sel[locus + "F"])
+        intsites_F[intsites_F > 0] = 1
+        cds_sites_S = np.dot(dfAdult_mf.h1[locus], intsites_S) \
+            + np.dot(dfAdult_mf.h2[locus], intsites_S)
+        cds_sites_F = np.dot(dfAdult_mf.h1[locus], intsites_F) \
+            + np.dot(dfAdult_mf.h2[locus], intsites_F)
+####
+        fitS_ind += (( (dfAdult.sel[locus + "St"] * 2) - cds_sites_S) + sum_selsites_S) / (dfAdult.sel[locus + "St"] * 2)
+        fitF_ind += (( (dfAdult.sel[locus + "Ft"] * 2) - cds_sites_F) + sum_selsites_F) / (dfAdult.sel[locus + "Ft"] * 2)
+####
+    dfAdult_mf.meta["fitS"] = fitS_ind / avg_over
+    dfAdult_mf.meta["fitF"] = fitF_ind / avg_over
+    #ipdb.set_trace()
     return(dfAdult_mf)
 
-def selection_fx(dfAdult_mf,
-                 positions,
-                 dfSel,
-                 locus,
-                 cds_coordinates):
+def selection_fx(dfAdult,
+                 dfAdult_mf,
+                 new_positions):
     '''recalculates DFE for new mutations and phenotype for new mf
     Parameters
     ---------
@@ -70,27 +80,27 @@ def selection_fx(dfAdult_mf,
     dfAdult_mf : df
          updated with phenotype
     '''
-
-    for loc in range(len(positions)):
-        cds_positions = []
-        muts_counter = []
-        for start, end in cds_coordinates[loc]:
-            cds_positions.extend([pos for pos in positions[loc] if pos >= start and pos <= end])
-        muts_counter.append(cds_positions)
-    newposlist = []
-    for loc in range(len(positions)):
-        locu = loc + 1
-        for pos in muts_counter[loc]:
-            if random.choice("SF") is "F":
-                #shape = 4, mean = 1, scale = mean/shape
-                #here mean is mean_fitness, wildtype is assumed to be 1
-                selF = np.random.gamma(4, scale=0.25)
-                selS = 1
+    for loc in dfAdult_mf.h2.keys(): #since this wont include 0
+        selS = []
+        selF = []
+        iix = []
+        for pos in new_positions[loc]: #this is the dict of positions
+            if not any(pos == dfAdult.pos[loc]):
+                iix.append(np.argmax(dfAdult_mf.pos > pos))
+                if any([i <= pos <= j for i,j in dfAdult.coord[loc + "F"]]):
+                     #shape = 4, mean = 1, scale = mean/shape
+                     #here mean is mean_fitness, wildtype is assumed to be 1
+                     selF.append(np.random.gamma(4, scale=0.25))
+                     selS.append(0)
+                elif any([i <= pos <= j for i,j in dfAdult.coord[loc + "S"]]):
+                         selS.append(np.random.gamma(4, scale=0.25))
+                         selF.append(0)
+                else: #not in a cds
+                    selS.append(0)
+                    selF.append(0)
             else:
-                selS = np.random.gamma(4, scale=0.25)
-                selF = 1
-            newposlist.append([locu, pos, selS, selF])
-    dfSel = pd.concat([dfSel, pd.DataFrame(newposlist, columns=dfSel.columns)],ignore_index=True)
-
-    dfAdult_mf = fitness_fx(locus, dfAdult_mf, dfSel)
-    return(dfAdult_mf, dfSel)
+                pass
+        dfAdult.sel[loc + "S"] = np.insert(dfAdult.sel[loc + "S"], iix, selS)
+        dfAdult.sel[loc + "F"] = np.insert(dfAdult.sel[loc + "F"], iix, selF)
+    dfAdult_mf = fitness_fx(dfAdult_mf, dfAdult)
+    return(dfAdult_mf, dfAdult)
