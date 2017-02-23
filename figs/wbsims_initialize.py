@@ -17,9 +17,6 @@ import copy
 
 from .agehost import agehost_fx
 from .worm import Worms
-from .village import Villages
-
-import ipdb
 
 def host_fx(village, infhost, muTrans, sizeTrans):
     '''Creates a transmission matrix for locations of infected hosts
