@@ -7,25 +7,22 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-from figs.recombination import recombination_fx
-from figs.mutation import mutation_fx
-from figs.selection import selection_fx
+from .recombination import recombination_fx
+from .mutation import mutation_fx
+from .selection import selection_fx
 
-def fecunditymda_fx(villages,
-                    fecund,
+def fecunditymda_fx(fecund,
+                    dfAdult,
                     locus,
                     mutation_rate,
                     recombination_rate,
                     basepairs,
                     selection,
-                    cds_coordinates,
                     densitydep_fec,
-                    clear_count,
                     mda_sterile,
+                    clear_count,
                     mda_clear,
-                    dfHost,
-                    dfAdult,
-                    dfSel):
+                    dfHost):
 
     '''function for reduced fecundity under mda
     conditions: mda=True, selection=False
@@ -50,13 +47,14 @@ def fecunditymda_fx(villages,
     dfAdult
     dfMF
     '''
+####################################################
     #by host or by village?
     if clear_count == 1: #permanent sterility
          for index, row in dfHost[dfHost.MDA == 1].iterrows():
              try:
                  #randomly select dfAdults, change sex to "S" for sterile
-                 sterile = dfAdult.loc[dfAdult.hostidx == row.hostidx].sample(frac = mda_sterile)["sex"].index
-                 dfAdult.ix[sterile,"sex"] = "S"
+                 sterile = dfAdult.meta.ix[dfAdult.meta.hostidx == row.hostidx].sample(frac = mda_sterile)["sex"].index.values
+                 dfAdult.meta.ix[sterile,"sex"] = "S"
              except ValueError:
                   pass
     if clear_count > 0 and clear_count <= mda_clear: #Drugs cause temporary sterility over clear_time
@@ -66,50 +64,49 @@ def fecunditymda_fx(villages,
         #new base fecundity under drugs
         sterile_t = (mmda * clear_count + bmda)
         #assign value to dfAdult.fec
-        dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(sterile_t,
-                    len(dfAdult[dfAdult.age < 6]))
+        dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t,
+                    len(dfAdult.meta[dfAdult.meta.age < 6]))
 
         #linear function defining decline in fecundity with age
         m = float(0 - sterile_t) / (21 - 6)
         b = 0 - m * 21
         #assign fecundity value based on age function
-        dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m
-                  * dfAdult.loc[dfAdult.age >= 6,"age"] + b, len(dfAdult[dfAdult.age >= 6]))
+        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
+                  * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b, len(dfAdult.meta[dfAdult.meta.age >= 6]))
+########################################################
     else: #base fecundity when no drugs
         #all locations where age is less than 6
-        dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(fecund,
-                  len(dfAdult[dfAdult.age < 6]))
+        dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(fecund,
+                  len(dfAdult.meta[dfAdult.meta.age < 6]))
         #linear function defining decline in fecundity with age
         m = float(0 - fecund) / (21 - 6)
         b = 0 - m * 21
         #assign fecundity value based on age function
-        dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m
-                  * dfAdult.loc[dfAdult.age >= 6,"age"] + b, len(dfAdult[dfAdult.age >= 6]))
+        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
+                  * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b, len(dfAdult.meta[dfAdult.meta.age >= 6]))
 
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
-    dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
-    if selection:
-        dfAdult_mf, dfSel = selection_fx(dfAdult_mf, positions, dfSel, locus, cds_coordinates)
+    # Positions is just the new positions
+    dfAdult_mf, new_positions = mutation_fx(locus, dfAdult_mf,
+         mutation_rate, recombination_rate, basepairs)
+    if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
+        dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
 
-    return(dfAdult_mf, dfSel)
+    return(dfAdult_mf, dfAdult)
 
-def fecunditymda_sel1_fx(villages,
-                    fecund,
+def fecunditymda_sel1_fx(fecund,
+                    dfAdult,
                     locus,
                     mutation_rate,
                     recombination_rate,
                     basepairs,
                     selection,
-                    dfSel,
-                    cds_coordinates,
                     densitydep_fec,
-                    clear_count,
                     mda_sterile,
+                    clear_count,
                     mda_clear,
-                    dfHost,
-                    dfAdult):
-
+                    dfHost):
     '''function for reduced fecundity under mda option 1
     option 1 simplifies that when no MDA or selective event all phenotypes
     are essetially wildtype, so fitness is not evaluated
@@ -135,16 +132,18 @@ def fecunditymda_sel1_fx(villages,
     dfAdult
     dfMF
     '''
+############################################################
     if clear_count == 1: #permanent sterility
          for index, row in dfHost[dfHost.MDA == 1].iterrows():
              #randomly select dfAdults, change sex to "S" for sterile
              try:
-                 mdarand = np.random.random(len(dfAdult.hostidx == row.hostidx))
-                 mdasterile = dfHost.loc[np.where(mdarand < mda_sterile
-                              ** dfAdult[dfAdult.hostidx == row.hostidx]["selF"])].index
-                 dfAdult.ix[mdasterile, "sex"] = "S"
+                 mdarand = np.random.random(len(dfAdult.meta.hostidx == row.hostidx))
+                 mdasterile = dfHost.meta.ix[np.where(mdarand < mda_sterile
+                              ** dfAdult.meta[dfAdult.meta.hostidx == row.hostidx]["selF"])].index.values
+                 dfAdult.meta.ix[mdasterile, "sex"] = "S"
              except ValueError:
                  pass
+
     if clear_count > 0 and clear_count <= mda_clear: #Drugs cause temporary sterility over clear_time
          #linear function defining fecundity during drug clearance
          mmda = float(fecund - 1) / (mda_clear - 1 )
@@ -152,52 +151,51 @@ def fecunditymda_sel1_fx(villages,
          #new base fecundity under drugs
          sterile_t = (mmda * clear_count + bmda)
          #assign value to dfAdult.fec
-         dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(sterile_t **
-                    dfAdult.loc[dfAdult.age < 6, "selF"],
-                               len(dfAdult[dfAdult.age < 6]))
+         dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t **
+                    dfAdult.meta.loc[dfAdult.meta.age < 6, "selF"],
+                               len(dfAdult.meta[dfAdult.meta.age < 6]))
 
         #linear function defining decline in fecundity with age
          m = float(0 - sterile_t) / (21 - 6)
          b = 0 - m * 21
          #assign fecundity value based on age function
-         dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson((m
-              * dfAdult.loc[dfAdult.age >= 6,"age"] + b) ** dfAdult.loc[dfAdult.age >= 6,"selF"],
-                    len(dfAdult[dfAdult.age >= 6]))
-
+         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((m
+              * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b) ** dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"],
+                    len(dfAdult.meta[dfAdult.meta.age >= 6]))
+###############################################################
     else: #base fecundity when no drugs
         #all locations where age is less than 6
-        dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(fecund,
-                  len(dfAdult[dfAdult.age < 6]))
+        dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(fecund,
+                  len(dfAdult.meta[dfAdult.meta.age < 6]))
         #linear function defining decline in fecundity with age
         m = float(0 - fecund) / (21 - 6)
         b = 0 - m * 21
         #assign fecundity value based on age function
-        dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson(m
-                  * dfAdult.loc[dfAdult.age >= 6,"age"] + b, len(dfAdult[dfAdult.age >= 6]))
+        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
+                  * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b, len(dfAdult.meta[dfAdult.meta.age >= 6]))
 
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
-    dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
-    if selection:
-        dfAdult_mf, dfSel = selection_fx(dfAdult_mf, positions, dfSel, locus, cds_coordinates)
+    # Positions is just the new positions
+    dfAdult_mf, new_positions = mutation_fx(locus, dfAdult_mf,
+         mutation_rate, recombination_rate, basepairs)
+    if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
+        dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
 
-    return(dfAdult_mf, dfSel)
+    return(dfAdult_mf, dfAdult)
 
-def fecunditymda_sel2_fx(villages,
-                    fecund,
+def fecunditymda_sel2_fx(fecund,
+                    dfAdult,
                     locus,
                     mutation_rate,
                     recombination_rate,
                     basepairs,
                     selection,
-                    dfSel,
-                    cds_coordinates,
                     densitydep_fec,
-                    clear_count,
                     mda_sterile,
+                    clear_count,
                     mda_clear,
-                    dfHost,
-                    dfAdult):
+                    dfHost):
     '''function for reduced fecundity under mda option 2
     option 2 is when the mutant are less fit then the wildtype when no mda
     is being applied.
@@ -227,10 +225,10 @@ def fecunditymda_sel2_fx(villages,
          for index, row in dfHost[dfHost.MDA == 1].iterrows():
              #randomly select dfAdults, change sex to "S" for sterile
              try:
-                 mdarand = np.random.random(len(dfAdult.hostidx == row.hostidx))
-                 mdasterile = dfHost.loc[np.where(mdarand < mda_sterile
-                              ** dfAdult[dfAdult.hostidx == row.hostidx]["selF"])].index
-                 dfAdult.ix[mdasterile, "sex"] = "S"
+                 mdarand = np.random.random(len(dfAdult.meta.hostidx == row.hostidx))
+                 mdasterile = dfHost.meta.ix[np.where(mdarand < mda_sterile
+                              ** dfAdult.meta[dfAdult.meta.hostidx == row.hostidx]["selF"])].index.values
+                 dfAdult.meta.ix[mdasterile, "sex"] = "S"
              except ValueError:
                  pass
 
@@ -241,17 +239,18 @@ def fecunditymda_sel2_fx(villages,
          #new base fecundity under drugs
          sterile_t = (mmda * clear_count + bmda)
          #assign value to dfAdult.fec
-         dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(sterile_t **
-                    dfAdult.loc[dfAdult.age < 6, "selF"],
-                               len(dfAdult[dfAdult.age < 6]))
+         dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t **
+                    dfAdult.meta.loc[dfAdult.meta.age < 6, "selF"],
+                               len(dfAdult.meta[dfAdult.meta.age < 6]))
 
         #linear function defining decline in fecundity with age
          m = float(0 - sterile_t) / (21 - 6)
          b = 0 - m * 21
          #assign fecundity value based on age function
-         dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson((m
-              * dfAdult.loc[dfAdult.age >= 6,"age"] + b) ** dfAdult.loc[dfAdult.age >= 6,"selF"],
-                    len(dfAdult[dfAdult.age >= 6]))
+         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((m
+              * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b) ** dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"],
+                    len(dfAdult.meta[dfAdult.meta.age >= 6]))
+############################################
     else: #base fecundity when no drugs
          #linear function defining fecundity during drug clearance
          mmda = float(fecund - 1) / (mda_clear - 1 )
@@ -259,21 +258,23 @@ def fecunditymda_sel2_fx(villages,
          #new base fecundity under drugs
          sterile_t = (mmda * clear_count + bmda)
          #assign value to dfAdult.fec
-         dfAdult.loc[dfAdult.age < 6, "fec"] = np.random.poisson(sterile_t **
-                    (1 - abs(1 - dfAdult.loc[dfAdult.age < 6, "selF"])),len(dfAdult[dfAdult.age < 6]))
+         dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t **
+                    (1 - abs(1 - dfAdult.meta.loc[dfAdult.meta.age < 6, "selF"])),len(dfAdult.meta[dfAdult.meta.age < 6]))
 
          #linear function defining decline in fecundity with age
          m = float(0 - sterile_t) / (21 - 6)
          b = 0 - m * 21
          #assign fecundity value based on age function
-         dfAdult.loc[dfAdult.age >= 6, "fec"] = np.random.poisson((m
-              * dfAdult.loc[dfAdult.age >= 6,"age"] + b) ** (1 - abs(1 - dfAdult.loc[dfAdult.age >= 6,"selF"])),
-                 len(dfAdult[dfAdult.age >= 6]))
-
+         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((m
+              * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b) ** (1 - abs(1 - dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"])),
+                 len(dfAdult.meta[dfAdult.meta.age >= 6]))
+############################################
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
-    dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf, mutation_rate, recombination_rate, basepairs)
-    if selection:
-        dfAdult_mf, dfSel = selection_fx(dfAdult_mf, positions, dfSel, locus, cds_coordinates)
+    # Positions is just the new positions
+    dfAdult_mf, new_positions = mutation_fx(locus, dfAdult_mf,
+         mutation_rate, recombination_rate, basepairs)
+    if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
+        dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
 
-    return(dfAdult_mf, dfSel)
+    return(dfAdult_mf, dfAdult)
