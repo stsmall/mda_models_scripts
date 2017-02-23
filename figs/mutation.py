@@ -7,7 +7,7 @@ Created on Thu Jan 12 17:59:27 2017
 """
 import numpy as np
 import random
-
+from collections import defaultdict
 def mutation_fx(locus,
                 dfAdult_mf,
                 mutation_rate,
@@ -38,7 +38,7 @@ def mutation_fx(locus,
          list of positions of new mutations
     '''
     #dfAdult_mf.reset_index(drop=True, inplace=True)
-    new_positions = {}
+    new_positions = defaultdict(list)
     nworms = dfAdult_mf.meta.shape[0]
     for loc in range(locus):
         if recombination_rate[loc] == 0:
@@ -77,7 +77,7 @@ def mutation_fx(locus,
                 ohap = np.insert(ohap, iix, oarray, axis=1)
                 getattr(dfAdult_mf, "h"+ whap2)[str(loc)] = ohap
             positions = np.insert(positions, iix, newsite)
-            new_positions[str(loc)] = newsite
+            new_positions[str(loc)].append(newsite)
         dfAdult_mf.pos[str(loc)] = positions
         assert dfAdult_mf.pos[str(loc)].shape[0] == dfAdult_mf.h1[str(loc)].shape[1]
     return(dfAdult_mf, new_positions)
