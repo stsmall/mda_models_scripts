@@ -6,9 +6,20 @@ from numpy import vstack
 import numpy as np
 import pandas as pd
 
+
+
 def merge_positions(pos1, pos2):
     """ Return indexes where to insert
     """
+    # This could be sped up
+    for i, j in enumerate(pos1):
+        if  i in 
+    for i, j in enumerate(pos2):
+
+
+
+
+
 
 
 class Worms(object):

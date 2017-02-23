@@ -114,8 +114,11 @@ class Test_Recombination_Fx(unittest.TestCase):
         np.testing.assert_equal(df_adult_mf.h1['1'][0, :] , [4, 4, 4, 0])
 
         # Test that the input array is not altered
-        # Regresssion test
         self.assertEqual(self.worms.h1['1'].shape[1], 4)
+
+    def test_recombination_mutation(self):
+        # Make sure that mutation doesn't alter the new worms.object
+        pass
 
     
 
