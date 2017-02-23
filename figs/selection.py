@@ -85,18 +85,21 @@ def selection_fx(dfAdult,
         selF = []
         iix = []
         for pos in new_positions[loc]: #this is the dict of positions
-            iix.append(np.argmax(dfAdult_mf.pos > pos))
-            if any([i <= pos <= j for i,j in dfAdult.coord[loc + "F"]]):
-                 #shape = 4, mean = 1, scale = mean/shape
-                 #here mean is mean_fitness, wildtype is assumed to be 1
-                 selF.append(np.random.gamma(4, scale=0.25))
-                 selS.append(0)
-            elif any([i <= pos <= j for i,j in dfAdult.coord[loc + "S"]]):
-                     selS.append(np.random.gamma(4, scale=0.25))
-                     selF.append(0)
-            else: #not in a cds
-                selS.append(0)
-                selF.append(0)
+            if not any(pos == dfAdult.pos):
+                iix.append(np.argmax(dfAdult_mf.pos > pos))
+                if any([i <= pos <= j for i,j in dfAdult.coord[loc + "F"]]):
+                     #shape = 4, mean = 1, scale = mean/shape
+                     #here mean is mean_fitness, wildtype is assumed to be 1
+                     selF.append(np.random.gamma(4, scale=0.25))
+                     selS.append(0)
+                elif any([i <= pos <= j for i,j in dfAdult.coord[loc + "S"]]):
+                         selS.append(np.random.gamma(4, scale=0.25))
+                         selF.append(0)
+                else: #not in a cds
+                    selS.append(0)
+                    selF.append(0)
+            else:
+                pass
         dfAdult.sel[loc + "S"] = np.insert(dfAdult.sel[loc + "S"], iix, selS)
         dfAdult.sel[loc + "F"] = np.insert(dfAdult.sel[loc + "F"], iix, selF)
     dfAdult_mf = fitness_fx(dfAdult_mf, dfAdult)
