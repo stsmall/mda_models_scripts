@@ -9,8 +9,7 @@
 import numpy as np
 import copy
 import ipdb
-def fitness_fx(locus,
-               dfAdult_mf,
+def fitness_fx(dfAdult_mf,
                dfAdult):
     ''' calculates mean fitness for each individual by summing fitness effects
     from dfSel for each position across all loci
@@ -31,7 +30,7 @@ def fitness_fx(locus,
     ninds = dfAdult_mf.meta.shape[0]
     fitF_ind = np.zeros(ninds)
     fitS_ind = np.zeros(ninds)
-
+    #ipdb.set_trace()
     for locus in dfAdult_mf.h2.keys():
         #these need to be the same length for the dot mult
 #        assert dfAdult_mf.h1[locus].shape[0] == dfAdult.sel[locus + "F"].shape
@@ -55,15 +54,14 @@ def fitness_fx(locus,
         fitS_ind += (( (dfAdult.sel[locus + "St"] * 2) - cds_sites_S) + sum_selsites_S) / (dfAdult.sel[locus + "St"] * 2)
         fitF_ind += (( (dfAdult.sel[locus + "Ft"] * 2) - cds_sites_F) + sum_selsites_F) / (dfAdult.sel[locus + "Ft"] * 2)
 ####
-    #ipdb.set_trace()
     dfAdult_mf.meta["fitS"] = fitS_ind / avg_over
     dfAdult_mf.meta["fitF"] = fitF_ind / avg_over
+    #ipdb.set_trace()
     return(dfAdult_mf)
 
 def selection_fx(dfAdult,
                  dfAdult_mf,
-                 new_positions,
-                 locus):
+                 new_positions):
     '''recalculates DFE for new mutations and phenotype for new mf
     Parameters
     ---------
@@ -101,5 +99,5 @@ def selection_fx(dfAdult,
                 selF.append(0)
         dfAdult.sel[loc + "S"] = np.insert(dfAdult.sel[loc + "S"], iix, selS)
         dfAdult.sel[loc + "F"] = np.insert(dfAdult.sel[loc + "F"], iix, selF)
-    dfAdult_mf = fitness_fx(locus, dfAdult_mf, dfAdult)
+    dfAdult_mf = fitness_fx(dfAdult_mf, dfAdult)
     return(dfAdult_mf, dfAdult)

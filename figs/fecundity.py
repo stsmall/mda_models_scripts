@@ -57,6 +57,6 @@ def fecunditybase_fx(fecund,
     dfAdult_mf, new_positions = mutation_fx(locus, dfAdult_mf,
          mutation_rate, recombination_rate, basepairs)
     if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
-        dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions, locus)
+        dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
 
     return(dfAdult_mf, dfAdult)
