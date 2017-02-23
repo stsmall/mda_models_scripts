@@ -85,7 +85,7 @@ def selection_fx(dfAdult,
         selF = []
         iix = []
         for pos in new_positions[loc]: #this is the dict of positions
-            if not any(pos == dfAdult.pos):
+            if not any(pos == dfAdult.pos[loc]):
                 iix.append(np.argmax(dfAdult_mf.pos > pos))
                 if any([i <= pos <= j for i,j in dfAdult.coord[loc + "F"]]):
                      #shape = 4, mean = 1, scale = mean/shape
