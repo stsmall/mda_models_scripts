@@ -49,10 +49,12 @@ def fecunditybase_fx(fecund,
     m = float(0 - fecund) / (21 - 6)
     b = 0 - m * 21
     #assign fecundity value based on age function
+
     dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
            * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b)
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
+    # Positions is just the new positions
     dfAdult_mf, positions = mutation_fx(locus, dfAdult_mf,
          mutation_rate, recombination_rate, basepairs)
     if selection:

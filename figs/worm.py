@@ -6,6 +6,10 @@ from numpy import vstack
 import numpy as np
 import pandas as pd
 
+def merge_positions(pos1, pos2):
+    """ Return indexes where to insert
+    """
+
 
 class Worms(object):
     def __init__(self, meta, haplotype1=None, haplotype2=None,
@@ -42,22 +46,25 @@ class Worms(object):
         index : int list
             numerical index from the other Worms object to add
         """
-        try:
+        if len(index) != 0:
             self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
             self.meta.reset_index(drop=True) #inplace=True
             # :TODO Make sure both self and df
             for i in df.h1.keys():
                 try:
+                    assert self.h1[i].shape[1] == df.h1[i].shape[1]
                     self.h1[i] = vstack((self.h1[i], df.h1[i][index,:]))
                 except KeyError:
                     self.h1[i] = df.h1[i][index, :]
+                    self.pos[i] = df.pos[i]
             for i in df.h2.keys():
                 try:
+                    assert self.h2[i].shape[1] == df.h2[i].shape[1]
                     self.h2[i] = vstack((self.h2[i], df.h2[i][index,:]))
                 except KeyError:
                     self.h2[i] = df.h2[i][index, :]
-        except ValueError:
-            print("nothing to remove")
+        else:
+            print("Nothing to add")
 
     def drop_worms(self, index):
         try:
@@ -68,7 +75,7 @@ class Worms(object):
             for i in self.h2.keys():
                 self.h2[i] = ndelete(self.h2[i], index, axis=0)
         except ValueError:
-            print("df empty")
+            print("DF empty in drop")
 
     def calc_allele_frequencies(self, host=None, village=None):
         """ Calculate allele frequencies

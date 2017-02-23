@@ -60,8 +60,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     mate_array : array long
         matches females with males
     fec : array long 
-        number of children each female has
-    pos : array long
+        number of children each female has pos : array long
         genomic positions array same size as axis-1 of fem/males
     recomb_rate: float
     fem : np.uint8 ndim 2
@@ -182,6 +181,11 @@ def recombination_fx(locus,
     cdef Py_ssize_t loc
     cdef np.ndarray[long, ndim=1] fec
     cdef double rr
+    # Need to make copy or otherwise awkward downstream
+    # behavior
+    cdef np.ndarray[DTYPE_t, ndim=2] h1_orig
+    cdef np.ndarray[DTYPE_t, ndim=2] h2_orig  
+
     ###############################################
     # Size of full meta along axis-0
     ###############################################
@@ -246,12 +250,6 @@ def recombination_fx(locus,
                 dfAdult.h2[str(loc)][g_fem_ix, :]))
             cmales = np.vstack((dfAdult.h1[str(loc)][:, :],
                 dfAdult.h2[str(loc)][:, :]))
-            '''
-            assert cfemales.shape[0] == 2*np.sum(g_fem_ix)
-            assert cfemales.shape[0] == 2*mate_array.shape[0]
-            assert fec.shape[0] == mate_array.shape[0]
-            assert np.max(mate_array) <= cmales.shape[0]/2
-            '''
             # :TODO passing in male genotypes instead of all
             out_array = mate_worms(
                     mate_array,
@@ -274,5 +272,5 @@ def recombination_fx(locus,
     new_meta.reset_index(drop=True, inplace=True)
     dfAdult_mf = Worms(meta = new_meta.ix[:, dfAdult.meta.columns], 
             haplotype1 = h1t, haplotype2=h2t,
-            positions=dfAdult.pos)
+            positions=dfAdult.pos.copy())
     return(dfAdult_mf)

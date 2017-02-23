@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/u fecsr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jan 12 17:59:27 2017
@@ -79,4 +79,5 @@ def mutation_fx(locus,
             positions = np.insert(positions, iix, newsite)
             new_positions.append(newsite)
         dfAdult_mf.pos[str(loc)] = positions
+        assert dfAdult_mf.pos[str(loc)].shape[0] == dfAdult_mf.h1[str(loc)].shape[1]
     return(dfAdult_mf, new_positions)
