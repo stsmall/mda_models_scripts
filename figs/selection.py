@@ -8,6 +8,7 @@
 """
 import numpy as np
 import copy
+import ipdb
 def fitness_fx(locus,
                dfAdult_mf,
                dfAdult):
@@ -33,10 +34,10 @@ def fitness_fx(locus,
 
     for locus in dfAdult_mf.h2.keys():
         #these need to be the same length for the dot mult
-#        assert dfAdult_mf.h1[locus].shape == dfAdult.sel[locus + "F"].shape
-#        assert dfAdult_mf.h2[locus].shape == dfAdult.sel[locus + "F"].shape
-#        assert dfAdult_mf.h1[locus].shape == dfAdult.sel[locus + "S"].shape
-#        assert dfAdult_mf.h2[locus].shape == dfAdult.sel[locus + "S"].shape
+#        assert dfAdult_mf.h1[locus].shape[0] == dfAdult.sel[locus + "F"].shape
+#        assert dfAdult_mf.h2[locus].shape[0] == dfAdult.sel[locus + "F"].shape
+#        assert dfAdult_mf.h1[locus].shape[0] == dfAdult.sel[locus + "S"].shape
+#        assert dfAdult_mf.h2[locus].shape[0] == dfAdult.sel[locus + "S"].shape
         sum_selsites_S = np.dot(dfAdult_mf.h1[locus], dfAdult.sel[locus + "S"]) \
             + np.dot(dfAdult_mf.h2[locus], dfAdult.sel[locus + "S"])
         sum_selsites_F = np.dot(dfAdult_mf.h1[locus], dfAdult.sel[locus + "F"]) \
@@ -54,8 +55,9 @@ def fitness_fx(locus,
         fitS_ind += (( (dfAdult.sel[locus + "St"] * 2) - cds_sites_S) + sum_selsites_S) / (dfAdult.sel[locus + "St"] * 2)
         fitF_ind += (( (dfAdult.sel[locus + "Ft"] * 2) - cds_sites_F) + sum_selsites_F) / (dfAdult.sel[locus + "Ft"] * 2)
 ####
-    dfAdult_mf["fitS"] = fitS_ind / avg_over
-    dfAdult_mf["fitF"] = fitF_ind / avg_over
+    #ipdb.set_trace()
+    dfAdult_mf.meta["fitS"] = fitS_ind / avg_over
+    dfAdult_mf.meta["fitF"] = fitF_ind / avg_over
     return(dfAdult_mf)
 
 def selection_fx(dfAdult,
@@ -83,7 +85,9 @@ def selection_fx(dfAdult,
     for loc in dfAdult_mf.h2.keys(): #since this wont include 0
         selS = []
         selF = []
+        iix = []
         for pos in new_positions[loc]: #this is the dict of positions
+            iix.append(np.argmax(dfAdult_mf.pos > pos))
             if any([i <= pos <= j for i,j in dfAdult.coord[loc + "F"]]):
                  #shape = 4, mean = 1, scale = mean/shape
                  #here mean is mean_fitness, wildtype is assumed to be 1
@@ -95,7 +99,7 @@ def selection_fx(dfAdult,
             else: #not in a cds
                 selS.append(0)
                 selF.append(0)
-        dfAdult.sel[loc + "S"] = np.insert(dfAdult.sel[loc + "S"], new_positions[loc], selS)
-        dfAdult.sel[loc + "F"] = np.insert(dfAdult.sel[loc + "F"], new_positions[loc], selF)
+        dfAdult.sel[loc + "S"] = np.insert(dfAdult.sel[loc + "S"], iix, selS)
+        dfAdult.sel[loc + "F"] = np.insert(dfAdult.sel[loc + "F"], iix, selF)
     dfAdult_mf = fitness_fx(locus, dfAdult_mf, dfAdult)
     return(dfAdult_mf, dfAdult)
