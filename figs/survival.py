@@ -84,15 +84,19 @@ def survivalbase_fx(month,
     dfSel
 
     '''
+    print('survival pos shape')
+    print(dfAdult.pos['1'].shape[0])
+    print(dfAdult.h1['1'].shape[1])
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
-        kill_adultrand = np.random.random(dfAdult.meta.shape[0])
+        kill_adult_rand = np.random.random(dfAdult.meta.shape[0])
         try:
-            kill_adultfxage = weibull_min.cdf(dfAdult.meta.age, shapeAdult,loc=0,scale=scaleAdult)
+            kill_adultfxage = weibull_min.cdf(dfAdult.meta.age, shapeAdult,
+                    loc=0, scale=scaleAdult)
         except TypeError:
-            kill_adultfxage = weibull_min.cdf(0, shapeAdult,loc=0,scale=scaleAdult)
-        dieAdult = np.where(kill_adultrand < kill_adultfxage)
+            kill_adultfxage = weibull_min.cdf(0, shapeAdult, loc=0, scale=scaleAdult)
+        dieAdult = np.where(kill_adult_rand < kill_adultfxage)
         dfAdult.drop_worms(dieAdult)
 
         dfAdult.meta.age = dfAdult.meta.age + 1 #2 - 21
@@ -106,6 +110,11 @@ def survivalbase_fx(month,
         dfHost.age = dfHost.age + 1
         if hostmigrate != 0:
             dfHost = hostmigration_fx(village, dfHost, hostmigrate, sizeTrans, muTrans)
+
+    print('Post killing')
+    print(dfAdult.pos['1'].shape[0])
+    print(dfAdult.h1['1'].shape[1])
+    print('Nworms :{0!s}'.format(dfAdult.h1['1'].shape[0]))
 
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
@@ -134,19 +143,16 @@ def survivalbase_fx(month,
         dfJuv.meta.ix[juv_rows, "R0net"] += 1
     except TypeError:
         print("dfJuv empty")
-    ipdb.set_trace()
     dfJuv.drop_worms(juv_rows)
     dfAdult.add_worms(dfJuv, juv_rows)
 
     #fecundity calls mutation/recombination
-    dfAdult_mf = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
+    dfAdult_mf, dfAdult = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
     dfAdult_mf.meta.age = 1
-    dfAdult_mf.meta.reset_index(inplace=True)
-    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index)
-    #######################################
-    dfMF.meta = dfMF.meta.drop('index',1)
-    #########################################
+    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
+
+
     return(dfHost, dfAdult, dfJuv, dfMF)

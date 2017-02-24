@@ -235,7 +235,6 @@ def transmission_fx(month,
                      prob_newinfection = 0
                 if np.random.random() < prob_newinfection:
                     dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                    ipdb.set_trace()
                     new_rows.append((new_hostidx, index))
                     #new host so have to resort and rebuild KDTree
 #                    pd.dfHost.sort_values("village", inplace=True)
@@ -243,13 +242,18 @@ def transmission_fx(month,
                     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
                     distset = cKDTree.query_pairs(tree, dispersal)
                 else:
-                    print(new_rows)
+                    #print(new_rows)
                     try: #allow self infection
-                        rehostidx = transhost[np.random.randint(len(transhost) + 1)][1] #random choice of host within dispersal
+                        rehostidx2 = transhost[np.random.randint(len(transhost) + 1)]
+                        if rehostidx2[0] == index:
+                            rehostidx = rehostidx2[1]
+                        else:
+                            rehostidx = rehostidx2[0]
+                     #rehostidx = rehostidx2[next(i[0] for i in enumerate(rehostidx2) if i[1] != index)]
                     except IndexError:
-                        rehostidx = transhostidx
+                        rehostidx = transhostidx.values[0]
                     new_rows.append((dfHost.ix[rehostidx,'hostidx'],index))
-                    print(new_rows)
+
         else:
             print("dfMF is empty")
     prev_size = dfJuv.meta.shape[0]
@@ -257,7 +261,6 @@ def transmission_fx(month,
     dfMF.drop_worms([i[1] for i in new_rows])
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
     dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
-    print(dfJuv.meta)
 #    pd.dfHost.sort_values("village", inplace=True)
 #    pd.dfHost.reset_index(inplace=True,drop=True)
 
