@@ -53,31 +53,33 @@ def mutation_fx(locus,
         for mut in range(num_muts):
             iix = 0
             randmf = np.random.randint(0, nworms)
-            narray = np.zeros(nworms, np.uint8)
-            narray[randmf] = 1
-            newsite = np.random.randint(1, basepairs[loc])
-            if newsite > max_seg:
-                iix = len(positions)
+            if randmf in dfAdlt_mf.pos[loc]: pass
             else:
-                iix = np.argmax(positions > newsite)
-            if recombination_rate[loc] == 0:
-                dfAdult_mf.h1[str(loc)] =\
-                        np.insert(dfAdult_mf.h1[str(loc)],
-                                iix, narray, axis=1)
-            else:
-                oarray = np.zeros(nworms, np.uint8)
-                whap = np.random.randint(1, 3)
-                if whap == 1: whap2 =str(2)
-                else: whap2 = str(1)
-                whap = str(whap)
-                hap = getattr(dfAdult_mf,"h"+ whap)[str(loc)]
-                hap = np.insert(hap, iix, narray, axis=1)
-                getattr(dfAdult_mf,"h"+ whap)[str(loc)] = hap
-                ohap = getattr(dfAdult_mf, "h"+ whap2)[str(loc)]
-                ohap = np.insert(ohap, iix, oarray, axis=1)
-                getattr(dfAdult_mf, "h"+ whap2)[str(loc)] = ohap
-            positions = np.insert(positions, iix, newsite)
-            new_positions[str(loc)].append(newsite)
+                narray = np.zeros(nworms, np.uint8)
+                narray[randmf] = 1
+                newsite = np.random.randint(1, basepairs[loc])
+                if newsite > max_seg:
+                    iix = len(positions)
+                else:
+                    iix = np.argmax(positions > newsite)
+                if recombination_rate[loc] == 0:
+                    dfAdult_mf.h1[str(loc)] =\
+                            np.insert(dfAdult_mf.h1[str(loc)],
+                                    iix, narray, axis=1)
+                else:
+                    oarray = np.zeros(nworms, np.uint8)
+                    whap = np.random.randint(1, 3)
+                    if whap == 1: whap2 =str(2)
+                    else: whap2 = str(1)
+                    whap = str(whap)
+                    hap = getattr(dfAdult_mf,"h"+ whap)[str(loc)]
+                    hap = np.insert(hap, iix, narray, axis=1)
+                    getattr(dfAdult_mf,"h"+ whap)[str(loc)] = hap
+                    ohap = getattr(dfAdult_mf, "h"+ whap2)[str(loc)]
+                    ohap = np.insert(ohap, iix, oarray, axis=1)
+                    getattr(dfAdult_mf, "h"+ whap2)[str(loc)] = ohap
+                positions = np.insert(positions, iix, newsite)
+                new_positions[str(loc)].append(newsite)
         dfAdult_mf.pos[str(loc)] = positions
         assert dfAdult_mf.pos[str(loc)].shape[0] == dfAdult_mf.h1[str(loc)].shape[1]
     return(dfAdult_mf, new_positions)

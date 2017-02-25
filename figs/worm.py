@@ -8,14 +8,14 @@ import pandas as pd
 
 
 
-def merge_positions(pos1, pos2):
+def merge_positions(pos1, pos2, newpos=None):
     """ Return indexes where to insert
     """
     # This could be sped up
     for i, j in enumerate(pos1):
-        if  i in 
+        pass
     for i, j in enumerate(pos2):
-
+        pass
 
 
 
@@ -48,6 +48,37 @@ class Worms(object):
             self.coord = {}
 
 
+    def _merge_positions(self, loc, oworm, newpos = None):
+        # Not the fastest
+        pos1 = self.pos[loc]
+        pos2 = oworms.pos[loc]
+        common = np.intersect1d(self.pos[loc], oworms.pos[loc])
+        m1 = [i for i in pos1 if i not in common]
+        m2 = [i for i in pos2 if i not in common]
+
+        
+        n1 = self.h1[loc].shape[0]
+        for i in m1:
+            iix = np.argmax(pos1 > i)
+            np.insert(self.h1[loc], iix, 
+                    np.zeroes(n1, dtype=np.uint8))
+            np.insert(self.h2[loc], iix, 
+                    np.zeroes(n1, dtype=np.uint8))
+            positions = np.insert(pos1, iix, i)
+
+        n2 = self.h1[loc].shape[0]
+        for i in m2:
+            iix = np.argmax(pos2 > i)
+            np.insert(oworm.h1[loc], iix, 
+                    np.zeroes(n2, dtype=np.uint8))
+            np.insert(oworm.h2[loc], iix, 
+                    np.zeroes(n2, dtype=np.uint8))
+            positions = np.insert(pos2, iix, i)
+
+        return(oworm)
+
+            
+
     def add_worms(self, df, index):
         """
         Parameters
@@ -57,10 +88,9 @@ class Worms(object):
         index : int list
             numerical index from the other Worms object to add
         """
-        if len(index) != 0:
+        if len(index) != 0 and self.meat.shape[0] !=0:
             self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
             self.meta.reset_index(drop=True) #inplace=True
-            # :TODO Make sure both self and df
             for i in df.h1.keys():
                 try:
                     assert self.h1[i].shape[1] == df.h1[i].shape[1]
@@ -74,8 +104,14 @@ class Worms(object):
                     self.h2[i] = vstack((self.h2[i], df.h2[i][index,:]))
                 except KeyError:
                     self.h2[i] = df.h2[i][index, :]
+        elif self.meta.shape[0] == 0 and len(index) != 0:
+            for i in df.h1.keys():
+
         else:
+            self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
+            self.meta.reset_index(drop=True) #inplace=True
             print("Nothing to add")
+
 
     def drop_worms(self, index):
         try:
@@ -88,6 +124,7 @@ class Worms(object):
         except ValueError:
             print("DF empty in drop")
 
+
     def calc_allele_frequencies(self, host=None, village=None):
         """ Calculate allele frequencies
         """
@@ -99,6 +136,3 @@ class Worms(object):
                         self.h2[loc])/float(self.h1[loc].shape[0])
             else:
                 allele_freq[loc] = np.sum(self.h1[loc])
-
-
-
