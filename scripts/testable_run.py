@@ -121,6 +121,7 @@ def wb_sims(numberGens, config_file):
     mda_freq = config.getint(sh, 'mda_freq')
     mda_coverage = list(map(float, config.get(sh, 'mda_coverage').split(",")))
     mda_macro = config.getfloat(sh, 'mda_macro')
+    mda_juvicide= config.getfloat(sh, 'mda_juvicide')
     mda_micro = config.getfloat(sh, 'mda_micro')
     mda_sterile = config.getfloat(sh, 'mda_sterile')
     mda_clear = config.getint(sh, 'mda_clear')
@@ -167,7 +168,7 @@ def wb_sims(numberGens, config_file):
     for i in range(villages):
         village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
                                bitesPperson[i],bednets, bnstart[i], bnstop[i], bncoverage[i]))
-    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro,
+    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
     cdslist = [perc_locus, cds_length, intgen_length]
     # set counters
