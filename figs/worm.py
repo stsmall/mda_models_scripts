@@ -7,21 +7,6 @@ import numpy as np
 import pandas as pd
 
 
-
-def merge_positions(pos1, pos2, newpos=None):
-    """ Return indexes where to insert
-    """
-    # This could be sped up
-    for i, j in enumerate(pos1):
-        pass
-    for i, j in enumerate(pos2):
-        pass
-
-
-
-
-
-
 class Worms(object):
     def __init__(self, meta, haplotype1=None, haplotype2=None,
             positions = None, selection=None, cds_coords=None):
@@ -50,65 +35,78 @@ class Worms(object):
 
     def _merge_positions(self, loc, oworm, newpos = None):
         # Not the fastest
-        pos1 = self.pos[loc]
-        pos2 = oworms.pos[loc]
-        common = np.intersect1d(self.pos[loc], oworms.pos[loc])
+        pos1 = np.copy(self.pos[loc])
+        pos2 = np.copy(oworm.pos[loc])
+        common = np.intersect1d(self.pos[loc], oworm.pos[loc])
         m1 = [i for i in pos1 if i not in common]
         m2 = [i for i in pos2 if i not in common]
-
-        
         n1 = self.h1[loc].shape[0]
-        for i in m1:
+        for i in m2:
             iix = np.argmax(pos1 > i)
-            np.insert(self.h1[loc], iix, 
-                    np.zeroes(n1, dtype=np.uint8))
-            np.insert(self.h2[loc], iix, 
-                    np.zeroes(n1, dtype=np.uint8))
-            positions = np.insert(pos1, iix, i)
+            self.h1[loc] = np.insert(self.h1[loc], iix, 
+                    np.zeros(n1, dtype=np.uint8), axis=1)
+            try:
+                self.h2[loc] = np.insert(self.h2[loc], iix, 
+                        np.zeros(n1, dtype=np.uint8), axis=1)
+            except KeyError:
+                pass
+            pos1 = np.insert(pos1, iix, i)
 
         n2 = self.h1[loc].shape[0]
-        for i in m2:
+        for i in m1:
             iix = np.argmax(pos2 > i)
-            np.insert(oworm.h1[loc], iix, 
-                    np.zeroes(n2, dtype=np.uint8))
-            np.insert(oworm.h2[loc], iix, 
-                    np.zeroes(n2, dtype=np.uint8))
-            positions = np.insert(pos2, iix, i)
+            oworm.h1[loc] = np.insert(oworm.h1[loc], iix, 
+                    np.zeros(n2, dtype=np.uint8), axis=1)
+            try:
+                oworm.h2[loc] = np.insert(oworm.h2[loc], iix, 
+                        np.zeros(n2, dtype=np.uint8), axis=1)
+            except KeyError:
+                pass
+            pos2 = np.insert(pos2, iix, i)
+        
+
+        self.pos[loc] = pos1 
 
         return(oworm)
 
             
 
-    def add_worms(self, df, index):
+    def add_worms(self, oworms, index):
         """
         Parameters
         ----------
-        df : figs.worm.Worms object
+        oworms : figs.worm.Worms object
             other Worms object to add worms from
         index : int list
             numerical index from the other Worms object to add
         """
-        if len(index) != 0 and self.meat.shape[0] !=0:
-            self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
+        if len(index) != 0 and self.meta.shape[0] !=0:
+            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], ignore_index=True)
             self.meta.reset_index(drop=True) #inplace=True
-            for i in df.h1.keys():
-                try:
-                    assert self.h1[i].shape[1] == df.h1[i].shape[1]
-                    self.h1[i] = vstack((self.h1[i], df.h1[i][index,:]))
-                except KeyError:
-                    self.h1[i] = df.h1[i][index, :]
-                    self.pos[i] = df.pos[i]
-            for i in df.h2.keys():
-                try:
-                    assert self.h2[i].shape[1] == df.h2[i].shape[1]
-                    self.h2[i] = vstack((self.h2[i], df.h2[i][index,:]))
-                except KeyError:
-                    self.h2[i] = df.h2[i][index, :]
+            for i in oworms.h1.keys():
+                if np.array_equal(self.pos[i],  oworms.pos[i]):
+                    self.h1[i] = vstack((self.h1[i], oworms.h1[i][index,:]))
+                    try:
+                        self.h2[i] = vstack((self.h2[i],
+                            oworms.h2[i][index,:]))
+                    except KeyError:
+                        pass
+                else:
+                    _oworm = self._merge_positions(i, oworms)
+                    self.h1[i] = vstack((self.h1[i], _oworm.h1[i][index,:]))
+                    try:
+                        self.h2[i] = vstack((self.h2[i],
+                            _oworm.h2[i][index,:]))
+                    except KeyError:
+                        pass
         elif self.meta.shape[0] == 0 and len(index) != 0:
-            for i in df.h1.keys():
-
+            for i in oworms.h1.keys():
+                self.h1[i] = oworms.h1[i][index, :]
+                self.pos[i] = oworms.pos[i]
+            for i in oworms.h2.keys():
+                self.h2[i] = oworms.h2[i][index, :]
         else:
-            self.meta = pd.concat([self.meta, df.meta.ix[index, :]], ignore_index=True)
+            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], ignore_index=True)
             self.meta.reset_index(drop=True) #inplace=True
             print("Nothing to add")
 

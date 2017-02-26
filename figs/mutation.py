@@ -53,7 +53,7 @@ def mutation_fx(locus,
         for mut in range(num_muts):
             iix = 0
             randmf = np.random.randint(0, nworms)
-            if randmf in dfAdlt_mf.pos[loc]: pass
+            if randmf in dfAdult_mf.pos[str(loc)]: pass
             else:
                 narray = np.zeros(nworms, np.uint8)
                 narray[randmf] = 1
