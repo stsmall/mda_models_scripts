@@ -1,7 +1,6 @@
 """
-"""
-
-from numpy import delete as ndelete
+""" 
+from numpy import delete as ndelete 
 from numpy import vstack
 import numpy as np
 import pandas as pd
@@ -113,7 +112,7 @@ class Worms(object):
 
     def drop_worms(self, index):
         try:
-            self.meta.drop(index)
+            self.meta.drop(index, inplace=True)
             self.meta = self.meta.reset_index(drop=True) #inplace=True
             for i in self.h1.keys():
                 self.h1[i] = ndelete(self.h1[i], index, axis=0)

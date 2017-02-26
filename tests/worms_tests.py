@@ -66,10 +66,20 @@ class Test_Worms(unittest.TestCase):
 
 
     def test_add_worms(self):
+        #### Testing regular add
         self.worms.add_worms(self.worms2, index = [0,1])
         self.assertEqual(self.worms.pos['1'].shape[0] , self.worms.h1['1'].shape[1]) 
         np.testing.assert_equal(self.worms.h1['1'][:,1],
                 np.array([0, 0, 0, 0 , 0, 3, 3], dtype=np.uint8))
+
+    def test_add_worms_empty(self):
+        pass
+
+    def test_drop_worms(self):
+        self.worms2.drop_worms([0, 1])
+        np.testing.assert_equal(self.worms2.h1['1'].shape[0], 3)
+        np.testing.assert_equal(self.worms2.meta.shape[0], 3)
+
 
 
 if __name__ == '__main__':
