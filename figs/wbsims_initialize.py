@@ -44,8 +44,8 @@ def host_fx(village, infhost):
 
     for vill in range(len(village)):
          #list of host positions
-         coordinates.extend( np.random.negative_binomial(village[vill].sizeTrans, village[vill].sizeTrans
-                             / float((village[vill].sizeTrans+village[vill].muTrans)), (infhost[vill],
+         coordinates.extend( np.random.negative_binomial(village[vill].size, village[vill].size
+                             / float((village[vill].size+village[vill].mu)), (infhost[vill],
                                                            2)) + village[vill].dist)
 
          for host in range(infhost[vill]):
