@@ -38,7 +38,7 @@ def hostmigration_fx(village,
              else: #at max can only go down
                  dfHost.ix[migrant, "village"] += np.random.choice([1,-1])
          #new coordinates
-         dfHost.ix[migrant, "coordinates"] = (np.random.negative_binomial(village[vill].sizeTrans,
-                  village[vill].sizeTrans / float((village[vill].sizeTrans+village[vill].muTrans)), (1, 2)) + village[dfHost.ix[migrant,"village"]].dist)
+         dfHost.ix[migrant, "coordinates"] = (np.random.negative_binomial(village[vill].size,
+                  village[vill].size / float((village[vill].size+village[vill].mu)), (1, 2)) + village[dfHost.ix[migrant,"village"]].dist)
          i += 1
      return(dfHost)
