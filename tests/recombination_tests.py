@@ -19,34 +19,6 @@ class Test_Recombination_Locus(unittest.TestCase):
             0, 1], dtype=np.int64)
         self.fec = np.array([3], dtype=np.int64)
 
-    '''
-    def test_recombination_norm(self):
-        h1, h2 = recombination_locus(self.h1,
-                self.h2, self.crossover_pos)
-        np.testing.assert_equal(h1, [1, 8])
-        np.testing.assert_equal(h2, [2, 5, 6])
-
-    def test_end(self):
-        """Test when recombination happens at the end
-        """
-        h1, h2 = recombination_locus(self.h1,
-                self.h2, 9)
-        np.testing.assert_equal(h1, self.h1)
-        np.testing.assert_equal(h2, self.h2)
-
-    def test_start(self):
-        h1, h2 = recombination_locus(self.h1,
-                self.h2, 0)
-        np.testing.assert_equal(h1, self.h2)
-        np.testing.assert_equal(h2, self.h1)
-
-
-    def test_multiple_crossovers(self):
-        h1, h2 = recombination_locus(self.h1,
-                self.h2, 4)
-        h1, h2 = recombination_locus(h1, h2, 7)
-        np.testing.assert_equal(self.h1, [1,5,6])
-    '''
 
 
 class Test_Recombination_Fx(unittest.TestCase):
@@ -114,8 +86,11 @@ class Test_Recombination_Fx(unittest.TestCase):
         np.testing.assert_equal(df_adult_mf.h1['1'][0, :] , [4, 4, 4, 0])
 
         # Test that the input array is not altered
-        # Regresssion test
         self.assertEqual(self.worms.h1['1'].shape[1], 4)
+
+    def test_recombination_mutation(self):
+        # Make sure that mutation doesn't alter the new worms.object
+        pass
 
     
 
