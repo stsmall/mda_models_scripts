@@ -8,7 +8,6 @@
 """
 import numpy as np
 import copy
-import ipdb
 def fitness_fx(dfAdult_mf,
                dfAdult):
     ''' calculates mean fitness for each individual by summing fitness effects
@@ -32,15 +31,15 @@ def fitness_fx(dfAdult_mf,
     fitS_ind = np.zeros(ninds)
     #ipdb.set_trace()
     for locus in dfAdult_mf.h2.keys():
-        #these need to be the same length for the dot mult
-#        assert dfAdult_mf.h1[locus].shape[0] == dfAdult.sel[locus + "F"].shape
-#        assert dfAdult_mf.h2[locus].shape[0] == dfAdult.sel[locus + "F"].shape
-#        assert dfAdult_mf.h1[locus].shape[0] == dfAdult.sel[locus + "S"].shape
-#        assert dfAdult_mf.h2[locus].shape[0] == dfAdult.sel[locus + "S"].shape
-        sum_selsites_S = np.dot(dfAdult_mf.h1[locus], dfAdult.sel[locus + "S"]) \
-            + np.dot(dfAdult_mf.h2[locus], dfAdult.sel[locus + "S"])
-        sum_selsites_F = np.dot(dfAdult_mf.h1[locus], dfAdult.sel[locus + "F"]) \
-            + np.dot(dfAdult_mf.h2[locus], dfAdult.sel[locus + "F"])
+        ##ADDITIVE
+        count_sites = dfAdult.h1[locus] + dfAdult.h2[locus]
+        ##DOMINANT
+#        count_sites[count_sites > 0] = 2
+        ##RECESSIVE
+#        count_sites[count_sites < 2] = 0
+        sum_selsites_S = np.dot(count_sites, dfAdult.sel[locus + "S"])
+        sum_selsites_F = np.dot(count_sites, dfAdult.sel[locus + "F"])
+
 ####
         intsites_S = copy.copy(dfAdult.sel[locus + "S"])
         intsites_S[intsites_S > 0] = 1
@@ -56,7 +55,6 @@ def fitness_fx(dfAdult_mf,
 ####
     dfAdult_mf.meta["fitS"] = fitS_ind / avg_over
     dfAdult_mf.meta["fitF"] = fitF_ind / avg_over
-    #ipdb.set_trace()
     return(dfAdult_mf)
 
 def selection_fx(dfAdult,

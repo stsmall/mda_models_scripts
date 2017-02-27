@@ -342,7 +342,7 @@ def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
         size_cds = np.round(np.random.gamma(4, 0.25, num_cds) *
                 cds_length)
 
-         #clustered
+         #clustered like operons in c elegans
 #        cds_F = range(0, int(round(num_cds / 2.0)) + 1)
 #        cds_S = range(cds_F.pop(), num_cds)
 
@@ -413,12 +413,15 @@ def fit_fx(dfAdult):
     ninds = len(dfAdult.meta)
     fitF_ind = np.zeros(ninds)
     fitS_ind = np.zeros(ninds)
-
     for locus in dfAdult.h2.keys():
-        sum_selsites_S = np.dot(dfAdult.h1[locus], dfAdult.sel[locus + "S"]) \
-            + np.dot(dfAdult.h2[locus], dfAdult.sel[locus + "S"])
-        sum_selsites_F = np.dot(dfAdult.h1[locus], dfAdult.sel[locus + "F"]) \
-            + np.dot(dfAdult.h2[locus], dfAdult.sel[locus + "F"])
+        ##ADDITIVE
+        count_sites = dfAdult.h1[locus] + dfAdult.h2[locus]
+        ##DOMINANT
+#        count_sites[count_sites > 0] = 2
+        ##RECESSIVE
+#        count_sites[count_sites < 2] = 0
+        sum_selsites_S = np.dot(count_sites, dfAdult.sel[locus + "S"])
+        sum_selsites_F = np.dot(count_sites, dfAdult.sel[locus + "F"])
 ####
         intsites_S = copy.copy(dfAdult.sel[locus + "S"])
         intsites_S[intsites_S > 0] = 1
