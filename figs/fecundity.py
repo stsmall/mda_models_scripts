@@ -57,6 +57,17 @@ def fecunditybase_fx(fecund,
     # Positions is just the new positions
     dfAdult_mf, new_positions = mutation_fx(locus, dfAdult_mf,
          mutation_rate, recombination_rate, basepairs)
+    ######################## Sorted check #####################################
+    for loc in range(locus):
+        loc = str(loc)
+        pos1 = dfAdult_mf.pos[loc]
+        isSorted = all(pos1[i] <= pos1[i+1] for i in range(len(pos1)-1))
+        if isSorted: pass
+        else: 
+            import sys
+            print('not sorted')
+            sys.exit()
+
     if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
         dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
 #    ipdb.set_trace()

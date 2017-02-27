@@ -97,7 +97,7 @@ def survivalbase_fx(month,
         except TypeError:
             kill_adultfxage = weibull_min.cdf(0, shapeAdult, loc=0, scale=scaleAdult)
         dieAdult = np.where(kill_adult_rand < kill_adultfxage)
-        dfAdult.drop_worms(dieAdult)
+        dfAdult.drop_worms(dieAdult[0])
 
         dfAdult.meta.age = dfAdult.meta.age + 1 #2 - 21
         ##host survival is from act table
@@ -121,7 +121,7 @@ def survivalbase_fx(month,
     dfJuv.meta.age += 1
     kill_juvrand = np.random.random(dfJuv.meta.shape[0])
     dieJuv = np.where(kill_juvrand > surv_Juv)
-    dfJuv.drop_worms(dieJuv)
+    dfJuv.drop_worms(dieJuv[0])
 
     ##MF is weibull cdf
     kill_mfrand = np.random.random(dfMF.meta.shape[0])
@@ -130,7 +130,7 @@ def survivalbase_fx(month,
     except TypeError:
         kill_mffxage = weibull_min.cdf(0,shapeMF,loc=0,scale=scaleMF)
     dieMF = np.where(kill_mfrand < kill_mffxage)
-    dfMF.drop_worms(dieMF)
+    dfMF.drop_worms(dieMF[0])
     dfMF.meta.age = dfMF.meta.age + 1 #2 - 12
     dfMF.drop_worms(dfMF.meta.ix[dfMF.meta.age > 12].index.values) #hard cutoff at 12 months
 

@@ -253,15 +253,19 @@ def transmission_fx(month,
                      #rehostidx = rehostidx2[next(i[0] for i in enumerate(rehostidx2) if i[1] != index)]
                     except IndexError:
                         rehostidx = transhostidx.values[0]
-                    new_rows.append((dfHost.ix[rehostidx,'hostidx'],index))
+                    new_rows.append((dfHost.ix[rehostidx,'hostidx'], index))
 
         else:
             print("dfMF is empty")
     prev_size = dfJuv.meta.shape[0]
     dfJuv.add_worms(dfMF, [i[1] for i in new_rows])
     dfMF.drop_worms([i[1] for i in new_rows])
-    dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
-    dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
+    try:
+        dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
+        dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
+    except:
+        from IPython import embed
+        embed()
 #    ipdb.set_trace()
 #    pd.dfHost.sort_values("village", inplace=True)
 #    pd.dfHost.reset_index(inplace=True,drop=True)
