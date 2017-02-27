@@ -50,7 +50,8 @@ class Worms(object):
             except KeyError:
                 pass
             pos1 = np.insert(pos1, iix, i)
-        n2 = self.h1[loc].shape[0]
+        
+        n2 = oworm.h1[loc].shape[0]
         for i in m1:
             iix = np.argmax(pos2 > i)
             oworm.h1[loc] = np.insert(oworm.h1[loc], iix, 
