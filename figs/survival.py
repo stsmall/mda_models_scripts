@@ -152,7 +152,10 @@ def survivalbase_fx(month,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
     dfAdult_mf.meta.age = 1
-#    ipdb.set_trace()
-    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
+    try:
+        dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
+    except ValueError:
+        from IPython import embed
+        embed()
 
     return(dfHost, dfAdult, dfJuv, dfMF)
