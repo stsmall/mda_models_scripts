@@ -50,7 +50,6 @@ class Worms(object):
             except KeyError:
                 pass
             pos1 = np.insert(pos1, iix, i)
-
         n2 = self.h1[loc].shape[0]
         for i in m1:
             iix = np.argmax(pos2 > i)
@@ -62,10 +61,7 @@ class Worms(object):
             except KeyError:
                 pass
             pos2 = np.insert(pos2, iix, i)
-        
-
         self.pos[loc] = pos1 
-
         return(oworm)
 
             
@@ -80,8 +76,9 @@ class Worms(object):
             numerical index from the other Worms object to add
         """
         if len(index) != 0 and self.meta.shape[0] !=0:
-            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], ignore_index=True)
-            self.meta.reset_index(drop=True) #inplace=True
+            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], 
+                    ignore_index=True)
+            self.meta.reset_index(drop=True, inplace=True) 
             for i in oworms.h1.keys():
                 if np.array_equal(self.pos[i],  oworms.pos[i]):
                     self.h1[i] = vstack((self.h1[i], oworms.h1[i][index,:]))
@@ -99,14 +96,16 @@ class Worms(object):
                     except KeyError:
                         pass
         elif self.meta.shape[0] == 0 and len(index) != 0:
+            self.meta = oworms.meta.ix[index, :]
             for i in oworms.h1.keys():
                 self.h1[i] = oworms.h1[i][index, :]
                 self.pos[i] = oworms.pos[i]
             for i in oworms.h2.keys():
                 self.h2[i] = oworms.h2[i][index, :]
         else:
-            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], ignore_index=True)
-            self.meta.reset_index(drop=True) #inplace=True
+            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], 
+                    ignore_index=True)
+            self.meta.reset_index(drop=True, inplace=True)
             print("Nothing to add")
 
 
@@ -127,9 +126,10 @@ class Worms(object):
         """
         all_loci_shape = [i.shape[0] for _, i in self.h1.iteritems()]
         allele_freqs = np.empty(np.sum(all_loci_shape), dtype=np.float64)
+        c = 0
         for loc in self.h1.keys():
             if loc in self.h2.keys():
-                allele_freq[loc] = np.sum(self.h1[loc] +\
+                allele_freqs[loc] = np.sum(self.h1[loc] +\
                         self.h2[loc])/float(self.h1[loc].shape[0])
             else:
-                allele_freq[loc] = np.sum(self.h1[loc])
+                allele_freqs[loc] = np.sum(self.h1[loc])
