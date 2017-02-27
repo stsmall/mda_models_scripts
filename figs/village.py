@@ -32,7 +32,8 @@ class Village(object):
 
     def __init__(self, identifier, hostpopsize = None,
             prevalence = None, distance = None, hours2bite = None, bitesPperson = None,
-            bednets = None, bnstart = None, bnstop = None, bncoverage = None):
+            bednets = None, bnstart = None, bnstop = None, bncoverage = None, muTrans = None,
+            sizeTrans = None):
         """
         """
         self.id =  identifier
@@ -45,6 +46,8 @@ class Village(object):
         self.bnstr = bnstart
         self.bnstp = bnstop
         self.bncov = bncoverage
+        self.mu = muTrans
+        self.size = sizeTrans
 
 #if __name__ == '__main__':
 #    t = [Village(0, hostpopsize=1000, prevalence=0.2, distance=0),

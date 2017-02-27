@@ -6,7 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-import ipdb
+#import ipdb
 import math
 import random
 import pickle
@@ -206,6 +206,7 @@ def transmission_fx(month,
     new_rows = []
     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
     distset = cKDTree.query_pairs(tree, dispersal)
+#    ipdb.set_trace()
     for vill in range(len(village)):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(village[vill].hostpopsize)
@@ -261,6 +262,7 @@ def transmission_fx(month,
     dfMF.drop_worms([i[1] for i in new_rows])
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
     dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
+#    ipdb.set_trace()
 #    pd.dfHost.sort_values("village", inplace=True)
 #    pd.dfHost.reset_index(inplace=True,drop=True)
 

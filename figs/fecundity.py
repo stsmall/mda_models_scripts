@@ -7,6 +7,7 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
+#import ipdb
 
 from .recombination import recombination_fx
 from .mutation import mutation_fx
@@ -58,5 +59,5 @@ def fecunditybase_fx(fecund,
          mutation_rate, recombination_rate, basepairs)
     if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
         dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
-
+#    ipdb.set_trace()
     return(dfAdult_mf, dfAdult)

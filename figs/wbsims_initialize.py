@@ -18,7 +18,7 @@ import copy
 from .agehost import agehost_fx
 from .worm import Worms
 
-def host_fx(village, infhost, muTrans, sizeTrans):
+def host_fx(village, infhost):
     '''Creates a transmission matrix for locations of infected hosts
        default_test : host_fx(2, [100, 300], 100, 1)
 
@@ -44,8 +44,8 @@ def host_fx(village, infhost, muTrans, sizeTrans):
 
     for vill in range(len(village)):
          #list of host positions
-         coordinates.extend( np.random.negative_binomial(sizeTrans, sizeTrans
-                             / float((sizeTrans+muTrans)), (infhost[vill],
+         coordinates.extend( np.random.negative_binomial(village[vill].sizeTrans, village[vill].sizeTrans
+                             / float((village[vill].sizeTrans+village[vill].muTrans)), (infhost[vill],
                                                            2)) + village[vill].dist)
 
          for host in range(infhost[vill]):
@@ -514,7 +514,7 @@ def wormdf_fx(village, infhost, muWormBurden, sizeWormBurden, locus,
      return(dfAdult)
 
 
-def wbsims_init(village, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurden,
+def wbsims_init(village, hostpopsize, prevalence, muWormBurden,
                 sizeWormBurden, locus, initial_migration, initial_distance_m, theta,
                 basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                 time_join, selection, cdslist):
@@ -607,7 +607,7 @@ def wbsims_init(village, hostpopsize, prevalence, muTrans, sizeTrans, muWormBurd
     hostpopsize = np.array(hostpopsize)
     prevalence = np.array(prevalence)
     infhost = np.round(hostpopsize * prevalence).astype(np.int64)
-    dfHost = host_fx(village, infhost, muTrans, sizeTrans)
+    dfHost = host_fx(village, infhost)
     perc_locus = cdslist[0]
     cds_length = cdslist[1]
     intgen_length = cdslist[2]

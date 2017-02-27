@@ -167,7 +167,7 @@ def wb_sims(numberGens, config_file):
     village=[]
     for i in range(villages):
         village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
-                               bitesPperson[i],bednets, bnstart[i], bnstop[i], bncoverage[i]))
+                               bitesPperson[i], bednets, bnstart[i], bnstop[i], bncoverage[i], muTrans, sizeTrans))
     mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
     cdslist = [perc_locus, cds_length, intgen_length]
@@ -178,8 +178,6 @@ def wb_sims(numberGens, config_file):
              wbinit.wbsims_init(village,
                                hostpopsize,
                                prevalence,
-                               muTrans,
-                               sizeTrans,
                                muWormBurden,
                                sizeWormBurden,
                                locus,

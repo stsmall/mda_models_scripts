@@ -6,7 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-import ipdb
+#import ipdb
 import numpy as np
 import pandas as pd
 from scipy.stats import weibull_min
@@ -109,7 +109,7 @@ def survivalbase_fx(month,
         #add 1 year to all ages of hosts
         dfHost.age = dfHost.age + 1
         if hostmigrate != 0:
-            dfHost = hostmigration_fx(village, dfHost, hostmigrate, sizeTrans, muTrans)
+            dfHost = hostmigration_fx(village, dfHost, hostmigrate)
 
     print('Post killing')
     print(dfAdult.pos['1'].shape[0])
@@ -152,7 +152,7 @@ def survivalbase_fx(month,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
     dfAdult_mf.meta.age = 1
+#    ipdb.set_trace()
     dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
-
 
     return(dfHost, dfAdult, dfJuv, dfMF)
