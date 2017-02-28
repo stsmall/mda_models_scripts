@@ -84,9 +84,7 @@ def survivalbase_fx(month,
     dfSel
 
     '''
-    print('survival pos shape')
-    print(dfAdult.pos['1'].shape[0])
-    print(dfAdult.h1['1'].shape[1])
+
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
@@ -97,7 +95,7 @@ def survivalbase_fx(month,
         except TypeError:
             kill_adultfxage = weibull_min.cdf(0, shapeAdult, loc=0, scale=scaleAdult)
         dieAdult = np.where(kill_adult_rand < kill_adultfxage)
-        dfAdult.drop_worms(dieAdult)
+        dfAdult.drop_worms(dieAdult[0])
 
         dfAdult.meta.age = dfAdult.meta.age + 1 #2 - 21
         ##host survival is from act table
@@ -121,7 +119,7 @@ def survivalbase_fx(month,
     dfJuv.meta.age += 1
     kill_juvrand = np.random.random(dfJuv.meta.shape[0])
     dieJuv = np.where(kill_juvrand > surv_Juv)
-    dfJuv.drop_worms(dieJuv)
+    dfJuv.drop_worms(dieJuv[0])
 
     ##MF is weibull cdf
     kill_mfrand = np.random.random(dfMF.meta.shape[0])
@@ -130,9 +128,13 @@ def survivalbase_fx(month,
     except TypeError:
         kill_mffxage = weibull_min.cdf(0,shapeMF,loc=0,scale=scaleMF)
     dieMF = np.where(kill_mfrand < kill_mffxage)
-    dfMF.drop_worms(dieMF)
+    dfMF.drop_worms(dieMF[0])
     dfMF.meta.age = dfMF.meta.age + 1 #2 - 12
     dfMF.drop_worms(dfMF.meta.ix[dfMF.meta.age > 12].index.values) #hard cutoff at 12 months
+    try:
+        assert dfMF.pos['0'].shape[0] == dfMF.h1['0'].shape[1]
+    except KeyError:
+        pass
 
     ##move Juv age 13 to adult age 1
     juv_rows = dfJuv.meta[dfJuv.meta.age > 12].index.values
@@ -152,7 +154,11 @@ def survivalbase_fx(month,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
     dfAdult_mf.meta.age = 1
-#    ipdb.set_trace()
-    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
+    try:
+        dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
+    except ValueError:
+        from IPython import embed
+        embed()
+
 
     return(dfHost, dfAdult, dfJuv, dfMF)

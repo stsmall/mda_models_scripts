@@ -30,9 +30,7 @@ def fecunditybase_fx(fecund,
     dfAdult: figs.Worms
         dataframe containing adult parasites
     locus : int
-    mutation_rate : list, float
-    recombination_rate : list, float
-    basepairs : list, int
+    mutation_rate : list, float recombination_rate : list, float basepairs : list, int
     selection : boolean
     dfSel : df
     cds_coordinates : [list], int
@@ -50,6 +48,7 @@ def fecunditybase_fx(fecund,
     m = float(0 - fecund) / (21 - 6)
     b = 0 - m * 21
     #assign fecundity value based on age function
+    # :TODO this errors out
     dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
            * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b)
     #sex, recombination, mutation
@@ -59,5 +58,4 @@ def fecunditybase_fx(fecund,
          mutation_rate, recombination_rate, basepairs)
     if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
         dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
-#    ipdb.set_trace()
     return(dfAdult_mf, dfAdult)

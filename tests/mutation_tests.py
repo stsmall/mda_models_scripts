@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 
 from figs.worm import Worms
-from figs.mutation import mutation_fx
+from figs.mutation import mutation_fx, mutation_at_segsite
+
 from IPython import embed
 
 np.random.seed(20)
@@ -48,12 +49,19 @@ class Test_Mutation(unittest.TestCase):
         np.testing.assert_equal(worms.h1['0'][:, -1],
                 np.array([1, 0, 0], dtype=np.uint8))
 
+
     def test_multiple_mutations(self):
         # Mainly test speed and insertion orders
         orig_nsegsites = self.worms.h1['0'].shape[1]
         worms, newpositions = mutation_fx(1, self.worms, [0.005],
             [1e-9], [200])
         print(orig_nsegsites)
+
+
+    def test_mutation_at_segsites(self):
+        mutation_at_segsite(10, '0', self.worms, 2)
+        # Whap is 0
+        np.testing.assert_equal(self.worms.h1['0'][2, 1], 1)
 
 
 if __name__ == '__main__':
