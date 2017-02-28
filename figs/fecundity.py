@@ -7,7 +7,6 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-#import ipdb
 
 from .recombination import recombination_fx
 from .mutation import mutation_fx
@@ -42,7 +41,7 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-    dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(fecund,
+    dfAdult.meta.loc[(dfAdult.meta.age < 6).values, "fec"] = np.random.poisson(fecund,
            len(dfAdult.meta[dfAdult.meta.age < 6]))
     #linear function defining decline in fecundity with age
     m = float(0 - fecund) / (21 - 6)
