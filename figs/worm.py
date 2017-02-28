@@ -1,10 +1,9 @@
 """
-""" 
-from numpy import delete as ndelete 
+"""
+from numpy import delete as ndelete
 from numpy import vstack
 import numpy as np
 import pandas as pd
-
 
 class Worms(object):
     def __init__(self, meta, haplotype1=None, haplotype2=None,
@@ -31,7 +30,6 @@ class Worms(object):
         else:
             self.coord = {}
 
-
     def _merge_positions(self, loc, oworm, newpos = None):
         # Not the fastest
         assert self.h1[loc].shape[1] == len(self.pos[loc])
@@ -43,10 +41,10 @@ class Worms(object):
         n1 = self.h1[loc].shape[0]
         for i in m2:
             iix = np.argmax(pos1 > i)
-            self.h1[loc] = np.insert(self.h1[loc], iix, 
+            self.h1[loc] = np.insert(self.h1[loc], iix,
                     np.zeros(n1, dtype=np.uint8), axis=1)
             try:
-                self.h2[loc] = np.insert(self.h2[loc], iix, 
+                self.h2[loc] = np.insert(self.h2[loc], iix,
                         np.zeros(n1, dtype=np.uint8), axis=1)
             except KeyError:
                 pass
@@ -55,17 +53,17 @@ class Worms(object):
         n2 = oworm.h1[loc].shape[0]
         for i in m1:
             iix = np.argmax(pos2 > i)
-            oworm.h1[loc] = np.insert(oworm.h1[loc], iix, 
+            oworm.h1[loc] = np.insert(oworm.h1[loc], iix,
                     np.zeros(n2, dtype=np.uint8), axis=1)
             try:
-                oworm.h2[loc] = np.insert(oworm.h2[loc], iix, 
+                oworm.h2[loc] = np.insert(oworm.h2[loc], iix,
                         np.zeros(n2, dtype=np.uint8), axis=1)
             except KeyError:
                 pass
             pos2 = np.insert(pos2, iix, i)
         return(oworm)
 
-            
+
 
     def add_worms(self, oworms, index):
         """
@@ -77,9 +75,9 @@ class Worms(object):
             numerical index from the other Worms object to add
         """
         if len(index) != 0 and self.meta.shape[0] !=0:
-            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], 
+            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]],
                     ignore_index=True)
-            self.meta.reset_index(drop=True, inplace=True) 
+            self.meta.reset_index(drop=True, inplace=True)
             for i in oworms.h1.keys():
                 if np.array_equal(self.pos[i],  oworms.pos[i]):
                     self.h1[i] = vstack((self.h1[i], oworms.h1[i][index,:]))
@@ -106,7 +104,7 @@ class Worms(object):
                 self.h2[i] = oworms.h2[i][index, :]
 
         else:
-            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]], 
+            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]],
                     ignore_index=True)
             self.meta.reset_index(drop=True, inplace=True)
             print("Nothing to add")
@@ -120,7 +118,7 @@ class Worms(object):
                 self.h1[i] = ndelete(self.h1[i], index, axis=0)
             for i in self.h2.keys():
                 self.h2[i] = ndelete(self.h2[i], index, axis=0)
-        else: 
+        else:
             print('No worms to drop')
             pass
 
