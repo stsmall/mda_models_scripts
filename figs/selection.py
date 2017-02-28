@@ -96,15 +96,12 @@ def selection_fx(dfAdult,
             else:
                 pass
 
-        print("dfAdult.sel['1S'].shape\t%i" %dfAdult.sel['1S'].shape[0])
-        print("dfAdult.pos['1'].shape\t%i" %dfAdult.pos['1'].shape[0])
+        print("dfAdult.sel['1S'].shape\t{}".format(dfAdult.sel['1S'].shape[0]))
+        print("dfAdult.pos['1'].shape\t{}".format(dfAdult.pos['1'].shape[0]))
         dfAdult.sel[loc + "S"] = np.insert(dfAdult.sel[loc + "S"], iix, selS)
         dfAdult.sel[loc + "F"] = np.insert(dfAdult.sel[loc + "F"], iix, selF)
-        print("add new positions\t%i" %iix)
-        print("dfAdult.sel['1S'].shape\t%i" %dfAdult.sel['1S'].shape[0])
-        print("dfAdult_mf.pos['1'].shape\t%i" %dfAdult_mf.pos['1'].shape[0])
-    try:
-        dfAdult_mf = fitness_fx(dfAdult_mf, dfAdult)
-    except:
-        ipdb.set_trace()
+        print("add new positions\t{}".format(iix))
+        print("dfAdult.sel['1S'].shape\t{}".format(dfAdult.sel['1S'].shape[0]))
+        print("dfAdult_mf.pos['1'].shape\t{}".format(dfAdult_mf.pos['1'].shape[0]))
+    dfAdult_mf = fitness_fx(dfAdult_mf, dfAdult)
     return(dfAdult_mf, dfAdult)
