@@ -131,10 +131,13 @@ class Worms(object):
         all_loci_shape = [i.shape[0] for _, i in self.h1.iteritems()]
         allele_freqs = np.empty(np.sum(all_loci_shape), dtype=np.float64)
         c=0
+        nworms = self.meta.shape[0]
         for loc in self.h1.keys():
             if loc in self.h2.keys():
-                allele_freqs[loc] = np.sum(self.h1[loc] +\
-                        self.h2[loc])/float(self.h1[loc].shape[0])
+                nsites = self.h1[loc].shape[1]
+                allele_freqs[c:c+nsites] = np.sum(self.h1[loc] +\
+                        self.h2[loc])/float(2*nworms)
             else:
-                allele_freqs[loc] = np.sum(self.h1[loc])
+                allele_freqs[c: c+nsites] = np.sum(self.h1[loc])/float(nworms)
             c += self.h1[loc].shape[1]
+        return(allele_freqs)

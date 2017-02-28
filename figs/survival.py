@@ -131,7 +131,6 @@ def survivalbase_fx(month,
     dfMF.drop_worms(dieMF[0])
     dfMF.meta.age = dfMF.meta.age + 1 #2 - 12
     dfMF.drop_worms(dfMF.meta.ix[dfMF.meta.age > 12].index.values) #hard cutoff at 12 months
-    print('frst')
     try:
         assert dfMF.pos['0'].shape[0] == dfMF.h1['0'].shape[1]
     except KeyError:

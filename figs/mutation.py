@@ -12,12 +12,16 @@ from collections import defaultdict
 def mutation_at_segsite(newsite, loc, worms, randmf):
     iix = np.where(worms.pos[str(loc)] == newsite)
     whap = str(np.random.randint(1, 3))
-    hap = getattr(worms, "h" + whap)[str(loc)][:, iix]
+    try:
+        hap = getattr(worms, "h" + whap)[str(loc)][:, iix]
+    except KeyError:
+        hap = getattr(worms, "h1")[str(loc)][:, iix]
+        whap = str(1)
     if hap[randmf] == 0:
         hap[randmf] = 1
     else:
         hap[randmf] = 0
-    getattr(worms,"h"+ whap)[str(loc)][:, iix]  = hap
+    getattr(worms,"h"+ whap)[str(loc)][:, iix]  = hap 
 
 
 def mutation_fx(locus,
@@ -49,7 +53,6 @@ def mutation_fx(locus,
     mutations : int, list
          list of positions of new mutations
     '''
-    #dfAdult_mf.reset_index(drop=True, inplace=True)
     new_positions = defaultdict(list)
     nworms = worms.meta.shape[0]
     for loc in range(locus):

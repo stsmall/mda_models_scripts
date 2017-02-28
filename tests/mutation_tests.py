@@ -49,12 +49,14 @@ class Test_Mutation(unittest.TestCase):
         np.testing.assert_equal(worms.h1['0'][:, -1],
                 np.array([1, 0, 0], dtype=np.uint8))
 
+
     def test_multiple_mutations(self):
         # Mainly test speed and insertion orders
         orig_nsegsites = self.worms.h1['0'].shape[1]
         worms, newpositions = mutation_fx(1, self.worms, [0.005],
             [1e-9], [200])
         print(orig_nsegsites)
+
 
     def test_mutation_at_segsites(self):
         mutation_at_segsite(10, '0', self.worms, 2)
