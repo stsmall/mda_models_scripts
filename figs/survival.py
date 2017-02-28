@@ -84,9 +84,7 @@ def survivalbase_fx(month,
     dfSel
 
     '''
-    print('survival pos shape')
-    print(dfAdult.pos['1'].shape[0])
-    print(dfAdult.h1['1'].shape[1])
+
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
         #Adult survival is based on weibull cdf
@@ -133,6 +131,11 @@ def survivalbase_fx(month,
     dfMF.drop_worms(dieMF[0])
     dfMF.meta.age = dfMF.meta.age + 1 #2 - 12
     dfMF.drop_worms(dfMF.meta.ix[dfMF.meta.age > 12].index.values) #hard cutoff at 12 months
+    print('frst')
+    try:
+        assert dfMF.pos['0'].shape[0] == dfMF.h1['0'].shape[1]
+    except KeyError:
+        pass
 
     ##move Juv age 13 to adult age 1
     juv_rows = dfJuv.meta[dfJuv.meta.age > 12].index.values
@@ -157,5 +160,6 @@ def survivalbase_fx(month,
     except ValueError:
         from IPython import embed
         embed()
+
 
     return(dfHost, dfAdult, dfJuv, dfMF)

@@ -47,9 +47,8 @@ def mutation_fx(locus,
             mut_coef = 2
         num_muts = np.random.binomial(mut_coef * nworms,
                 basepairs[loc] * mutation_rate[loc])
-        positions = dfAdult_mf.pos[str(loc)]
+        positions = np.copy(dfAdult_mf.pos[str(loc)])
         max_seg = positions[-1]
-        #print num_muts
         for mut in range(num_muts):
             iix = 0
             randmf = np.random.randint(0, nworms)

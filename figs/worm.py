@@ -34,6 +34,7 @@ class Worms(object):
 
     def _merge_positions(self, loc, oworm, newpos = None):
         # Not the fastest
+        assert self.h1[loc].shape[1] == len(self.pos[loc])
         pos1 = np.copy(self.pos[loc])
         pos2 = np.copy(oworm.pos[loc])
         common = np.intersect1d(self.pos[loc], oworm.pos[loc])
@@ -50,7 +51,7 @@ class Worms(object):
             except KeyError:
                 pass
             pos1 = np.insert(pos1, iix, i)
-        
+        self.pos[loc] = pos1
         n2 = oworm.h1[loc].shape[0]
         for i in m1:
             iix = np.argmax(pos2 > i)
