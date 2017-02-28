@@ -6,7 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-#import ipdb
+
 import math
 import random
 import pickle
@@ -205,12 +205,9 @@ def transmission_fx(month,
     if dfMF.meta.shape[0] > 0:
         assert dfMF.pos['0'].shape[0] == dfMF.h1['0'].shape[1]
     else: pass
-
     dispersal = 2 * sigma
     new_rows = []
     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
-    distset = cKDTree.query_pairs(tree, dispersal)
-#    ipdb.set_trace()
     for vill in range(len(village)):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(village[vill].hostpopsize)
@@ -225,12 +222,11 @@ def transmission_fx(month,
             else:
                 transMF = dfMF.meta[dfMF.meta.village == vill].sample(L3trans)
             transMF.sort_values("hostidx",inplace=True)
-
             tcount = ''
             for index, row in transMF.iterrows():
                 if row.hostidx != tcount:
-                    transhostidx = dfHost[dfHost.hostidx == row.hostidx].index #index of donating host
-                    transhost = [i for i in distset if transhostidx in i]
+                    transhostidx = dfHost[dfHost.hostidx == row.hostidx].index[0] #index of donating host
+                    transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal)
                     tcount = row.hostidx
                 else:
                     pass
@@ -242,21 +238,13 @@ def transmission_fx(month,
                     dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
                     new_rows.append((new_hostidx, index))
                     #new host so have to resort and rebuild KDTree
-#                    pd.dfHost.sort_values("village", inplace=True)
-#                    pd.dfHost.reset_index(inplace=True,drop=True)
                     tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
-                    distset = cKDTree.query_pairs(tree, dispersal)
+                    tcount = ''
                 else:
-                    #print(new_rows)
                     try: #allow self infection
-                        rehostidx2 = transhost[np.random.randint(len(transhost) + 1)]
-                        if rehostidx2[0] == index:
-                            rehostidx = rehostidx2[1]
-                        else:
-                            rehostidx = rehostidx2[0]
-                     #rehostidx = rehostidx2[next(i[0] for i in enumerate(rehostidx2) if i[1] != index)]
+                        rehostidx = transhost[np.random.randint(len(transhost) + 1)]
                     except IndexError:
-                        rehostidx = transhostidx.values[0]
+                        rehostidx = transhostidx
                     new_rows.append((dfHost.ix[rehostidx,'hostidx'], index))
 
         else:
@@ -270,8 +258,4 @@ def transmission_fx(month,
         print(dfMF.meta)
     dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
     dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
-#    ipdb.set_trace()
-#    pd.dfHost.sort_values("village", inplace=True)
-#    pd.dfHost.reset_index(inplace=True,drop=True)
-
     return(village, dfHost, dfJuv, dfMF, L3trans)

@@ -37,9 +37,8 @@ class Worms(object):
         assert self.h1[loc].shape[1] == len(self.pos[loc])
         pos1 = np.copy(self.pos[loc])
         pos2 = np.copy(oworm.pos[loc])
-        common = np.intersect1d(self.pos[loc], oworm.pos[loc])
-        m1 = [i for i in pos1 if i not in common]
-        m2 = [i for i in pos2 if i not in common]
+        m1 = np.setdiff1d(pos1, pos2) 
+        m2 = np.setdiff1d(pos2, pos1)
         n1 = self.h1[loc].shape[0]
         for i in m2:
             iix = np.argmax(pos1 > i)
