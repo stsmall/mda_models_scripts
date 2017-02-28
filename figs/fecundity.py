@@ -50,7 +50,7 @@ def fecunditybase_fx(fecund,
     #assign fecundity value based on age function
     # :TODO this errors out
     dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
-           * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b)
+           * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"].values + b)
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
     # Positions is just the new positions

@@ -125,19 +125,24 @@ class Worms(object):
             pass
 
 
-    def calc_allele_frequencies(self, host=None, village=None):
+    def calc_allele_frequencies(self, host=None, village=None, loci=None):
         """ Calculate allele frequencies
         """
-        all_loci_shape = [i.shape[0] for i in self.h1.values()]
+        if loci == None:
+            loci = self.h.keys()
+        else: 
+            loci = loci
+        all_loci_shape = [self.h1[i].shape[1] for i in loci]
         allele_freqs = np.zeros(np.sum(all_loci_shape), dtype=np.float64)
         c=0
         nworms = self.meta.shape[0]
-        for loc in self.h1.keys():
+        for loc in loci:
+            nsites = self.h1[loc].shape[1]
             if loc in self.h2.keys():
-                nsites = self.h1[loc].shape[1]
                 allele_freqs[c:c+nsites] = np.sum(self.h1[loc] +\
-                        self.h2[loc])/float(2*nworms)
+                        self.h2[loc], dtype=np.float64, axis=0)/2*nworms
             else:
-                allele_freqs[c: c+nsites] = np.sum(self.h1[loc])/float(nworms)
+                allele_freqs[c: c+nsites] = np.sum(self.h1[loc], 
+                        dtype=np.float64, axis=0)/nworms
             c += self.h1[loc].shape[1]
         return(allele_freqs)

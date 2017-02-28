@@ -2,13 +2,17 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib import colors
+import numpy as np
 
 
 def plot_allele_frequency(df_allele, outfile="./temp/testfig.png"):
     """Plots allele frequency
     """
-
-    fig = sns.distplot(df_allele).get_figure()
+    try:
+        fig = sns.distplot(df_allele).get_figure()
+    except np.linalg.LinAlgError:
+        from IPython import embed
+        embed()
     fig.savefig(outfile)
 
 
