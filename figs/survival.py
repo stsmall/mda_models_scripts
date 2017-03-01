@@ -6,7 +6,6 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-#import ipdb
 import numpy as np
 import pandas as pd
 from scipy.stats import weibull_min
@@ -138,15 +137,13 @@ def survivalbase_fx(month,
 
     ##move Juv age 13 to adult age 1
     juv_rows = dfJuv.meta[dfJuv.meta.age > 12].index.values
-    try:
+    if any(juv_rows):
         #reset age to adult
         dfJuv.meta.ix[juv_rows,"age"] = 1
         #increase R0net for next gen
         dfJuv.meta.ix[juv_rows, "R0net"] += 1
-    except TypeError:
-        print("dfJuv empty")
-    dfJuv.drop_worms(juv_rows)
-    dfAdult.add_worms(dfJuv, juv_rows)
+        dfAdult.add_worms(dfJuv, juv_rows)
+        dfJuv.drop_worms(juv_rows)
 
     #fecundity calls mutation/recombination
     dfAdult_mf, dfAdult = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
@@ -154,11 +151,7 @@ def survivalbase_fx(month,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = [random.choice("MF") for i in range(len(dfAdult_mf.meta))]
     dfAdult_mf.meta.age = 1
-    try:
-        dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
-    except ValueError:
-        from IPython import embed
-        embed()
+    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
 
     return(dfHost, dfAdult, dfJuv, dfMF)
