@@ -7,6 +7,7 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
+import ipdb
 
 from .recombination import recombination_fx
 from .mutation import mutation_fx
@@ -47,8 +48,11 @@ def fecunditybase_fx(fecund,
     m = float(0 - fecund) / (21 - 6)
     b = 0 - m * 21
     #assign fecundity value based on age function
-    # :TODO this errors out
-    dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(((dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] * m) + b)).astype(np.int64)
+    positive_lambda = dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"].values * m + b
+    positive_lambda[positive_lambda < 0] = 0
+    print(dfAdult.meta)
+    dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(positive_lambda).astype(np.int64)
+#    dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(((dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] * m) + b)).astype(np.int64)
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
     # Positions is just the new positions
