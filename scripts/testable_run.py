@@ -39,11 +39,9 @@ def wb_sims(config_file):
     Returns
     -------
     '''
+
     config = configparser.ConfigParser()
     config.read(config_file)
-
-    # villages = [Village(hostpopsize = 100, prevalence = 0.1)]
-    # villages = [Village(**i) for i in ]
 
     # simulation
     sh = "simulation"
@@ -163,11 +161,7 @@ def wb_sims(config_file):
     for i in range(villages):
         village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
                                bitesPperson[i], bednets, bnstart[i], bnstop[i], bncoverage[i], muTrans, sizeTrans))
-    mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
-            mda_micro, mda_sterile, mda_clear]
-    cdslist = [perc_locus, cds_length, intgen_length]
 
-    # set counters
     if os.path.isfile("dfAdult_meta.pkl"):
         with open('dfAdult_meta.pkl', 'rb') as input:
             dfAdult = pickle.load(input)
@@ -180,9 +174,13 @@ def wb_sims(config_file):
             dfMF = pickle.load(input)
 ###
         sim_time = numberGens
-        burn_in = -1
+        burn_in = 0
     else:
         sim_time = numberGens + burn_in
+        cdslist = [perc_locus, cds_length, intgen_length]
+        for i in range(villages):
+            village[i].bnstr += burn_in
+            village[i].bnstp += burn_in
         dfHost, dfAdult, dfJuv, dfMF =\
                  wbinit.wbsims_init(village,
                                    hostpopsize,
@@ -201,6 +199,9 @@ def wb_sims(config_file):
                                    time_join,
                                    selection,
                                    cdslist)
+
+    mdalist = [mda_start + burn_in, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
+            mda_micro, mda_sterile, mda_clear]
 
     for month in range(1,sim_time):
         print("\nmonth is {}\n".format(month))
