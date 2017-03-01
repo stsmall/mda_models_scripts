@@ -207,7 +207,7 @@ def transmission_fx(month,
     else: pass
     dispersal = 2 * sigma
     new_rows = []
-    tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
+    tree = cKDTree(np.vstack(dfHost.coordinates))
     for vill in range(len(village)):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(village[vill].hostpopsize)
@@ -238,7 +238,7 @@ def transmission_fx(month,
                     dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
                     new_rows.append((new_hostidx, index))
                     #new host so have to resort and rebuild KDTree
-                    tree = cKDTree(np.vstack(dfHost.coordinates), compact_nodes=False, balanced_tree=False)
+                    tree = cKDTree(np.vstack(dfHost.coordinates))
                     tcount = ''
                 else:
                     try: #allow self infection
