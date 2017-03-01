@@ -6,33 +6,27 @@ Spyder Editor
 import subprocess
 import math
 import random
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import pairwise_distances
 from scipy.stats import weibull_min
 import matplotlib.pyplot as plt
 
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+import os.path
+import pickle
+from figs.worm import Worms
 import figs.wbsims_initialize as wbinit
-#import figs.transmission as trans
 import figs.transmissionKDtree as trans
 from figs.village import Village
-#from figs.counthaps import hapcount
-
 from figs.calc_outstats import allelefreq_fx
 from figs.plotting import (plot_allele_frequency,
         plot_coordinates_host)
 
-from IPython import embed
-#import ipdb; ipdb.set_trace()
-
-
-
-def wb_sims(numberGens, config_file):
+def wb_sims(config_file):
     '''main function for simulations
     Parameters
     ---------
@@ -53,6 +47,7 @@ def wb_sims(numberGens, config_file):
 
     # simulation
     sh = "simulation"
+    numberGens = config.getint(sh, "numberGens")
     burn_in = config.getint(sh, "burn_in")
     seed = config.getint(sh, "seed")
 
@@ -171,30 +166,44 @@ def wb_sims(numberGens, config_file):
     mdalist = [mda_start, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
     cdslist = [perc_locus, cds_length, intgen_length]
-    # set counters
-    sim_time = numberGens
 
-    dfHost, dfAdult, dfJuv, dfMF =\
-             wbinit.wbsims_init(village,
-                               hostpopsize,
-                               prevalence,
-                               muWormBurden,
-                               sizeWormBurden,
-                               locus,
-                               initial_migration,
-                               initial_distance_m,
-                               theta,
-                               basepairs,
-                               mutation_rate,
-                               recombination_rate,
-                               time2Ancestral,
-                               thetaRegional,
-                               time_join,
-                               selection,
-                               cdslist)
+    # set counters
+    if os.path.isfile("dfAdult_meta.pkl"):
+        with open('dfAdult_meta.pkl', 'rb') as input:
+            dfAdult = pickle.load(input)
+        with open("dfHost_df.pkl",'rb') as input:
+            dfHost = pickle.load(input)
+###delete if we combine all df to dfAdult
+        with open("dfJuv_meta.pkl",'rb') as input:
+            dfJuv = pickle.load(input)
+        with open("dfMF_meta.pkl",'rb') as input:
+            dfMF = pickle.load(input)
+###
+        sim_time = numberGens
+        burn_in = -1
+    else:
+        sim_time = numberGens + burn_in
+        dfHost, dfAdult, dfJuv, dfMF =\
+                 wbinit.wbsims_init(village,
+                                   hostpopsize,
+                                   prevalence,
+                                   muWormBurden,
+                                   sizeWormBurden,
+                                   locus,
+                                   initial_migration,
+                                   initial_distance_m,
+                                   theta,
+                                   basepairs,
+                                   mutation_rate,
+                                   recombination_rate,
+                                   time2Ancestral,
+                                   thetaRegional,
+                                   time_join,
+                                   selection,
+                                   cdslist)
 
     for month in range(1,sim_time):
-        print("month is %i\n\n" %month)
+        print("\nmonth is {}\n".format(month))
         village, dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
                                                             village,
                                                             sigma,
@@ -223,16 +232,31 @@ def wb_sims(numberGens, config_file):
                                                     dfAdult,
                                                     dfJuv,
                                                     dfMF)
-        if month > burn_in:
-                  allelefreq_fx(dfAdult)
-                  dfAdult.groupby("village").describe()
-                  dfJuv.groupby("village").describe()
-                  dfMF.groupby("village").describe()
-                  dfHost.groupby("village").describe()
+        if month == burn_in:
+            with open('dfAdult_meta.pkl', 'wb') as output:
+                pickler = pickle.Pickler(output, -1)
+                dfAdult_burnin = Worms(dfAdult.meta, dfAdult.h1, dfAdult.h2, dfAdult.pos,
+                                       dfAdult.sel, dfAdult.coord)
+                pickler.dump(dfAdult_burnin)
+            del dfAdult_burnin
+            with open('dfHost_df.pkl', 'wb') as output:
+                pickle.dump(dfHost, output, -1)
+###delete if we combine all df to dfAdult
+            with open('dfJuv_meta.pkl', 'wb') as output:
+                pickler = pickle.Pickler(output, -1)
+                dfJuv_burnin = Worms(dfJuv.meta, dfJuv.h1, dfJuv.h2, dfJuv.pos)
+                pickler.dump(dfJuv_burnin)
+            with open('dfMF_meta.pkl', 'wb') as output:
+                pickler = pickle.Pickler(output, -1)
+                dfMF_burnin = Worms(dfMF.meta, dfMF.h1, dfMF.h2, dfMF.pos)
+                pickler.dump(dfMF_burnin)
+            del dfJuv_burnin
+            del dfMF_burnin
+###
 
-    return(village,dfHost,dfAdult,dfJuv,dfMF)
+    return(village, dfHost, dfAdult, dfJuv, dfMF)
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     village,dfHost, dfAdult, dfJuv, dfMF= wb_sims(24, '../tests/wbsims.cfg')
+     village,dfHost, dfAdult, dfJuv, dfMF = wb_sims('../tests/wbsims.cfg')
 
