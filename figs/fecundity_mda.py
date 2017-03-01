@@ -63,6 +63,7 @@ def fecunditymda_fx(fecund,
         bmda = 1 - mmda * 1
         #new base fecundity under drugs
         sterile_t = (mmda * clear_count + bmda)
+        assert sterile_t > 0
         #assign value to dfAdult.fec
         dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t,
                     len(dfAdult.meta[dfAdult.meta.age < 6]))
@@ -71,8 +72,9 @@ def fecunditymda_fx(fecund,
         m = float(0 - sterile_t) / (21 - 6)
         b = 0 - m * 21
         #assign fecundity value based on age function
-        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
-                  * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b, len(dfAdult.meta[dfAdult.meta.age >= 6]))
+        positive_lambda = (dfAdult.meta.loc[dfAdult.meta.age >= 6, "age"].values * m) + b
+        positive_lambda[positive_lambda < 0] = 0
+        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(positive_lambda).astype(np.int64)
 ########################################################
     else: #base fecundity when no drugs
         #all locations where age is less than 6
@@ -82,8 +84,9 @@ def fecunditymda_fx(fecund,
         m = float(0 - fecund) / (21 - 6)
         b = 0 - m * 21
         #assign fecundity value based on age function
-        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
-                  * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b, len(dfAdult.meta[dfAdult.meta.age >= 6]))
+        positive_lambda = (dfAdult.meta.loc[dfAdult.meta.age >= 6, "age"].values * m) + b
+        positive_lambda[positive_lambda < 0] = 0
+        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(positive_lambda).astype(np.int64)
 
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
@@ -150,6 +153,7 @@ def fecunditymda_sel1_fx(fecund,
          bmda = 1 - mmda * 1
          #new base fecundity under drugs
          sterile_t = (mmda * clear_count + bmda)
+         assert sterile_t > 0
          #assign value to dfAdult.fec
          dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t **
                     dfAdult.meta.loc[dfAdult.meta.age < 6, "selF"],
@@ -159,9 +163,10 @@ def fecunditymda_sel1_fx(fecund,
          m = float(0 - sterile_t) / (21 - 6)
          b = 0 - m * 21
          #assign fecundity value based on age function
-         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((m
-              * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b) ** dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"],
-                    len(dfAdult.meta[dfAdult.meta.age >= 6]))
+         positive_lambda = (dfAdult.meta.loc[dfAdult.meta.age >= 6, "age"].values * m) + b
+         positive_lambda[positive_lambda < 0] = 0
+         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((positive_lambda)
+                             ** dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"]).astype(np.int64)
 ###############################################################
     else: #base fecundity when no drugs
         #all locations where age is less than 6
@@ -171,8 +176,9 @@ def fecunditymda_sel1_fx(fecund,
         m = float(0 - fecund) / (21 - 6)
         b = 0 - m * 21
         #assign fecundity value based on age function
-        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(m
-                  * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b, len(dfAdult.meta[dfAdult.meta.age >= 6]))
+        positive_lambda = (dfAdult.meta.loc[dfAdult.meta.age >= 6, "age"].values * m) + b
+        positive_lambda[positive_lambda < 0] = 0
+        dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(positive_lambda).astype(np.int64)
 
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
@@ -238,6 +244,7 @@ def fecunditymda_sel2_fx(fecund,
          bmda = 1 - mmda * 1
          #new base fecundity under drugs
          sterile_t = (mmda * clear_count + bmda)
+         assert sterile_t > 0
          #assign value to dfAdult.fec
          dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t **
                     dfAdult.meta.loc[dfAdult.meta.age < 6, "selF"],
@@ -247,27 +254,25 @@ def fecunditymda_sel2_fx(fecund,
          m = float(0 - sterile_t) / (21 - 6)
          b = 0 - m * 21
          #assign fecundity value based on age function
-         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((m
-              * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b) ** dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"],
-                    len(dfAdult.meta[dfAdult.meta.age >= 6]))
+         positive_lambda = (dfAdult.meta.loc[dfAdult.meta.age >= 6, "age"].values * m) + b
+         positive_lambda[positive_lambda < 0] = 0
+         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((positive_lambda)
+                             ** dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"]).astype(np.int64)
 ############################################
     else: #base fecundity when no drugs
-         #linear function defining fecundity during drug clearance
-         mmda = float(fecund - 1) / (mda_clear - 1 )
-         bmda = 1 - mmda * 1
-         #new base fecundity under drugs
-         sterile_t = (mmda * clear_count + bmda)
          #assign value to dfAdult.fec
-         dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(sterile_t **
-                    (1 - abs(1 - dfAdult.meta.loc[dfAdult.meta.age < 6, "selF"])),len(dfAdult.meta[dfAdult.meta.age < 6]))
+         dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(fecund **
+                    (1 - abs(1 - dfAdult.meta.loc[dfAdult.meta.age < 6, "selF"])))
 
          #linear function defining decline in fecundity with age
-         m = float(0 - sterile_t) / (21 - 6)
+         m = float(0 - fecund) / (21 - 6)
          b = 0 - m * 21
          #assign fecundity value based on age function
-         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson((m
-              * dfAdult.meta.loc[dfAdult.meta.age >= 6,"age"] + b) ** (1 - abs(1 - dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"])),
-                 len(dfAdult.meta[dfAdult.meta.age >= 6]))
+         positive_lambda = (dfAdult.meta.loc[dfAdult.meta.age >= 6, "age"].values * m) + b
+         positive_lambda[positive_lambda < 0] = 0
+         dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(positive_lambda
+                         ** (1 - abs(1 - dfAdult.meta.loc[dfAdult.meta.age >= 6,"selF"])),
+                            len(dfAdult.meta[dfAdult.meta.age >= 6]))
 ############################################
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
