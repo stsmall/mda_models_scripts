@@ -108,11 +108,6 @@ def survivalbase_fx(month,
         if hostmigrate != 0:
             dfHost = hostmigration_fx(village, dfHost, hostmigrate)
 
-    print('Post killing')
-    print(dfAdult.pos['1'].shape[0])
-    print(dfAdult.h1['1'].shape[1])
-    print('Nworms :{0!s}'.format(dfAdult.h1['1'].shape[0]))
-
     ##Juv is exponential 0.866; surv_Juv
     #dont include age 0 which just moved from transmission fx
     dfJuv.meta.age += 1
