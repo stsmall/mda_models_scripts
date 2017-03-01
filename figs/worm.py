@@ -38,33 +38,40 @@ class Worms(object):
         m1 = np.setdiff1d(pos1, pos2) 
         m2 = np.setdiff1d(pos2, pos1)
         n1 = self.h1[loc].shape[0]
+        iix = []
         for i in m2:
-            iix = np.argmax(pos1 > i)
-            self.h1[loc] = np.insert(self.h1[loc], iix,
-                    np.zeros(n1, dtype=np.uint8), axis=1)
-            try:
-                self.h2[loc] = np.insert(self.h2[loc], iix,
-                        np.zeros(n1, dtype=np.uint8), axis=1)
-            except KeyError:
-                pass
-            pos1 = np.insert(pos1, iix, i)
+            iix.append(np.argmax(pos1 > i))
+
+
+        self.h1[loc] = np.insert(self.h1[loc], iix, 
+                np.zeros((n1, len(m2)), dtype=np.uint8), axis=1)
+        try:
+            self.h2[loc] = np.insert(self.h2[loc], iix, 
+                    np.zeros((n1, len(m2)), dtype=np.uint8), axis=1)
+        except KeyError:
+            pass
+        pos1 = np.insert(pos1, iix, m2)
+        
         self.pos[loc] = pos1
+
         n2 = oworm.h1[loc].shape[0]
+        iix = []
         for i in m1:
-            iix = np.argmax(pos2 > i)
-            oworm.h1[loc] = np.insert(oworm.h1[loc], iix,
-                    np.zeros(n2, dtype=np.uint8), axis=1)
-            try:
-                oworm.h2[loc] = np.insert(oworm.h2[loc], iix,
-                        np.zeros(n2, dtype=np.uint8), axis=1)
-            except KeyError:
-                pass
-            pos2 = np.insert(pos2, iix, i)
+            iix.append(np.argmax(pos2 > i))
+        oworm.h1[loc] = np.insert(oworm.h1[loc], iix, 
+                np.zeros((n2, len(m1)), dtype=np.uint8), axis=1)
+        try:
+            oworm.h2[loc] = np.insert(oworm.h2[loc], iix, 
+                    np.zeros((n2, len(m1)), dtype=np.uint8), axis=1)
+        except KeyError:
+            pass
+
+        #pos2 = np.insert(pos2, iix, m1)
         return(oworm)
 
 
-
-    def add_worms(self, oworms, index):
+            
+    def add_worms(self, oworms, index, update=False):
         """
         Parameters
         ----------
@@ -93,6 +100,9 @@ class Worms(object):
                             _oworm.h2[i][index,:]))
                     except KeyError:
                         pass
+                if update:
+                    oworms.h1[i] = _oworms
+                    oworms.pos[i] =  self.pos[i]
         elif self.meta.shape[0] == 0 and len(index) != 0:
             self.meta = oworms.meta.ix[index, :]
             self.meta.reset_index(drop=True, inplace=True)
@@ -107,6 +117,8 @@ class Worms(object):
                     ignore_index=True)
             self.meta.reset_index(drop=True, inplace=True)
             print("Nothing to add")
+
+        
 
 
     def drop_worms(self, index):
@@ -126,7 +138,7 @@ class Worms(object):
         """ Calculate allele frequencies
         """
         if loci == None:
-            loci = self.h.keys()
+            loci = self.h1.keys()
         else: 
             loci = loci
         all_loci_shape = [self.h1[i].shape[1] for i in loci]
