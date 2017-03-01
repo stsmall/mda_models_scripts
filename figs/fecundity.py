@@ -42,8 +42,8 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-    dfAdult.meta.loc[dfAdult.meta.age < 6, "fec"] = np.random.poisson(fecund,
-           len(dfAdult.meta.loc[dfAdult.meta.age < 6]))
+    dfAdult.meta.loc[(dfAdult.meta.age < 6).values, "fec"] = np.random.poisson(fecund,
+           len(dfAdult.meta[dfAdult.meta.age < 6]))
     #linear function defining decline in fecundity with age
     m = float(0 - fecund) / (21 - 6)
     b = 0 - m * 21

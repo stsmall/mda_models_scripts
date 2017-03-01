@@ -1,0 +1,32 @@
+# Ideas taken from: https://gist.github.com/dan-blanchard/7045057
+
+language: python
+
+python: 
+  - 2.7
+  - 3.5
+
+
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda2/bin:$PATH
+  - conda update --yes conda
+
+
+install: 
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy nose dateutil pandas statsmodels matplotlib requests cython 
+  - conda install --yes -c bioconda scrm
+  - conda install --yes -c dan_blanchard python-coveralls nose-cov 
+
+env: 
+  global:
+  - NOSE_ARGS="not slow"
+
+script: 
+ - nosetests --with-cov --logging-level=INFO figs
+
+
+#after_success:
+#  - coveralls --config_file .coveragerc

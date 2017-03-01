@@ -35,9 +35,8 @@ class Worms(object):
         assert self.h1[loc].shape[1] == len(self.pos[loc])
         pos1 = np.copy(self.pos[loc])
         pos2 = np.copy(oworm.pos[loc])
-        common = np.intersect1d(self.pos[loc], oworm.pos[loc])
-        m1 = [i for i in pos1 if i not in common]
-        m2 = [i for i in pos2 if i not in common]
+        m1 = np.setdiff1d(pos1, pos2) 
+        m2 = np.setdiff1d(pos2, pos1)
         n1 = self.h1[loc].shape[0]
         for i in m2:
             iix = np.argmax(pos1 > i)
@@ -123,19 +122,24 @@ class Worms(object):
             pass
 
 
-    def calc_allele_frequencies(self, host=None, village=None):
+    def calc_allele_frequencies(self, host=None, village=None, loci=None):
         """ Calculate allele frequencies
         """
-        all_loci_shape = [i.shape[0] for _, i in self.h1.iteritems()]
-        allele_freqs = np.empty(np.sum(all_loci_shape), dtype=np.float64)
+        if loci == None:
+            loci = self.h.keys()
+        else: 
+            loci = loci
+        all_loci_shape = [self.h1[i].shape[1] for i in loci]
+        allele_freqs = np.zeros(np.sum(all_loci_shape), dtype=np.float64)
         c=0
         nworms = self.meta.shape[0]
-        for loc in self.h1.keys():
+        for loc in loci:
+            nsites = self.h1[loc].shape[1]
             if loc in self.h2.keys():
-                nsites = self.h1[loc].shape[1]
                 allele_freqs[c:c+nsites] = np.sum(self.h1[loc] +\
-                        self.h2[loc])/float(2*nworms)
+                        self.h2[loc], dtype=np.float64, axis=0)/2*nworms
             else:
-                allele_freqs[c: c+nsites] = np.sum(self.h1[loc])/float(nworms)
+                allele_freqs[c: c+nsites] = np.sum(self.h1[loc], 
+                        dtype=np.float64, axis=0)/nworms
             c += self.h1[loc].shape[1]
         return(allele_freqs)

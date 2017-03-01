@@ -80,6 +80,10 @@ class Test_Worms(unittest.TestCase):
         np.testing.assert_equal(self.worms2.h1['1'].shape[0], 3)
         np.testing.assert_equal(self.worms2.meta.shape[0], 3)
 
+    def test_calc_allele_frequencies(self):
+        a_f = self.worms2.calc_allele_frequencies()
+        print(a_f)
+
 
 
 if __name__ == '__main__':
