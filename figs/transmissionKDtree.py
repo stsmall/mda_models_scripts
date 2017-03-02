@@ -137,7 +137,7 @@ def new_infection_fx(dispersal,
     #copy village
     vill = mfhostidx[:mfhostidx.rfind('h')][-1]
     #new host index
-    old_hostidx = dfHost[dfHost.village == vill].hostidx.iloc[-1]
+    old_hostidx = dfHost[dfHost.village == int(vill)].hostidx.iloc[-1]
     new_hostidx = old_hostidx[:old_hostidx.rfind('h')] + 'h' + str(int(old_hostidx.split('h')[1]) + 1)
     #radnom sex
     sex = random.choice("01")
