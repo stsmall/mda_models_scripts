@@ -4,6 +4,7 @@
 
 ## Generic files to ignore
 *~
+*.pkl
 *.lock
 *.DS_Store
 *.swp
