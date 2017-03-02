@@ -392,7 +392,8 @@ def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
 
 def fit_fx(dfAdult):
     ''' Calculates mean fitness for each individual by summing fitness effects
-    from dfSel for each position across all loci
+    from dfSel for each position across all loci. Fitness here is 1 + s, where s
+    is found by fit - 1.
 
     Parameters
     ----------
@@ -414,11 +415,11 @@ def fit_fx(dfAdult):
     fitF_ind = np.zeros(ninds)
     fitS_ind = np.zeros(ninds)
     for locus in dfAdult.h2.keys():
-        ##ADDITIVE
+        ##CODOMINANT: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 1
         count_sites = dfAdult.h1[locus] + dfAdult.h2[locus]
-        ##DOMINANT
+        ##DOMINANT: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 2
 #        count_sites[count_sites > 0] = 2
-        ##RECESSIVE
+        ##RECESSIVE: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 0
 #        count_sites[count_sites < 2] = 0
         sum_selsites_S = np.dot(count_sites, dfAdult.sel[locus + "S"])
         sum_selsites_F = np.dot(count_sites, dfAdult.sel[locus + "F"])

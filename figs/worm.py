@@ -9,6 +9,10 @@ class Worms(object):
     def __init__(self, meta, haplotype1=None, haplotype2=None,
             positions = None, selection=None, cds_coords=None):
         self.meta = meta
+#        self.adult = self.meta.stage == "A"
+#        self.juv = self.meta.stage == "J"
+#        self.mf = self.meta.stage == "M"
+
         if haplotype1:
             self.h1 = haplotype1
         else:
@@ -35,7 +39,7 @@ class Worms(object):
         assert self.h1[loc].shape[1] == len(self.pos[loc])
         pos1 = np.copy(self.pos[loc])
         pos2 = np.copy(oworm.pos[loc])
-        m1 = np.setdiff1d(pos1, pos2) 
+        m1 = np.setdiff1d(pos1, pos2)
         m2 = np.setdiff1d(pos2, pos1)
         n1 = self.h1[loc].shape[0]
         iix = []
@@ -43,25 +47,25 @@ class Worms(object):
             iix.append(np.argmax(pos1 > i))
 
 
-        self.h1[loc] = np.insert(self.h1[loc], iix, 
+        self.h1[loc] = np.insert(self.h1[loc], iix,
                 np.zeros((n1, len(m2)), dtype=np.uint8), axis=1)
         try:
-            self.h2[loc] = np.insert(self.h2[loc], iix, 
+            self.h2[loc] = np.insert(self.h2[loc], iix,
                     np.zeros((n1, len(m2)), dtype=np.uint8), axis=1)
         except KeyError:
             pass
         pos1 = np.insert(pos1, iix, m2)
-        
+
         self.pos[loc] = pos1
 
         n2 = oworm.h1[loc].shape[0]
         iix = []
         for i in m1:
             iix.append(np.argmax(pos2 > i))
-        oworm.h1[loc] = np.insert(oworm.h1[loc], iix, 
+        oworm.h1[loc] = np.insert(oworm.h1[loc], iix,
                 np.zeros((n2, len(m1)), dtype=np.uint8), axis=1)
         try:
-            oworm.h2[loc] = np.insert(oworm.h2[loc], iix, 
+            oworm.h2[loc] = np.insert(oworm.h2[loc], iix,
                     np.zeros((n2, len(m1)), dtype=np.uint8), axis=1)
         except KeyError:
             pass
@@ -70,7 +74,7 @@ class Worms(object):
         return(oworm)
 
 
-            
+
     def add_worms(self, oworms, index, update=False):
         """
         Parameters
@@ -118,7 +122,7 @@ class Worms(object):
             self.meta.reset_index(drop=True, inplace=True)
             print("Nothing to add")
 
-        
+
 
 
     def drop_worms(self, index):
@@ -139,7 +143,7 @@ class Worms(object):
         """
         if loci == None:
             loci = self.h1.keys()
-        else: 
+        else:
             loci = loci
         all_loci_shape = [self.h1[i].shape[1] for i in loci]
         allele_freqs = np.zeros(np.sum(all_loci_shape), dtype=np.float64)
@@ -151,7 +155,7 @@ class Worms(object):
                 allele_freqs[c:c+nsites] = np.sum(self.h1[loc] +\
                         self.h2[loc], dtype=np.float64, axis=0)/2*nworms
             else:
-                allele_freqs[c: c+nsites] = np.sum(self.h1[loc], 
+                allele_freqs[c: c+nsites] = np.sum(self.h1[loc],
                         dtype=np.float64, axis=0)/nworms
             c += self.h1[loc].shape[1]
         return(allele_freqs)

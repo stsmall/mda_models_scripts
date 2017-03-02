@@ -12,7 +12,8 @@ import copy
 def fitness_fx(dfAdult_mf,
                dfAdult):
     ''' calculates mean fitness for each individual by summing fitness effects
-    from dfSel for each position across all loci
+    from dfSel for each position across all loci.
+    selection coefficient, s, is found by fit - 1
     Parameters
     ---------
     locus : int
@@ -31,11 +32,11 @@ def fitness_fx(dfAdult_mf,
     fitF_ind = np.zeros(ninds)
     fitS_ind = np.zeros(ninds)
     for locus in dfAdult_mf.h2.keys():
-        ##ADDITIVE
-        count_sites = dfAdult_mf.h1[locus] + dfAdult_mf.h2[locus]
-        ##DOMINANT
+        ##CODOMINANT: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 1
+        count_sites = dfAdult.h1[locus] + dfAdult.h2[locus]
+        ##DOMINANT: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 2
 #        count_sites[count_sites > 0] = 2
-        ##RECESSIVE
+        ##RECESSIVE: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 0
 #        count_sites[count_sites < 2] = 0
         sum_selsites_S = np.dot(count_sites, dfAdult.sel[locus + "S"])
         sum_selsites_F = np.dot(count_sites, dfAdult.sel[locus + "F"])
