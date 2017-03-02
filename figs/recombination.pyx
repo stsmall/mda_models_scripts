@@ -104,6 +104,7 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     # Pos must be sorted
     
     weight_array = weighted_random_index(basepairs, pos)
+    weight_array /= np.sum(weight_array) 
     for i in range(outsize):
         hapc = np.int(rand()/RAND_MAX)
         if hapc == 0: 
@@ -130,7 +131,6 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                     else: ohapc = 1
                     k += 1
         hapc = np.int(rand()/RAND_MAX)
-        
         hout_index = i + outsize
         if hapc == 0: 
             ohapc = 1
