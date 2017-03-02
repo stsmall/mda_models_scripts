@@ -9,10 +9,9 @@ class Worms(object):
     def __init__(self, meta, haplotype1=None, haplotype2=None,
             positions = None, selection=None, cds_coords=None):
         self.meta = meta
-#        self.adult = self.meta.stage == "A"
-#        self.juv = self.meta.stage == "J"
-#        self.mf = self.meta.stage == "M"
-
+        self.adult = self.meta.stage == "A"
+        self.juv = self.meta.stage == "J"
+        self.mf = self.meta.stage == "M"
         if haplotype1:
             self.h1 = haplotype1
         else:

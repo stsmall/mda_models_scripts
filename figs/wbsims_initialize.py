@@ -6,7 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-
+#import ipdb
 import math
 import subprocess
 import numpy as np
@@ -129,7 +129,7 @@ def parse_coalsims_fx(msout, ploidy, nind):
     Returns
     ------
     gt_array
-         columns to be added to dfAdult
+         columns to be added to dfworm
     pos
          list of positions for the mutaitons
     """
@@ -313,7 +313,7 @@ def coalsims_fx(worm_popsize, numvillages, initial_migration, initial_distance_m
         return(gt, gt2, positions)
 
 
-def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
+def sel_fx(dfworm, basepairs, perc_locus, cds_length, intgen_length):
     '''Initializes the distribution of fitness effects for each mutation
 
     Parameters
@@ -335,8 +335,8 @@ def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
     mu = intgen_length
     #last coordinate is approx num_cds * mu; so if num_cds is too large or mu is too long
     #genes will run over the locus length
-    #dfAdult.pos
-    for locus in dfAdult.h2.keys():
+    #dfworm.pos
+    for locus in dfworm.h2.keys():
         num_cds = int(round((perc_locus[int(locus)]*basepairs[int(locus)]) /
             cds_length))
         size_cds = np.round(np.random.gamma(4, 0.25, num_cds) *
@@ -352,8 +352,8 @@ def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
         cds_F = rand_cds[0:int(round(num_cds / 2.0))]
         cds_S = rand_cds[len(cds_F): num_cds]
 
-        dfAdult.sel[locus + "Ft"] = sum(size_cds[cds_F])
-        dfAdult.sel[locus + "St"] = sum(size_cds[cds_S])
+        dfworm.sel[locus + "Ft"] = sum(size_cds[cds_F])
+        dfworm.sel[locus + "St"] = sum(size_cds[cds_S])
         #r = size
         #m = mean
         #p = r / (  r + m )
@@ -368,36 +368,36 @@ def sel_fx(dfAdult, basepairs, perc_locus, cds_length, intgen_length):
             else:
                 cds_coords.append([i + cds_stop, i + j + cds_stop])
                 cds_stop += (i + j)
-        dfAdult.coord[locus + "F"] = [cds_coords[i] for i in cds_F]
-        dfAdult.coord[locus + "S"] = [cds_coords[i] for i in cds_S]
+        dfworm.coord[locus + "F"] = [cds_coords[i] for i in cds_F]
+        dfworm.coord[locus + "S"] = [cds_coords[i] for i in cds_S]
         selS = []
         selF = []
-        for position in dfAdult.pos[locus]:
-            if any([i <= position <= j for i,j in dfAdult.coord[locus + "F"]]):
+        for position in dfworm.pos[locus]:
+            if any([i <= position <= j for i,j in dfworm.coord[locus + "F"]]):
                  #shape = 4, mean = 1, scale = mean/shape
                  #here mean is mean_fitness, wildtype is assumed to be 1
                  selF.append(np.random.gamma(4, scale=0.25))
                  selS.append(0)
-            elif any([i <= position <= j for i,j in dfAdult.coord[locus + "S"]]):
+            elif any([i <= position <= j for i,j in dfworm.coord[locus + "S"]]):
                      selS.append(np.random.gamma(4, scale=0.25))
                      selF.append(0)
             else: #not in a cds
                 selS.append(0)
                 selF.append(0)
-        dfAdult.sel[locus + "F"] = np.array(selS)
-        dfAdult.sel[locus + "S"] = np.array(selF)
+        dfworm.sel[locus + "F"] = np.array(selS)
+        dfworm.sel[locus + "S"] = np.array(selF)
 
-    return(dfAdult)
+    return(dfworm)
 
 
-def fit_fx(dfAdult):
+def fit_fx(dfworm):
     ''' Calculates mean fitness for each individual by summing fitness effects
     from dfSel for each position across all loci. Fitness here is 1 + s, where s
     is found by fit - 1.
 
     Parameters
     ----------
-    dfAdult : df
+    dfworm : df
       data frame of adult worms containing genotype information
     dfSel : df
       data fram of fitness benefit for each allele
@@ -410,31 +410,31 @@ def fit_fx(dfAdult):
       array filling selS column for survival fitness
 
     '''
-    avg_over = len(dfAdult.h2.keys())
-    ninds = len(dfAdult.meta)
+    avg_over = len(dfworm.h2.keys())
+    ninds = len(dfworm.meta)
     fitF_ind = np.zeros(ninds)
     fitS_ind = np.zeros(ninds)
-    for locus in dfAdult.h2.keys():
+    for locus in dfworm.h2.keys():
         ##CODOMINANT: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 1
-        count_sites = dfAdult.h1[locus] + dfAdult.h2[locus]
+        count_sites = dfworm.h1[locus] + dfworm.h2[locus]
         ##DOMINANT: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 2
 #        count_sites[count_sites > 0] = 2
         ##RECESSIVE: AA = 1 + 2s, Aa = 1 + hs, aa = 1, where h is 0
 #        count_sites[count_sites < 2] = 0
-        sum_selsites_S = np.dot(count_sites, dfAdult.sel[locus + "S"])
-        sum_selsites_F = np.dot(count_sites, dfAdult.sel[locus + "F"])
+        sum_selsites_S = np.dot(count_sites, dfworm.sel[locus + "S"])
+        sum_selsites_F = np.dot(count_sites, dfworm.sel[locus + "F"])
 ####
-        intsites_S = copy.copy(dfAdult.sel[locus + "S"])
+        intsites_S = copy.copy(dfworm.sel[locus + "S"])
         intsites_S[intsites_S > 0] = 1
-        intsites_F = copy.copy(dfAdult.sel[locus + "F"])
+        intsites_F = copy.copy(dfworm.sel[locus + "F"])
         intsites_F[intsites_F > 0] = 1
-        cds_sites_S = np.dot(dfAdult.h1[locus], intsites_S) \
-            + np.dot(dfAdult.h2[locus], intsites_S)
-        cds_sites_F = np.dot(dfAdult.h1[locus], intsites_F) \
-            + np.dot(dfAdult.h2[locus], intsites_F)
+        cds_sites_S = np.dot(dfworm.h1[locus], intsites_S) \
+            + np.dot(dfworm.h2[locus], intsites_S)
+        cds_sites_F = np.dot(dfworm.h1[locus], intsites_F) \
+            + np.dot(dfworm.h2[locus], intsites_F)
 ####
-        fitS_ind += (( (dfAdult.sel[locus + "St"] * 2) - cds_sites_S) + sum_selsites_S) / (dfAdult.sel[locus + "St"] * 2)
-        fitF_ind += (( (dfAdult.sel[locus + "Ft"] * 2) - cds_sites_F) + sum_selsites_F) / (dfAdult.sel[locus + "Ft"] * 2)
+        fitS_ind += (( (dfworm.sel[locus + "St"] * 2) - cds_sites_S) + sum_selsites_S) / (dfworm.sel[locus + "St"] * 2)
+        fitF_ind += (( (dfworm.sel[locus + "Ft"] * 2) - cds_sites_F) + sum_selsites_F) / (dfworm.sel[locus + "Ft"] * 2)
 ####
 
     return(fitF_ind / avg_over, fitS_ind / avg_over)
@@ -451,7 +451,7 @@ def wormdf_fx(village, infhost, muWormBurden, sizeWormBurden, locus,
         number of infectious hosts per village, calculate by hostpopsize * prevalence
      Returns
      -------
-     dfAdult : df
+     dfworm : df
          dataframe of adult wb worms, if selection is True contains the columns
          selF and selS, denoting average fitness for fecundity and selection
      dfSel : df
@@ -474,18 +474,19 @@ def wormdf_fx(village, infhost, muWormBurden, sizeWormBurden, locus,
           for host in range(len(popinit[vill])):
                host_idx.extend(["v" + str(vill) + "h" + str(host + 1)] * popinit[vill][host])
 
-     dfAdult = pd.DataFrame({
+     dfworm = pd.DataFrame({
                       'village' : np.repeat(range(len(village)), worm_popsize),
                       'hostidx' : host_idx,
                       'age' : 1,
                       'sex' : [random.choice("MF") for i in range(sum(worm_popsize))],
+                      'stage' : "A",
                       'R0net' : np.random.random(sum(worm_popsize)),
                       'fec' : 0
                       })
-     dfAdult = dfAdult.loc[:, ['village', 'hostidx', 'age',
-            'sex', 'R0net', 'fec']]
+     dfworm = dfworm.loc[:, ['village', 'hostidx', 'age',
+            'sex', 'stage', 'R0net', 'fec']]
      # Add genetic data
-     dfAdult = Worms(dfAdult)
+     dfworm = Worms(dfworm)
      posSel = []
      for loc in range(locus):
          if recombination[loc] == 0:
@@ -494,25 +495,25 @@ def wormdf_fx(village, infhost, muWormBurden, sizeWormBurden, locus,
                      theta[loc], basepairs[loc], mutation[loc],
                      recombination[loc], time2Ancestral, thetaRegional,
                      time_join)
-             dfAdult.h1[str(loc)] = gt_array
-             dfAdult.pos[str(loc)] = mutations
+             dfworm.h1[str(loc)] = gt_array
+             dfworm.pos[str(loc)] = mutations
          elif recombination[loc] > 0:
              gt_array, gt_array2, mutations = coalsims_fx(worm_popsize,
                      len(village), initial_migration, initial_distance_m,
                      theta[loc], basepairs[loc], mutation[loc],
                      recombination[loc], time2Ancestral, thetaRegional, time_join)
-             dfAdult.h1[str(loc)] = gt_array
-             dfAdult.h2[str(loc)] = gt_array2
-             dfAdult.pos[str(loc)] = mutations
+             dfworm.h1[str(loc)] = gt_array
+             dfworm.h2[str(loc)] = gt_array2
+             dfworm.pos[str(loc)] = mutations
              posSel.append(mutations)
      # Create dfSel
      if selection:
-         dfAdult = sel_fx(dfAdult, basepairs,
+         dfworm = sel_fx(dfworm, basepairs,
                  perc_locus, cds_length, intgen_length)
-         fitS, fitF = fit_fx(dfAdult)
-         dfAdult.meta["fitF"] = fitF
-         dfAdult.meta["fitS"] = fitS
-     return(dfAdult)
+         fitS, fitF = fit_fx(dfworm)
+         dfworm.meta["fitF"] = fitF
+         dfworm.meta["fitS"] = fitS
+     return(dfworm)
 
 
 def wbsims_init(village, hostpopsize, prevalence, muWormBurden,
@@ -571,7 +572,7 @@ def wbsims_init(village, hostpopsize, prevalence, muWormBurden,
 
     Returns
     ------
-    dfAdult : df
+    dfworm : df
       initialize df for adult worms
     dfHost : df
       initialize df for host
@@ -613,18 +614,16 @@ def wbsims_init(village, hostpopsize, prevalence, muWormBurden,
     cds_length = cdslist[1]
     intgen_length = cdslist[2]
 
-    dfAdult = wormdf_fx(village, infhost, muWormBurden, sizeWormBurden,
+    dfworm = wormdf_fx(village, infhost, muWormBurden, sizeWormBurden,
                               locus, initial_migration, initial_distance_m, theta,
                               basepairs, mutation_rate, recombination_rate, time2Ancestral, thetaRegional,
                               time_join, selection, perc_locus, cds_length, intgen_length)
-
-    dfJuv = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
-    dfMF = Worms(pd.DataFrame({}, columns = dfAdult.meta.columns))
-    return(dfHost, dfAdult, dfJuv, dfMF)
+#    ipdb.set_trace()
+    return(dfHost, dfworm)
 
 ####3 loci, 2 villages, with selection
 #if __name__ == '__main__':
-#    village, dfHost, dfAdult, dfJuv, dfMF=wbsims_init(2, [100, 200],
+#    village, dfHost, dfworm, dfJuv, dfMF=wbsims_init(2, [100, 200],
 #    [0.1, 0.3], 100, 1, [5, 5], [50, 50], 3, 0.0001, [1000], [[5, 5], [10, 10],[10, 10]],
 #    [13000, 200000, 100000],[7.6E-8, 2.9E-9, 2.9E-9], [0, 2.9E-9, 2.9E-9], 1800, 23, 240,
 #    True, [[0, 0.18, 0.20], 1100, 2500])
