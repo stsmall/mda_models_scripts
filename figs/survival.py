@@ -129,6 +129,7 @@ def survivalbase_fx(month,
         dfworm.meta.ix[juviix12,'age'] = 1
         #increase R0net for next gen
         dfworm.meta.ix[juviix12,'R0net'] += 1
+        dfworm.meta.ix[juviix12,'stage'] = "A"
 
     dfworm.drop_worms(np.append(dieJuv,dieMF))
 

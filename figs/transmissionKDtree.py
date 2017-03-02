@@ -199,7 +199,7 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
-
+#    ipdb.set_trace()
     mfiix = dfworm.meta[dfworm.meta.stage == "M"].index.values
     if dfworm.meta.ix[mfiix].shape[0] > 0:
         assert dfworm.pos['0'].shape[0] == dfworm.h1['0'].shape[1]
@@ -208,6 +208,7 @@ def transmission_fx(month,
     new_hostidx = []
     new_juv = []
     tree = cKDTree(np.vstack(dfHost.coordinates))
+#    mfiix_vill = np.array([np.where(dfworm.meta.ix[mfiix].village == vill)].index.values for vill in range(len(village)))
     mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
         infhost = (dfHost.village == vill).sum()
@@ -229,13 +230,13 @@ def transmission_fx(month,
                     transhostidx = dfHost[dfHost.hostidx == mfhostidx].index[0] #index of donating host
                     transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal)
                     tcount = mfhostidx
-                else:
-                    pass
+
                 if len(dfHost[dfHost.village == vill]) < village[vill].hostpopsize:
                      prob_newinfection = 1.0 / (len(transhost) + 1)
                 else: #everyone is already infected
                      prob_newinfection = 0
                 if np.random.random() < prob_newinfection:
+                    print(prob_newinfection)
                     dfHost, rehostidx = new_infection_fx(dispersal, mfhostidx, dfHost)
                     new_hostidx.append(rehostidx)
                     #new host so have to resort and rebuild KDTree
@@ -250,7 +251,7 @@ def transmission_fx(month,
 
         else:
             print("dfMF is empty")
-    dfworm.meta.ix[new_juv].stage = "J"
-    dfworm.meta.ix[new_juv].hostidx = new_hostidx
+    dfworm.meta.ix[new_juv, 'stage'] = "J"
+    dfworm.meta.ix[new_juv, 'hostidx'] = new_hostidx
 #    ipdb.set_trace()
     return(village, dfHost, dfworm, L3trans)

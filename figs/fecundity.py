@@ -41,10 +41,10 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-    ipdb.set_trace()
+#    ipdb.set_trace()
     adiix = dfworm.meta[dfworm.meta.stage == "A"].index.values
-    young = adiix[(dfworm.meta.ix[adiix].age < 6).values]
-    old = adiix[(dfworm.meta.ix[adiix].age >= 6).values]
+    young = adiix[np.where(dfworm.meta.ix[adiix].age < 6)]
+    old = adiix[np.where(dfworm.meta.ix[adiix].age >= 6)]
     dfworm.meta.ix[young, 'fec'] = np.random.poisson(fecund, young.shape[0])
     #linear function defining decline in fecundity with age
     m = float(0 - fecund) / (21 - 6)
