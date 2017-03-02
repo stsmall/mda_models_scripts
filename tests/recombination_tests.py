@@ -26,6 +26,7 @@ class Test_Recombination_Fx(unittest.TestCase):
         villages = [0, 0, 0, 0, 1]
         sex = ['M', 'M', 'F', 'F', 'F']
         hostidx = ['v0h1', 'v0h1', 'v0h1', 'v0h1', 'v0h2']
+        stage = ['A', 'A', 'A', 'A', 'A', 'A']
         R0net = [0.66, 0.5299222, 0.658231, 0.444, 0.222]
         fec = [0, 0, 10, 2, 20]
         positions = {

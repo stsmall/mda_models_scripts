@@ -7,14 +7,13 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-import ipdb
 
 from .recombination import recombination_fx
 from .mutation import mutation_fx
 from .selection import selection_fx
 
 def fecunditybase_fx(fecund,
-                     dfAdult,
+                     dfworms,
                      locus,
                      mutation_rate,
                      recombination_rate,
@@ -42,16 +41,18 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-    dfAdult.meta.loc[(dfAdult.meta.age < 6).values, "fec"] = np.random.poisson(fecund,
-           len(dfAdult.meta[dfAdult.meta.age < 6]))
+    #dfAdult = dfworms.meta.ix[dfworms.adult, :]  
+    dfAdult = dfworms
+    young = (dfAdult.meta.age < 6).values
+    dfAdult.meta.loc[young, "fec"] = np.random.poisson(fecund, np.sum(young))
     #linear function defining decline in fecundity with age
     m = float(0 - fecund) / (21 - 6)
     b = 0 - m * 21
     #assign fecundity value based on age function
-    positive_lambda = (dfAdult.meta.loc[dfAdult.meta.age >= 6, "age"].values * m) + b
+    old = np.logical_not(young)
+    positive_lambda = (dfAdult.meta.loc[old, "age"].values * m) + b
     positive_lambda[positive_lambda < 0] = 0
     dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(positive_lambda).astype(np.int64)
-    print(dfAdult.meta.head())
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
     # Positions is just the new positions

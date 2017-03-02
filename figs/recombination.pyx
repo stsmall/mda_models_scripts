@@ -6,12 +6,11 @@ under certain conditions; type `show c' for details.
 '''
 import numpy as np
 cimport numpy as np
-import random
 import pandas as pd
 import cython
-from cpython cimport array
+#from cpython cimport array
 from libc.stdlib cimport rand, RAND_MAX
-from collections import defaultdict
+from libc.math cimport fabs
 from figs.worm import Worms
 #from cython.parallel import parallel, prange
 #from libc.stdlib cimport abort, malloc, free
@@ -19,9 +18,19 @@ from figs.worm import Worms
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
 
+
+cdef long[:] sorting_count(long[:] array, int end, int max_, int min_):
+    cdef int i
+    cdef int range_ = max_ - min_ + 1
+
+
+
 cdef long[:] sorted_random_ints(long[:] pos, int size, double[:] weight_array):
     cdef long[:] random_ints = np.random.choice(pos, size=size, p=weight_array)
     return(np.sort(random_ints))
+
+
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -31,13 +40,14 @@ cdef double[:] weighted_random_index(int basepairs, long[:] pos):
     cdef size_t weight_shape = pos.shape[0] + 1
     cdef size_t pos_len = pos.shape[0]
     cdef double[:] weight_array = np.empty(weight_shape, dtype=np.float64)
+    cdef double bp = float(basepairs)
     cdef int prev_value
     prev_value = 0
-    for i in range(pos.shape[0]):
-        weight_array[i] = (pos[i] - prev_value)/float(basepairs)  
+    for i in range(pos_len):
+        weight_array[i] = fabs(pos[i] - prev_value)/bp  
         prev_value = pos[i]
     # The last interval
-    weight_array[i + 1] = (basepairs - pos[i])/float(basepairs)
+    weight_array[i + 1] = fabs(basepairs - pos[i])/bp
     return(np.sort(weight_array))
 
 
@@ -92,7 +102,9 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
     mnworms = males.shape[0]/2
     fnworms = fem.shape[0]/2
     # Pos must be sorted
+    
     weight_array = weighted_random_index(basepairs, pos)
+    weight_array /= np.sum(weight_array) 
     for i in range(outsize):
         hapc = np.int(rand()/RAND_MAX)
         if hapc == 0: 
@@ -119,7 +131,6 @@ cdef np.ndarray[dtype=np.uint8_t, ndim=2] mate_worms(
                     else: ohapc = 1
                     k += 1
         hapc = np.int(rand()/RAND_MAX)
-        
         hout_index = i + outsize
         if hapc == 0: 
             ohapc = 1
@@ -261,6 +272,7 @@ def recombination_fx(locus,
                     cmales)
             h1t[str(loc)] = out_array[0:total_offspring, :]
             h2t[str(loc)] = out_array[total_offspring:, :]
+
     new_meta = pd.DataFrame({
         'village' : np.repeat(dfAdult.meta.village[g_fem_ix], fec),
         'sex' : np.random.choice(['M', 'F'], size = total_offspring),

@@ -54,6 +54,7 @@ def mutation_fx(locus,
          list of positions of new mutations
     '''
     new_positions = defaultdict(list)
+    new_indexs = defaultdict(list)
     nworms = worms.meta.shape[0]
     for loc in range(locus):
         if recombination_rate[loc] == 0:
