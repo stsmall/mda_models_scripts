@@ -6,7 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-#import ipdb
+import ipdb
 import math
 import random
 import pickle
@@ -199,7 +199,8 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
-    mfiix = dfworm.meta[dfworm.mf].index.values
+
+    mfiix = dfworm.meta[dfworm.meta.stage == "M"].index.values
     if dfworm.meta.ix[mfiix].shape[0] > 0:
         assert dfworm.pos['0'].shape[0] == dfworm.h1['0'].shape[1]
     else: pass

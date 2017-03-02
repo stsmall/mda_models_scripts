@@ -85,7 +85,7 @@ def survivalbase_fx(month,
 
     #adult worms and hosts are only evaluated per year
     if month%12 == 0:
-        adiix = dfworm.meta[dfworm.adult].index.values
+        adiix = dfworm.meta[dfworm.meta.stage == "A"].index.values
         #Adult survival is based on weibull cdf
         kill_adult_rand = np.random.random(adiix.shape[0])
         try:
@@ -106,13 +106,13 @@ def survivalbase_fx(month,
             dfHost = hostmigration_fx(village, dfHost, hostmigrate)
 
     ##Juv is exponential 0.866; surv_Juv
-    juviix = dfworm.meta[dfworm.juv].index.values
+    juviix = dfworm.meta[dfworm.meta.stage == "J"].index.values
     kill_juvrand = np.random.random(juviix.shape[0])
     dieJuv = juviix[np.where(kill_juvrand > surv_Juv)]
     dfworm.meta.ix[juviix,'age'] += 1
 
     ##MF is weibull cdf
-    mfiix = dfworm.meta[dfworm.mf].index.values
+    mfiix = dfworm.meta[dfworm.meta.stage == "M"].index.values
     kill_mfrand = np.random.random(mfiix.shape[0])
     try:
         kill_mffxage = weibull_min.cdf(dfworm.meta.ix[mfiix].age,shapeMF,loc=0,scale=scaleMF)
@@ -123,7 +123,6 @@ def survivalbase_fx(month,
 
     ##move Juv age 13 to adult age 1
 #    ipdb.set_trace()
-    #juviix12 = dfworm.meta.ix[juviix][dfworm.meta.age > 12].index.values
     juviix12 = dfworm.meta.ix[juviix].query('age > 12').index.values
     if any(juviix12):
         #reset age to adult

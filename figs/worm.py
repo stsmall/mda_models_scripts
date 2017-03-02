@@ -9,9 +9,6 @@ class Worms(object):
     def __init__(self, meta, haplotype1=None, haplotype2=None,
             positions = None, selection=None, cds_coords=None):
         self.meta = meta
-        self.adult = self.meta.stage == "A"
-        self.juv = self.meta.stage == "J"
-        self.mf = self.meta.stage == "M"
         if haplotype1:
             self.h1 = haplotype1
         else:
@@ -104,7 +101,7 @@ class Worms(object):
                     except KeyError:
                         pass
                 if update:
-                    oworms.h1[i] = _oworms
+                    oworms.h1[i] = oworms
                     oworms.pos[i] =  self.pos[i]
         elif self.meta.shape[0] == 0 and len(index) != 0:
             self.meta = oworms.meta.ix[index, :]
