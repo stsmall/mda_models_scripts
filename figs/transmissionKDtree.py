@@ -10,9 +10,7 @@ import ipdb
 import math
 import random
 import pickle
-
 import numpy as np
-import pandas as pd
 from scipy.spatial import cKDTree
 
 from .agehost import agehost_fx
@@ -79,15 +77,14 @@ def vectorbite_fx(vill,
                               * hostpopsize)
     # 0.37 is prob of bite on infected host picking up MF
     infbites = np.random.binomial(totalbites, (prev_t * 0.37))
-    if densitydep_uptake: #values for anopheles from CITE
+    if densitydep_uptake: #values for anopheles from doi:10.1371/journal.pone.0002874.s001
        #number of MF in 20ul of blood
        #235ml is 5% of total host blood
        #there are 50 units of 20ul in 1ml
        mfBlood = avgMF / 50.0
        # 0.414 is proportion of  L3 that leave mosquito per bite
        # 0.32 proportion of L3 that make it into the host
-       L3trans = round(infbites * (4.395 * (1 - math.exp( -(0.055 * (mfBlood))
-           / 4.395)) ** 2) * (0.414 * 0.32))
+       L3trans = round(infbites * (4.395 * (1 - math.exp( -1* (0.055 * mfBlood / 4.395)) ** 2)) * (0.414 * 0.32))
     else:
        # 0.414 is proportion of  L3 that leave mosquito per bite
        # 0.32 proportion of L3 that make it into the host
@@ -214,12 +211,7 @@ def transmission_fx(month,
     for vill in range(len(village)):
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(village[vill].hostpopsize)
-        print prev_t
-        print infhost
         avgMF = mfiix_vill[vill].shape[0]/float(infhost)
-        print avgMF
-        print mfiix_vill[vill].shape[0]
-        print (dfworm.meta.stage == "M").sum()
         L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill, L3trans))
         if L3trans != 0:
@@ -249,7 +241,6 @@ def transmission_fx(month,
                     tree = cKDTree(hostcoords)
                     tcount = ''
                     infhost += 1
-                    print infhost
                 else:
                     rehostidx = np.random.choice(transhost)
                     new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])
