@@ -1,17 +1,16 @@
 """
 """
 
-import unittests
-import sys
-import os.path
-sys.path.append(
-            os.path.abspath(os.path.join(os.path.dirname(__file__),
-                os.path.pardir)))
+import unittest
 
 
-def main():
-    print('Testing')
+class Test_Kill_Adults_Worms(unittest.TestCase):
+    """
+    """
+    def setUp(self):
+        pass
+
 
 
 if __name__ == '__main__':
-    main()
+    unittest.main()

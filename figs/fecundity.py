@@ -41,8 +41,7 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-    #dfAdult = dfworms.meta.ix[dfworms.adult, :]  
-    dfAdult = dfworms
+    dfAdult = dfworms.meta.ix[dfworms.adult, :]  
     young = (dfAdult.meta.age < 6).values
     dfAdult.meta.loc[young, "fec"] = np.random.poisson(fecund, np.sum(young))
     #linear function defining decline in fecundity with age
