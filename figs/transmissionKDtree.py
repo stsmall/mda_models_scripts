@@ -138,15 +138,20 @@ def new_infection_fx(dispersal,
     #copy village
     vill = int(mfhostidx[:mfhostidx.rfind('h')][-1])
     #new host index
-    old_hostidx = dfHost[dfHost.village == vill].hostidx.iloc[-1]
-    new_hostidx = old_hostidx[:old_hostidx.rfind('h')] + 'h' + str(int(old_hostidx.split('h')[1]) + 1)
+    old_hostidx = dfHost[dfHost.village == vill].hostidx.values
+    max_hostidx = max(map(int,[x.split("h")[1] for x in old_hostidx]))
+    new_hostidx = 'v' + str(vill) + 'h' + str(max_hostidx + 1)
     #radnom sex
     sex = random.choice("01")
     #age and agedeath function from wbsims_initialize
     age, agedeath = agehost_fx(sex, deathdict)
     #add to dfHost at bottom
     newhostlist = [[vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]]
-    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
+####
+#    ipdb.set_trace()
+    dfHost.loc[max(dfHost.index.values) + 1] = newhostlist[0]
+#    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
+####
     return(dfHost, new_hostidx)
 
 def transmission_fx(month,
@@ -212,6 +217,7 @@ def transmission_fx(month,
     for vill in range(len(village)):
         infhost = dfHost[dfHost.village == vill].shape[0]
         prev_t = infhost / float(village[vill].hostpopsize)
+        print prev_t
         avgMF = mfiix_vill[vill].shape[0]/float(infhost)
         L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill, L3trans))
