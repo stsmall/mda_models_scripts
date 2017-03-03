@@ -116,7 +116,6 @@ def new_infection_fx(dispersal,
     newhostidx: str
           new host index
     '''
-    print("newfx")
     #how close
     mindist = 5
     #how far
@@ -213,10 +212,14 @@ def transmission_fx(month,
     tree = cKDTree(hostcoords)
     mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
-        infhost = dfHost[dfHost.village == vill].shape[0]
+        infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(village[vill].hostpopsize)
         print prev_t
+        print infhost
         avgMF = mfiix_vill[vill].shape[0]/float(infhost)
+        print avgMF
+        print mfiix_vill[vill].shape[0]
+        print (dfworm.meta.stage == "M").sum()
         L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill, L3trans))
         if L3trans != 0:
@@ -245,6 +248,8 @@ def transmission_fx(month,
                     hostcoords = np.concatenate([hostcoords, [dfHost.ix[dfHost.index[-1]].coordinates]])
                     tree = cKDTree(hostcoords)
                     tcount = ''
+                    infhost += 1
+                    print infhost
                 else:
                     rehostidx = np.random.choice(transhost)
                     new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])
