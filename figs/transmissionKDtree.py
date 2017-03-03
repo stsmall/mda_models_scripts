@@ -147,13 +147,10 @@ def new_infection_fx(dispersal,
     age, agedeath = agehost_fx(sex, deathdict)
     #add to dfHost at bottom
     newhostlist = [[vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]]
-####
-#    ipdb.set_trace()
-    dfHost.loc[max(dfHost.index.values) + 1] = newhostlist[0]
+    dfHost.loc[dfHost.index[-1] + 1] = newhostlist[0]
 #    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
-####
     return(dfHost, new_hostidx)
-
+#@profile
 def transmission_fx(month,
                     village,
                     sigma,
@@ -212,7 +209,8 @@ def transmission_fx(month,
     dispersal = 2 * sigma
     new_hostidx = []
     new_juv = []
-    tree = cKDTree(np.vstack(dfHost.coordinates))
+    hostcoords = np.vstack(dfHost.coordinates)
+    tree = cKDTree(hostcoords)
     mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
         infhost = dfHost[dfHost.village == vill].shape[0]
@@ -244,7 +242,8 @@ def transmission_fx(month,
                     dfHost, rehostidx = new_infection_fx(dispersal, mfhostidx, dfHost)
                     new_hostidx.append(rehostidx)
                     #new host so have to resort and rebuild KDTree
-                    tree = cKDTree(np.vstack(dfHost.coordinates))
+                    hostcoords = np.concatenate([hostcoords, [dfHost.ix[dfHost.index[-1]].coordinates]])
+                    tree = cKDTree(hostcoords)
                     tcount = ''
                 else:
                     rehostidx = np.random.choice(transhost)
