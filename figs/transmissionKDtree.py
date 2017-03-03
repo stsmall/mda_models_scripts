@@ -20,6 +20,7 @@ from .agehost import agehost_fx
 deathdict = pickle.load(open('../figs/data/acttable.p', "rb"))
 
 def vectorbite_fx(vill,
+                  prev_t,
                   month,
                   village,
                   densitydep_uptake,
@@ -60,11 +61,11 @@ def vectorbite_fx(vill,
     bitesPperson = village[vill].bpp
     hours2bite = village[vill].h2b
     hostpopsize = village[vill].hostpopsize
-    prev_t = village[vill].prev
     bednets = village[vill].bn
     bnstart = village[vill].bnstr
     bnstop = village[vill].bnstp
     bncoverage =  village[vill].bncov
+    prev_t = prev_t
     #print("vectorbite")
     if bednets:
         if month > bnstart and month < bnstop:
@@ -135,9 +136,9 @@ def new_infection_fx(dispersal,
               newhostptY = dfHost.coordinates[dfHost.hostidx == mfhostidx].values[0][1] + y_new
               newpts = np.array([newhostptX, newhostptY])
     #copy village
-    vill = mfhostidx[:mfhostidx.rfind('h')][-1]
+    vill = int(mfhostidx[:mfhostidx.rfind('h')][-1])
     #new host index
-    old_hostidx = dfHost[dfHost.village == int(vill)].hostidx.iloc[-1]
+    old_hostidx = dfHost[dfHost.village == vill].hostidx.iloc[-1]
     new_hostidx = old_hostidx[:old_hostidx.rfind('h')] + 'h' + str(int(old_hostidx.split('h')[1]) + 1)
     #radnom sex
     sex = random.choice("01")
@@ -211,11 +212,12 @@ def transmission_fx(month,
 #    mfiix_vill = np.array([np.where(dfworm.meta.ix[mfiix].village == vill)].index.values for vill in range(len(village)))
     mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
-        infhost = (dfHost.village == vill).sum()
+        infhost = dfHost[dfHost.village == vill].shape[0]
+        print infhost
         prev_t = infhost / float(village[vill].hostpopsize)
-        village[vill].prev = prev_t
+        print(prev_t)
         avgMF = mfiix_vill[vill].shape[0]/float(infhost)
-        L3trans = vectorbite_fx(vill, month, village, densitydep_uptake, avgMF)
+        L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill, L3trans))
         if L3trans != 0:
             if L3trans > mfiix_vill[vill].shape[0]:  #more transmision events than possible MF
@@ -231,12 +233,12 @@ def transmission_fx(month,
                     transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal)
                     tcount = mfhostidx
 
-                if len(dfHost[dfHost.village == vill]) < village[vill].hostpopsize:
+                if dfHost[dfHost.village == vill].shape[0] < village[vill].hostpopsize:
                      prob_newinfection = 1.0 / (len(transhost) + 1)
                 else: #everyone is already infected
                      prob_newinfection = 0
-                if np.random.random() < prob_newinfection:
-                    print(prob_newinfection)
+                trand = np.random.random()
+                if trand < prob_newinfection:
                     dfHost, rehostidx = new_infection_fx(dispersal, mfhostidx, dfHost)
                     new_hostidx.append(rehostidx)
                     #new host so have to resort and rebuild KDTree
