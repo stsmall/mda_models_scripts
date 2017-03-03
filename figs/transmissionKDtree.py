@@ -84,7 +84,7 @@ def vectorbite_fx(vill,
        mfBlood = avgMF / 50.0
        # 0.414 is proportion of  L3 that leave mosquito per bite
        # 0.32 proportion of L3 that make it into the host
-       L3trans = round(infbites * (4.395 * (1 - math.exp( -1* (0.055 * mfBlood / 4.395)) ** 2)) * (0.414 * 0.32))
+       L3trans = round(infbites * (4.395 * ((1 - math.exp( -1* (0.055 * mfBlood / 4.395))) ** 2)) * (0.414 * 0.32))
     else:
        # 0.414 is proportion of  L3 that leave mosquito per bite
        # 0.32 proportion of L3 that make it into the host
