@@ -229,7 +229,7 @@ def transmission_fx(month,
             tcount = ''
             for mfhostidx, transhostidx in zip(transMFidx, transMFhostidx):
                 if mfhostidx != tcount:
-                    transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal)
+                    transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal, n_jobs=-1)
                     tcount = mfhostidx
                 if infhost < village[vill].hostpopsize:
                      prob_newinfection = 1.0 / (len(transhost) + 1)
