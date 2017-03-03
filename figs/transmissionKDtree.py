@@ -222,16 +222,16 @@ def transmission_fx(month,
                 transMF = mfiix_vill[vill]
             else:
                 transMF = np.random.choice(mfiix_vill[vill], L3trans, replace=False)
-            tcount = ''
+            np.sort(transMF)
             new_juv.extend(transMF)
-            for idx in transMF:
-                if dfworm.meta.ix[idx].hostidx != tcount:
-                    mfhostidx = dfworm.meta.ix[idx].hostidx
-                    transhostidx = dfHost[dfHost.hostidx == mfhostidx].index[0] #index of donating host
+            transMFidx = dfworm.meta.ix[transMF].hostidx.values
+            transMFhostidx = dfHost[dfHost.hostidx == transMFidx].index[0] #index of donating host
+            tcount = ''
+            for mfhostidx, transhostidx in zip(transMFidx, transMFhostidx):
+                if mfhostidx != tcount:
                     transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal)
                     tcount = mfhostidx
-
-                if dfHost[dfHost.village == vill].shape[0] < village[vill].hostpopsize:
+                if infhost < village[vill].hostpopsize:
                      prob_newinfection = 1.0 / (len(transhost) + 1)
                 else: #everyone is already infected
                      prob_newinfection = 0
@@ -243,12 +243,8 @@ def transmission_fx(month,
                     tree = cKDTree(np.vstack(dfHost.coordinates))
                     tcount = ''
                 else:
-                    try: #allow self infection
-                        rehostidx = transhost[np.random.randint(len(transhost) + 1)]
-                    except IndexError:
-                        rehostidx = transhostidx
-                    new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])
-
+                    rehostidx = np.random.choice(transhost)
+                    new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])     
         else:
             print("dfMF is empty")
     dfworm.meta.ix[new_juv, 'stage'] = "J"
