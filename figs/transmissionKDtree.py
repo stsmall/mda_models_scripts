@@ -200,7 +200,6 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
-#    ipdb.set_trace()
     mfiix = dfworm.meta[dfworm.meta.stage == "M"].index.values
     if dfworm.meta.ix[mfiix].shape[0] > 0:
         assert dfworm.pos['0'].shape[0] == dfworm.h1['0'].shape[1]
@@ -209,7 +208,6 @@ def transmission_fx(month,
     new_hostidx = []
     new_juv = []
     tree = cKDTree(np.vstack(dfHost.coordinates))
-#    mfiix_vill = np.array([np.where(dfworm.meta.ix[mfiix].village == vill)].index.values for vill in range(len(village)))
     mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
         infhost = dfHost[dfHost.village == vill].shape[0]
@@ -222,14 +220,14 @@ def transmission_fx(month,
                 transMF = mfiix_vill[vill]
             else:
                 transMF = np.random.choice(mfiix_vill[vill], L3trans, replace=False)
-            np.sort(transMF)
+            transMF.sort()
             new_juv.extend(transMF)
             transMFidx = dfworm.meta.ix[transMF].hostidx.values
-            transMFhostidx = dfHost[dfHost.hostidx == transMFidx].index[0] #index of donating host
+            transMFhostidx = [dfHost.query('hostidx in @x').index.values for x in transMFidx]
             tcount = ''
             for mfhostidx, transhostidx in zip(transMFidx, transMFhostidx):
                 if mfhostidx != tcount:
-                    transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal, n_jobs=-1)
+                    transhost = tree.query_ball_point(dfHost.ix[transhostidx[0]].coordinates, dispersal, n_jobs=-1)
                     tcount = mfhostidx
                 if infhost < village[vill].hostpopsize:
                      prob_newinfection = 1.0 / (len(transhost) + 1)
@@ -244,10 +242,9 @@ def transmission_fx(month,
                     tcount = ''
                 else:
                     rehostidx = np.random.choice(transhost)
-                    new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])     
+                    new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])
         else:
             print("dfMF is empty")
     dfworm.meta.ix[new_juv, 'stage'] = "J"
     dfworm.meta.ix[new_juv, 'hostidx'] = new_hostidx
-#    ipdb.set_trace()
     return(village, dfHost, dfworm, L3trans)
