@@ -213,9 +213,7 @@ def transmission_fx(month,
     mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
         infhost = dfHost[dfHost.village == vill].shape[0]
-        print infhost
         prev_t = infhost / float(village[vill].hostpopsize)
-        print(prev_t)
         avgMF = mfiix_vill[vill].shape[0]/float(infhost)
         L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill, L3trans))
