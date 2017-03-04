@@ -142,7 +142,7 @@ def new_infection_fx(dispersal,
     #age and agedeath function from wbsims_initialize
     age, agedeath = agehost_fx(sex, deathdict)
     #add to dfHost at bottom
-    newhostlist = [[vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]]
+    newhostlist = [[vill, new_hostidx, sex, age, agedeath, newpts, 0, []]]
     dfHost.loc[dfHost.index[-1] + 1] = newhostlist[0]
 #    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
     return(dfHost, new_hostidx)
@@ -221,26 +221,29 @@ def transmission_fx(month,
             transMFidx = dfworm.meta.ix[transMF].hostidx.values
             transMFhostidx = [dfHost.query('hostidx in @x').index.values for x in transMFidx]
             tcount = ''
-            for mfhostidx, transhostidx in zip(transMFidx, transMFhostidx):
-                if mfhostidx != tcount:
-                    transhost = tree.query_ball_point(dfHost.ix[transhostidx[0]].coordinates, dispersal, n_jobs=-1)
-                    tcount = mfhostidx
-                if infhost < village[vill].hostpopsize:
-                     prob_newinfection = 1.0 / (len(transhost) + 1)
-                else: #everyone is already infected
-                     prob_newinfection = 0
-                trand = np.random.random()
-                if trand < prob_newinfection:
-                    dfHost, rehostidx = new_infection_fx(dispersal, mfhostidx, dfHost)
-                    new_hostidx.append(rehostidx)
-                    #new host so have to resort and rebuild KDTree
-                    hostcoords = np.concatenate([hostcoords, [dfHost.ix[dfHost.index[-1]].coordinates]])
-                    tree = cKDTree(hostcoords)
-                    tcount = ''
-                    infhost += 1
-                else:
-                    rehostidx = np.random.choice(transhost)
-                    new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])
+            try:
+                for mfhostidx, transhostidx in zip(transMFidx, transMFhostidx):
+                    if mfhostidx != tcount:
+                        transhost = tree.query_ball_point(dfHost.ix[transhostidx[0]].coordinates, dispersal, n_jobs=-1)
+                        tcount = mfhostidx
+                    if infhost < village[vill].hostpopsize:
+                         prob_newinfection = 1.0 / (len(transhost) + 1)
+                    else: #everyone is already infected
+                         prob_newinfection = 0
+                    trand = np.random.random()
+                    if trand < prob_newinfection:
+                        dfHost, rehostidx = new_infection_fx(dispersal, mfhostidx, dfHost)
+                        new_hostidx.append(rehostidx)
+                        #new host so have to resort and rebuild KDTree
+                        hostcoords = np.concatenate([hostcoords, [dfHost.ix[dfHost.index[-1]].coordinates]])
+                        tree = cKDTree(hostcoords)
+                        tcount = ''
+                        infhost += 1
+                    else:
+                        rehostidx = np.random.choice(transhost)
+                        new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])
+            except:
+                ipdb.set_trace()
         else:
             print("dfMF is empty")
     dfworm.meta.ix[new_juv, 'stage'] = "J"
