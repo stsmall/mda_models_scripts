@@ -162,17 +162,11 @@ def wb_sims(config_file):
         village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
                                bitesPperson[i], bednets, bnstart[i], bnstop[i], bncoverage[i], muTrans, sizeTrans))
 
-    if os.path.isfile("dfAdult_meta.pkl"):
-        with open('dfAdult_meta.pkl', 'rb') as input:
-            dfAdult = pickle.load(input)
+    if os.path.isfile("dfworm_meta.pkl"):
+        with open('dfworm_meta.pkl', 'rb') as input:
+            dfworm = pickle.load(input)
         with open("dfHost_df.pkl",'rb') as input:
             dfHost = pickle.load(input)
-###delete if we combine all df to dfAdult
-        with open("dfJuv_meta.pkl",'rb') as input:
-            dfJuv = pickle.load(input)
-        with open("dfMF_meta.pkl",'rb') as input:
-            dfMF = pickle.load(input)
-###
         sim_time = numberGens
         burn_in = 0
     else:
@@ -181,7 +175,7 @@ def wb_sims(config_file):
         for i in range(villages):
             village[i].bnstr += burn_in
             village[i].bnstp += burn_in
-        dfHost, dfAdult, dfJuv, dfMF =\
+        dfHost, dfworm =\
                  wbinit.wbsims_init(village,
                                    hostpopsize,
                                    prevalence,
@@ -205,59 +199,44 @@ def wb_sims(config_file):
 
     for month in range(1,sim_time):
         print("\nmonth is {}\n".format(month))
-        village, dfHost, dfJuv, dfMF, L3trans = trans.transmission_fx(month,
+        village, dfHost, dfworm, L3trans = trans.transmission_fx(month,
                                                             village,
                                                             sigma,
                                                             densitydep_uptake,
                                                             dfHost,
-                                                            dfJuv,
-                                                            dfMF)
-        dfHost, dfAdult, dfJuv, dfMF = survfx(month,
-                                                    village,
-                                                    surv_Juv,
-                                                    shapeMF,
-                                                    scaleMF,
-                                                    shapeAdult,
-                                                    scaleAdult,
-                                                    fecund,
-                                                    locus,
-                                                    mutation_rate,
-                                                    recombination_rate,
-                                                    basepairs,
-                                                    selection,
-                                                    hostmigrate,
-                                                    mdalist,
-                                                    densitydep_surv,
-                                                    densitydep_fec,
-                                                    dfHost,
-                                                    dfAdult,
-                                                    dfJuv,
-                                                    dfMF)
+                                                            dfworm)
+        dfHost, dfworm = survfx(month,
+                                village,
+                                surv_Juv,
+                                shapeMF,
+                                scaleMF,
+                                shapeAdult,
+                                scaleAdult,
+                                fecund,
+                                locus,
+                                mutation_rate,
+                                recombination_rate,
+                                basepairs,
+                                selection,
+                                hostmigrate,
+                                mdalist,
+                                densitydep_surv,
+                                densitydep_fec,
+                                dfHost,
+                                dfworm)
         if month == burn_in:
-            with open('dfAdult_meta.pkl', 'wb') as output:
+            with open('dfworm_meta.pkl', 'wb') as output:
                 pickler = pickle.Pickler(output, -1)
-                dfAdult_burnin = Worms(dfAdult.meta, dfAdult.h1, dfAdult.h2, dfAdult.pos,
-                                       dfAdult.sel, dfAdult.coord)
-                pickler.dump(dfAdult_burnin)
-            del dfAdult_burnin
+                dfworm_burnin = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
+                                       dfworm.sel, dfworm.coord)
+                pickler.dump(dfworm_burnin)
+            del dfworm_burnin
             with open('dfHost_df.pkl', 'wb') as output:
                 pickle.dump(dfHost, output, -1)
-###delete if we combine all df to dfAdult
-            with open('dfJuv_meta.pkl', 'wb') as output:
-                pickler = pickle.Pickler(output, -1)
-                dfJuv_burnin = Worms(dfJuv.meta, dfJuv.h1, dfJuv.h2, dfJuv.pos)
-                pickler.dump(dfJuv_burnin)
-            with open('dfMF_meta.pkl', 'wb') as output:
-                pickler = pickle.Pickler(output, -1)
-                dfMF_burnin = Worms(dfMF.meta, dfMF.h1, dfMF.h2, dfMF.pos)
-                pickler.dump(dfMF_burnin)
-            del dfJuv_burnin
-            del dfMF_burnin
-###
 
-    return(village, dfHost, dfAdult, dfJuv, dfMF)
+    return(village, dfHost, dfworm)
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     village,dfHost, dfAdult, dfJuv, dfMF = wb_sims('../tests/wbsims.cfg')
+     village,dfHost, dfworm = wb_sims('../tests/wbsims.cfg')
 

@@ -6,7 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-
+import ipdb
 import math
 import random
 import pickle
@@ -20,6 +20,7 @@ from .agehost import agehost_fx
 deathdict = pickle.load(open('../figs/data/acttable.p', "rb"))
 
 def vectorbite_fx(vill,
+                  prev_t,
                   month,
                   village,
                   densitydep_uptake,
@@ -60,11 +61,11 @@ def vectorbite_fx(vill,
     bitesPperson = village[vill].bpp
     hours2bite = village[vill].h2b
     hostpopsize = village[vill].hostpopsize
-    prev_t = village[vill].prev
     bednets = village[vill].bn
     bnstart = village[vill].bnstr
     bnstop = village[vill].bnstp
     bncoverage =  village[vill].bncov
+    prev_t = prev_t
     #print("vectorbite")
     if bednets:
         if month > bnstart and month < bnstop:
@@ -95,7 +96,7 @@ def vectorbite_fx(vill,
 
 
 def new_infection_fx(dispersal,
-                     transMF,
+                     mfhostidx,
                      dfHost):
     '''A transmission event infecting a naive host
 
@@ -115,7 +116,7 @@ def new_infection_fx(dispersal,
     newhostidx: str
           new host index
     '''
-    #print("newfx")
+    print("newfx")
     #how close
     mindist = 5
     #how far
@@ -123,7 +124,7 @@ def new_infection_fx(dispersal,
     #assign new position
     maxc = int( math.sqrt(( maxdist ** 2 / 2 )))
     #makes the below statement true
-    newpts = dfHost[dfHost.hostidx == transMF.hostidx].coordinates.values[0]
+    newpts = dfHost[dfHost.hostidx == mfhostidx].coordinates.values[0]
 
     while next((True for elem in dfHost['coordinates'].values if np.array_equal(elem, newpts)),False) is True:
          #shift of new points
@@ -131,32 +132,31 @@ def new_infection_fx(dispersal,
          y_new = random.randint( -maxc, maxc )
          #test that new shifts are min distance
          if math.sqrt(x_new ** 2 + y_new ** 2) > mindist:
-              newhostptX = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][0] + x_new
-              newhostptY = dfHost.coordinates[dfHost.hostidx == transMF.hostidx].values[0][1] + y_new
+              newhostptX = dfHost.coordinates[dfHost.hostidx == mfhostidx].values[0][0] + x_new
+              newhostptY = dfHost.coordinates[dfHost.hostidx == mfhostidx].values[0][1] + y_new
               newpts = np.array([newhostptX, newhostptY])
     #copy village
-    vill = transMF.village
+    vill = int(mfhostidx[:mfhostidx.rfind('h')][-1])
     #new host index
-    old_hostidx = dfHost[dfHost.village == transMF.village].hostidx.iloc[-1]
-    new_hostidx = old_hostidx[:old_hostidx.rfind('h')] + 'h' + str(int(old_hostidx.split('h')[1]) + 1)
+    old_hostidx = dfHost[dfHost.village == vill].hostidx.values
+    max_hostidx = max(map(int,[x.split("h")[1] for x in old_hostidx]))
+    new_hostidx = 'v' + str(vill) + 'h' + str(max_hostidx + 1)
     #radnom sex
     sex = random.choice("01")
     #age and agedeath function from wbsims_initialize
     age, agedeath = agehost_fx(sex, deathdict)
     #add to dfHost at bottom
-    #dfHost = dfHost.append([dfHost, pd.DataFrame([vill, new_hostidx, sex, age, agedeath, newpts, 0, 0])],ignore_index=True)
     newhostlist = [[vill, new_hostidx, sex, age, agedeath, newpts, 0, 0]]
-    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
-    #dfHost.reset_index(drop=True,inplace=True)
+    dfHost.loc[dfHost.index[-1] + 1] = newhostlist[0]
+#    dfHost = pd.concat([dfHost, pd.DataFrame(newhostlist,columns=dfHost.columns)],ignore_index=True)
     return(dfHost, new_hostidx)
-
+#@profile
 def transmission_fx(month,
                     village,
                     sigma,
                     densitydep_uptake,
                     dfHost,
-                    dfJuv,
-                    dfMF):
+                    dfworm):
     '''Transmission events resolved as either reinfection or new infection
 
     Parameters
@@ -202,60 +202,54 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
-    if dfMF.meta.shape[0] > 0:
-        assert dfMF.pos['0'].shape[0] == dfMF.h1['0'].shape[1]
+    mfiix = dfworm.meta[dfworm.meta.stage == "M"].index.values
+    if dfworm.meta.ix[mfiix].shape[0] > 0:
+        assert dfworm.pos['0'].shape[0] == dfworm.h1['0'].shape[1]
     else: pass
     dispersal = 2 * sigma
-    new_rows = []
-    tree = cKDTree(np.vstack(dfHost.coordinates))
+    new_hostidx = []
+    new_juv = []
+    hostcoords = np.vstack(dfHost.coordinates)
+    tree = cKDTree(hostcoords)
+    mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
-        infhost = (dfHost.village == vill).sum()
+        infhost = dfHost[dfHost.village == vill].shape[0]
         prev_t = infhost / float(village[vill].hostpopsize)
-        village[vill].prev = prev_t
-        avgMF = (dfMF.meta.village == vill).sum()/float(infhost)
-        L3trans = vectorbite_fx(vill, month, village, densitydep_uptake, avgMF)
-        print("village is %i transmitted is %i" %(vill,L3trans))
+        print(prev_t)
+        avgMF = mfiix_vill[vill].shape[0]/float(infhost)
+        L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
+        print("village is %i transmitted is %i" %(vill, L3trans))
         if L3trans != 0:
-
-            if L3trans > (dfMF.meta.village == vill).sum():  #more transmision events than possible MF
-                  transMF = dfMF.meta[dfMF.meta.village == vill]
+            if L3trans > mfiix_vill[vill].shape[0]:  #more transmision events than possible MF
+                transMF = mfiix_vill[vill]
             else:
-                transMF = dfMF.meta[dfMF.meta.village == vill].sample(L3trans)
-            transMF.sort_values("hostidx",inplace=True)
+                transMF = np.random.choice(mfiix_vill[vill], L3trans, replace=False)
+            transMF.sort()
+            new_juv.extend(transMF)
+            transMFidx = dfworm.meta.ix[transMF].hostidx.values
+            transMFhostidx = [dfHost.query('hostidx in @x').index.values for x in transMFidx]
             tcount = ''
-            for index, row in transMF.iterrows():
-                if row.hostidx != tcount:
-                    transhostidx = dfHost[dfHost.hostidx == row.hostidx].index[0] #index of donating host
-                    transhost = tree.query_ball_point(dfHost.ix[transhostidx].coordinates, dispersal)
-                    tcount = row.hostidx
-                else:
-                    pass
-                if len(dfHost[dfHost.village == vill]) < village[vill].hostpopsize:
+            for mfhostidx, transhostidx in zip(transMFidx, transMFhostidx):
+                if mfhostidx != tcount:
+                    transhost = tree.query_ball_point(dfHost.ix[transhostidx[0]].coordinates, dispersal, n_jobs=-1)
+                    tcount = mfhostidx
+                if infhost < village[vill].hostpopsize:
                      prob_newinfection = 1.0 / (len(transhost) + 1)
                 else: #everyone is already infected
                      prob_newinfection = 0
-                if np.random.random() < prob_newinfection:
-                    dfHost, new_hostidx = new_infection_fx(dispersal, row, dfHost)
-                    new_rows.append((new_hostidx, index))
+                trand = np.random.random()
+                if trand < prob_newinfection:
+                    dfHost, rehostidx = new_infection_fx(dispersal, mfhostidx, dfHost)
+                    new_hostidx.append(rehostidx)
                     #new host so have to resort and rebuild KDTree
-                    tree = cKDTree(np.vstack(dfHost.coordinates))
+                    hostcoords = np.concatenate([hostcoords, [dfHost.ix[dfHost.index[-1]].coordinates]])
+                    tree = cKDTree(hostcoords)
                     tcount = ''
                 else:
-                    try: #allow self infection
-                        rehostidx = transhost[np.random.randint(len(transhost) + 1)]
-                    except IndexError:
-                        rehostidx = transhostidx
-                    new_rows.append((dfHost.ix[rehostidx,'hostidx'], index))
-
+                    rehostidx = np.random.choice(transhost)
+                    new_hostidx.append(dfHost.ix[rehostidx,'hostidx'])
         else:
             print("dfMF is empty")
-    prev_size = dfJuv.meta.shape[0]
-    dfJuv.add_worms(dfMF, [i[1] for i in new_rows])
-    dfMF.drop_worms([i[1] for i in new_rows])
-    try:
-        assert(len(dfMF.pos['0']) == dfMF.h1['0'].shape[1])
-    except KeyError:
-        print(dfMF.meta)
-    dfJuv.meta.ix[prev_size:, 'hostidx'] = [i[0] for i in new_rows]
-    dfJuv.meta.ix[prev_size:, 'age'] = [0 for i in range(len(new_rows))]
-    return(village, dfHost, dfJuv, dfMF, L3trans)
+    dfworm.meta.ix[new_juv, 'stage'] = "J"
+    dfworm.meta.ix[new_juv, 'hostidx'] = new_hostidx
+    return(village, dfHost, dfworm, L3trans)

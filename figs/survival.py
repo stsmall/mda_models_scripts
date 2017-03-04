@@ -13,34 +13,29 @@ from figs.fecundity import fecunditybase_fx
 from figs.host_migration import hostmigration_fx
 
 
-def kill_adults(worms, hosts, month, dfMF, shapeAdult, scaleAdult,
-        village, hostmigrate):
+def kill_adults(worms, hosts, month, shapeAdult, scaleAdult,
+        village):
     """
-    Parameters
-    ----------
     """
-    if month%12 == 0:
-        #Adult survival is based on weibull cdf
-        kill_adult_rand = np.random.random(worms.meta.shape[0])
-        try:
-            kill_adult_fx_age = weibull_min.cdf(worms.meta.age, shapeAdult,
-                    loc=0, scale=scaleAdult)
-        except TypeError:
-            kill_adult_fx_age = weibull_min.cdf(0, shapeAdult, loc=0, scale=scaleAdult)
-        dieAdult = np.where(kill_adult_rand < kill_adult_fx_age)
-        worms.drop_worms(dieAdult[0])
-
-        worms.meta.age = worms.meta.age + 1 #2 - 21
-        ##host survival is from act table
-        dfHost = hosts[hosts.age < hosts.agedeath]
-        #remove all worms with dead host.hostidx from all dataframes
-        worms.drop_worms(worms.meta[~worms.meta.hostidx.isin(dfHost.hostidx)].index.values)
-        dfMF.drop_worms(dfMF.meta[~dfMF.meta.hostidx.isin(dfHost.hostidx)].index.values)
-        #add 1 year to all ages of hosts
-        hosts.age = dfHost.age + 1
-        if hostmigrate != 0:
-            dfHost = hostmigration_fx(village, dfHost, hostmigrate)
-
+    adiix = worms.meta.index[worms.meta.stage == "A"].values
+    #Adult survival is based on weibull cdf
+    kill_adult_rand = np.random.random(adiix.shape[0])
+    try:
+        kill_adult_fx_age = weibull_min.cdf(worms.meta.age[adiix], shapeAdult,
+                loc=0, scale=scaleAdult)
+    except TypeError:
+        kill_adult_fx_age = weibull_min.cdf(0, shapeAdult, loc=0, scale=scaleAdult)
+    dieAdult = adiix[np.where(kill_adult_rand < kill_adult_fx_age)]
+    worms.meta.age[adiix] += 1 #2 - 21
+    ##host survival is from act table
+    dfHost = hosts.query("age < agedeath")
+    diehost = dfHost.hostidx.values
+    dead_worms = np.append(dieAdult,
+            worms.meta[worms.meta.hostidx.isin(diehost)].index.values)
+    worms.drop_worms(dead_worms)
+    #remove all worms with dead host.hostidx from all dataframes
+    #add 1 year to all ages of hosts
+    return(dfHost)
 
 
 def survivalbase_fx(month,
@@ -61,10 +56,7 @@ def survivalbase_fx(month,
                     densitydep_surv,
                     densitydep_fec,
                     dfHost,
-                    dfAdult,
-                    dfMF):
-
-
+                    dfworm):
     '''Base survival function
     Parameters
     ---------
@@ -105,56 +97,52 @@ def survivalbase_fx(month,
 
     Returns
     -------
-    dfMF
-    dfAdult
+    dfworm
     dfHost
 
     '''
-
-    #adult worms and hosts are only evaluated per year
     if month%12 == 0:
-        kill_adults(dfAdult, dfHost, month, dfMF, shapeAdult, scaleAdult,
-                village, hostmigrate)
+        dfHost = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
+                village)
     else: pass
 
+    dfHost.age = dfHost.age + 1
+    if hostmigrate != 0:
+        dfHost = hostmigration_fx(village, dfHost, hostmigrate)
+
     ##Juv is exponential 0.866; surv_Juv
-    #dont include age 0 which just moved from transmission fx
-    dfAdult.meta.age[dfAdult.juv] += 1
-    kill_juvrand = np.random.random(sum(dfAdult.juv))
-    dieJuv = np.where(kill_juvrand > surv_Juv)
-    dfAdult.drop_worms(dieJuv[0])
+    juviix = dfworm.meta[dfworm.meta.stage == "J"].index.values
+    kill_juvrand = np.random.random(juviix.shape[0])
+    dieJuv = juviix[np.where(kill_juvrand > surv_Juv)]
+    dfworm.meta.ix[juviix,'age'] += 1
 
     ##MF is weibull cdf
-    kill_mfrand = np.random.random(dfMF.meta.shape[0])
+    mfiix = dfworm.meta[dfworm.meta.stage == "M"].index.values
+    kill_mfrand = np.random.random(mfiix.shape[0])
     try:
-        kill_mffxage = weibull_min.cdf(dfMF.meta.age,shapeMF,loc=0,scale=scaleMF)
+        kill_mffxage = weibull_min.cdf(dfworm.meta.ix[mfiix].age,shapeMF,loc=0,scale=scaleMF)
     except TypeError:
         kill_mffxage = weibull_min.cdf(0,shapeMF,loc=0,scale=scaleMF)
-    dieMF = np.where(kill_mfrand < kill_mffxage)
-    dfMF.drop_worms(dieMF[0])
-    dfMF.meta.age = dfMF.meta.age + 1 #2 - 12
-    dfMF.drop_worms(dfMF.meta.ix[dfMF.meta.age > 12].index.values) #hard cutoff at 12 months
-    try:
-        assert dfMF.pos['0'].shape[0] == dfMF.h1['0'].shape[1]
-    except KeyError:
-        pass
+    dieMF = mfiix[np.where(kill_mfrand < kill_mffxage)]
+    dfworm.meta.ix[mfiix, 'age'] += 1
 
     ##move Juv age 13 to adult age 1
-    juv_rows = dfAdult.meta[np.logical_and(dfAdult.meta.age > 12, 
-        dfAdult.juv)].index.values
-    if any(juv_rows):
+#    ipdb.set_trace()
+    juviix12 = dfworm.meta.ix[juviix].query('age > 12').index.values
+    if any(juviix12):
         #reset age to adult
-        dfJuv.meta.ix[juv_rows,"age"] = 1
+        dfworm.meta.ix[juviix12,'age'] = 1
         #increase R0net for next gen
-        dfJuv.meta.ix[juv_rows, "R0net"] += 1
+        dfworm.meta.ix[juviix12,'R0net'] += 1
+        dfworm.meta.ix[juviix12,'stage'] = "A"
 
+    dfworm.drop_worms(np.append(dieJuv, dieMF))
     #fecundity calls mutation/recombination
-    dfAdult_mf, dfAdult = fecunditybase_fx(fecund, dfAdult, locus, mutation_rate,
+    dfAdult_mf, dfworm = fecunditybase_fx(fecund, dfworm, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
                                          densitydep_fec)
     dfAdult_mf.meta.sex = np.random.choice(['M', 'F'] , size=len(dfAdult_mf.meta))
     dfAdult_mf.meta.age = 1
-    dfMF.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
+    dfworm.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
-
-    return(dfHost, dfAdult, dfMF)
+    return(dfHost, dfworm)

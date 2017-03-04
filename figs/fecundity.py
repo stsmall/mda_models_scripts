@@ -7,13 +7,13 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-
+import ipdb
 from .recombination import recombination_fx
 from .mutation import mutation_fx
 from .selection import selection_fx
 
 def fecunditybase_fx(fecund,
-                     dfworms,
+                     dfworm,
                      locus,
                      mutation_rate,
                      recombination_rate,
@@ -41,22 +41,23 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-    dfAdult = dfworms.meta.ix[dfworms.adult, :]  
-    young = (dfAdult.meta.age < 6).values
-    dfAdult.meta.loc[young, "fec"] = np.random.poisson(fecund, np.sum(young))
+#    ipdb.set_trace()
+    adiix = dfworm.meta[dfworm.meta.stage == "A"].index.values
+    young = adiix[np.where(dfworm.meta.ix[adiix].age < 6)]
+    old = adiix[np.where(dfworm.meta.ix[adiix].age >= 6)]
+    dfworm.meta.ix[young, 'fec'] = np.random.poisson(fecund, young.shape[0])
     #linear function defining decline in fecundity with age
     m = float(0 - fecund) / (21 - 6)
     b = 0 - m * 21
     #assign fecundity value based on age function
-    old = np.logical_not(young)
-    positive_lambda = (dfAdult.meta.loc[old, "age"].values * m) + b
+    positive_lambda = (dfworm.meta.ix[old].age.values * m) + b
     positive_lambda[positive_lambda < 0] = 0
-    dfAdult.meta.loc[dfAdult.meta.age >= 6, "fec"] = np.random.poisson(positive_lambda).astype(np.int64)
+    dfworm.meta.ix[old, 'fec'] = np.random.poisson(positive_lambda).astype(np.int64)
     #sex, recombination, mutation
-    dfAdult_mf = recombination_fx(locus, dfAdult, recombination_rate, basepairs)
+    dfAdult_mf = recombination_fx(locus, dfworm, adiix, recombination_rate, basepairs)
     # Positions is just the new positions
     dfAdult_mf, new_positions = mutation_fx(locus, dfAdult_mf,
          mutation_rate, recombination_rate, basepairs)
     if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
-        dfAdult_mf, dfAdult = selection_fx(dfAdult, dfAdult_mf, new_positions)
-    return(dfAdult_mf, dfAdult)
+        dfAdult_mf, dfworm = selection_fx(dfworm, dfAdult_mf, new_positions)
+    return(dfAdult_mf, dfworm)
