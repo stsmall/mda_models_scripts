@@ -198,27 +198,24 @@ def transmission_fx(month,
         number of transmitted MF
     '''
     print("transmission_fx")
-    mfiix = dfworm.meta[dfworm.meta.stage == "M"].index.values
-    if dfworm.meta.ix[mfiix].shape[0] > 0:
-        assert dfworm.pos['0'].shape[0] == dfworm.h1['0'].shape[1]
-    else: pass
     dispersal = 2 * sigma
     new_hostidx = []
     new_juv = []
     hostcoords = np.vstack(dfHost.coordinates)
     tree = cKDTree(hostcoords)
-    mfiix_vill = np.array([dfworm.meta.ix[mfiix][dfworm.meta.village == vill].index.values for vill in range(len(village))])
     for vill in range(len(village)):
+#        ipdb.set_trace()
+        mfiix_vill = dfworm.meta[(dfworm.meta["stage"] == "M") & (dfworm.meta["village"] == vill)].index.values
         infhost = (dfHost.village == vill).sum()
         prev_t = infhost / float(village[vill].hostpopsize)
-        avgMF = mfiix_vill[vill].shape[0]/float(infhost)
+        avgMF = mfiix_vill.shape[0]/float(infhost)
         L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
         print("village is %i transmitted is %i" %(vill, L3trans))
         if L3trans != 0:
-            if L3trans > mfiix_vill[vill].shape[0]:  #more transmision events than possible MF
-                transMF = mfiix_vill[vill]
+            if L3trans > mfiix_vill.shape[0]:  #more transmision events than possible MF
+                transMF = mfiix_vill
             else:
-                transMF = np.random.choice(mfiix_vill[vill], L3trans, replace=False)
+                transMF = np.random.choice(mfiix_vill, L3trans, replace=False)
             transMF.sort()
             new_juv.extend(transMF)
             transMFidx = dfworm.meta.ix[transMF].hostidx.values
