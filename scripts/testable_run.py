@@ -158,9 +158,6 @@ def wb_sims(config_file):
     dist.extend(initial_distance_m)
     distvill = [sum(dist[:i+1]) for i in range(len(dist))]
     village=[]
-    for i in range(villages):
-        village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
-                               bitesPperson[i], bednets, bnstart[i], bnstop[i], bncoverage[i], muTrans, sizeTrans))
 
     if os.path.isfile("dfworm_meta.pkl"):
         with open('dfworm_meta.pkl', 'rb') as input:
@@ -169,12 +166,18 @@ def wb_sims(config_file):
             dfHost = pickle.load(input)
         sim_time = numberGens
         burn_in = 0
+        for i in range(villages):
+            village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
+                               bitesPperson[i], bednets, bnstart[i] + burn_in, bnstop[i] + burn_in,
+                               bncoverage[i], muTrans, sizeTrans))
+
     else:
         sim_time = numberGens + burn_in
         cdslist = [perc_locus, cds_length, intgen_length]
         for i in range(villages):
-            village[i].bnstr += burn_in
-            village[i].bnstp += burn_in
+            village.append(Village(i,hostpopsize[i],prevalence[i],distvill[i], hours2bite[i],
+                                   bitesPperson[i], bednets, bnstart[i] + burn_in, bnstop[i] + burn_in,
+                                   bncoverage[i], muTrans, sizeTrans))
         dfHost, dfworm =\
                  wbinit.wbsims_init(village,
                                    hostpopsize,

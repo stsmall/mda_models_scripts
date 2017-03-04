@@ -75,14 +75,14 @@ def selection_fx(dfworm,
     dfAdult_mf : df
          updated with phenotype
     '''
-    for loc in dfAdult_mf.h2.keys(): #since this wont include 0
+    for loc in dfworm.h2.keys(): #since this wont include 0
         selS = []
         selF = []
         iix = []
         new_positions[loc].sort()
         for pos in new_positions[loc]: #this is the dict of positions
             if not any(pos == dfworm.pos[loc]):
-                iix.append(np.argmax(dfAdult_mf.pos[loc] > pos))
+                iix = (np.argmax(dfworm.pos[loc] > pos)) #this is the position it is inserted
                 if any([i <= pos <= j for i,j in dfworm.coord[loc + "F"]]):
                      #shape = 4, mean = 1, scale = mean/shape
                      #here mean is mean_fitness, wildtype is assumed to be 1
@@ -96,16 +96,11 @@ def selection_fx(dfworm,
                     selF.append(0)
             else:
                 pass
-
-        print("dfworm.sel['1S'].shape\t{}".format(dfworm.sel['1S'].shape[0]))
-        print("dfworm.pos['1'].shape\t{}".format(dfworm.pos['1'].shape[0]))
         try:
             dfworm.sel[loc + "S"] = np.insert(dfworm.sel[loc + "S"], iix, selS)
             dfworm.sel[loc + "F"] = np.insert(dfworm.sel[loc + "F"], iix, selF)
+#            dfworm.pos[loc] = np.insert(dfworm.pos[loc],iix)
         except:
             ipdb.set_trace()
-        print("add new positions\t{}".format(iix))
-        print("dfworm.sel['1S'].shape\t{}".format(dfworm.sel['1S'].shape[0]))
-        print("dfAdult_mf.pos['1'].shape\t{}".format(dfAdult_mf.pos['1'].shape[0]))
     dfAdult_mf = fitness_fx(dfAdult_mf, dfworm)
     return(dfAdult_mf, dfworm)
