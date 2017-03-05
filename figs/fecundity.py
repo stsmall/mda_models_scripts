@@ -41,7 +41,6 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-#    ipdb.set_trace()
     adiix = dfworm.meta[dfworm.meta.stage == "A"].index.values
     young = adiix[np.where(dfworm.meta.ix[adiix].age < 6)]
     old = adiix[np.where(dfworm.meta.ix[adiix].age >= 6)]

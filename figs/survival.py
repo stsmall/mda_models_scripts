@@ -18,7 +18,6 @@ def kill_adults(worms, hosts, month, shapeAdult, scaleAdult,
     """
     """
     adiix = worms.meta.index[worms.meta.stage == "A"].values
-    #Adult survival is based on weibull cdf
     kill_adult_rand = np.random.random(adiix.shape[0])
     try:
         kill_adult_fx_age = weibull_min.cdf(worms.meta.age[adiix], shapeAdult,
@@ -27,14 +26,11 @@ def kill_adults(worms, hosts, month, shapeAdult, scaleAdult,
         kill_adult_fx_age = weibull_min.cdf(0, shapeAdult, loc=0, scale=scaleAdult)
     dieAdult = adiix[np.where(kill_adult_rand < kill_adult_fx_age)]
     worms.meta.age[adiix] += 1 #2 - 21
-    ##host survival is from act table
     dfHost = hosts.query("age < agedeath")
     diehost = dfHost.hostidx.values
     dead_worms = np.append(dieAdult,
-            worms.meta[worms.meta.hostidx.isin(diehost)].index.values)
+            worms.meta[~worms.meta.hostidx.isin(diehost)].index.values)
     worms.drop_worms(dead_worms)
-    #remove all worms with dead host.hostidx from all dataframes
-    #add 1 year to all ages of hosts
     return(dfHost)
 
 
