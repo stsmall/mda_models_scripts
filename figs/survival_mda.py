@@ -6,10 +6,9 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-import ipdb
+
 import numpy as np
 from scipy.stats import weibull_min
-import random
 from figs.hostmda import hostmda_fx
 from figs.fecundity_mda import fecunditymda_fx
 #from figs.fecundity_mda import fecunditymda_sel1_fx

@@ -6,8 +6,6 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-import numpy as np
-import ipdb
 
 def hostmda_fx(village,
                dfHost,
