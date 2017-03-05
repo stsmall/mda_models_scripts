@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.metrics import pairwise_distances
 from scipy.stats import weibull_min
 import matplotlib.pyplot as plt
-
+from collections import defaultdict
 try:
     import configparser
 except ImportError:
@@ -199,15 +199,16 @@ def wb_sims(config_file):
 
     mdalist = [mda_start + burn_in, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
-
+    L3transdict = defaultdict(list)
     for month in range(1,sim_time):
         print("\nmonth is {}\n".format(month))
-        village, dfHost, dfworm, L3trans = trans.transmission_fx(month,
+        village, dfHost, dfworm, L3transdict = trans.transmission_fx(month,
                                                             village,
                                                             sigma,
                                                             densitydep_uptake,
                                                             dfHost,
-                                                            dfworm)
+                                                            dfworm,
+                                                            L3transdict)
         dfHost, dfworm = survfx(month,
                                 village,
                                 surv_Juv,
