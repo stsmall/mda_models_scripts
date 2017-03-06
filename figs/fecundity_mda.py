@@ -48,19 +48,19 @@ def fecunditymda_fx(fecund,
     dfMF
     '''
 ####################################################
-    #by host or by village?
     if clear_count == 1: #permanent sterility
         Adultmda = dfworm.meta[(dfworm.meta["stage"] == "A") &
                                (dfworm.meta.hostidx.isin(hostmda))].index.values
-        #wormmda = dfworm.meta[dfworm.hostidx.isin(hostmda)].index.values
-        #Adultmda = dfworm.meta.ix[wormmda, "stage" == "A"].index.values
         adultsterile = dfworm.meta.ix[Adultmda].groupby("hostidx").apply(lambda y: y.sample(frac = mda_sterile).index.values)
         steriix = np.concatenate([i for i in adultsterile.values]).ravel()
         dfworm.meta.ix[steriix,"sex"] = "S"
-
     else: pass
 
+##reduced fertility only for hosts with MDA
     if clear_count > 0 and clear_count <= mda_clear: #Drugs cause temporary sterility over clear_time
+        
+    
+    
         adiix = dfworm.meta[dfworm.meta.stage == "A"].index.values
         young = adiix[np.where(dfworm.meta.ix[adiix].age < 6)]
         old = adiix[np.where(dfworm.meta.ix[adiix].age >= 6)]

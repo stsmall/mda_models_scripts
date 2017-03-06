@@ -25,6 +25,7 @@ from figs.village import Village
 from figs.calc_outstats import allelefreq_fx
 from figs.plotting import (plot_allele_frequency,
         plot_coordinates_host)
+import figs.figs2stats as figstats
 
 def wb_sims(config_file):
     '''main function for simulations
@@ -121,23 +122,19 @@ def wb_sims(config_file):
 
     # outfiles
     sh = 'outfiles'
-    demofigs=config.getboolean(sh, 'demofigs')
-    demotables=config.getboolean(sh, 'demotables')
-    demoTime=config.getint(sh, 'demoTime')
+    logTime=config.getint(sh, 'logdf2file')
     sample_size=config.getfloat(sh, 'sample_size')
     window_length=config.getint(sh, 'window_length')
     num_windows=config.getint(sh, 'num_windows')
-    popgenfigs=config.getboolean(sh, 'popgenfigs')
-    popgentables=config.getboolean(sh, 'popgentables')
-    popgenTime=config.getint(sh, 'popgenTime')
     wb2vcf=config.getboolean(sh, 'wb2vcf')
     wbmfvcf=config.getboolean(sh, 'wbmfvcf')
     wbadultvcf=config.getboolean(sh, 'wbadultvcf')
     wbjuvvcf=config.getboolean(sh, 'wbjuvvcf')
     wbfracvcf=config.getfloat(sh, 'wbfracvcf')
-    wb2scikit=config.getboolean(sh, 'wb2scikit')
-    wbdebug=config.getboolean(sh, 'wbdebug')
-
+    figs2scikit=config.getboolean(sh, 'wb2scikit')
+    outstats = [sample_size, window_length, num_windows, wb2vcf, wbmfvcf, 
+                wbadultvcf, wbjuvvcf, wbfracvcf, figs2scikit] 
+    #start intialize
     if selection:
         if mda:
             if fitness == 1:
@@ -159,10 +156,10 @@ def wb_sims(config_file):
     distvill = [sum(dist[:i+1]) for i in range(len(dist))]
     village=[]
 
-    if os.path.isfile("dfworm_meta.pkl"):
+    if os.path.isfile("dfworm_burnin.pkl"):
         with open('dfworm_meta.pkl', 'rb') as input:
             dfworm = pickle.load(input)
-        with open("dfHost_df.pkl",'rb') as input:
+        with open("dfHost_burnin.pkl",'rb') as input:
             dfHost = pickle.load(input)
         sim_time = numberGens
         burn_in = 0
@@ -200,6 +197,8 @@ def wb_sims(config_file):
     mdalist = [mda_start + burn_in, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
     L3transdict = defaultdict(list)
+    
+####start sims    
     for month in range(1,sim_time):
         print("\nmonth is {}\n".format(month))
         village, dfHost, dfworm, L3transdict = trans.transmission_fx(month,
@@ -228,19 +227,46 @@ def wb_sims(config_file):
                                 densitydep_fec,
                                 dfHost,
                                 dfworm)
+        #store intialized after burnin
         if month == burn_in:
-            with open('dfworm_meta.pkl', 'wb') as output:
+            with open('dfworm_burnin.pkl', 'wb') as output:
                 pickler = pickle.Pickler(output, -1)
                 dfworm_burnin = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                        dfworm.sel, dfworm.coord)
                 pickler.dump(dfworm_burnin)
             del dfworm_burnin
-            with open('dfHost_df.pkl', 'wb') as output:
+            with open('dfHost_burnin.pkl', 'wb') as output:
                 pickle.dump(dfHost, output, -1)
-
-    return(village, dfHost, dfworm)
+        #log data        
+        elif month > burn_in and month%logTime == 0:
+            with open('dfworm_{}.pkl'.format(month), 'wb') as output:
+                pickler = pickle.Pickler(output, -1)
+                dfworm = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
+                                       dfworm.sel, dfworm.coord)
+                pickler.dump(dfworm)
+            del dfworm_burnin
+            with open('dfHost_{}.pkl'.format(month), 'wb') as output:
+                pickle.dump(dfHost, output, -1)
+        else: pass
+     
+    #print out last rep
+    with open('dfworm_{}.pkl'.format(month), 'wb') as output:
+        pickler = pickle.Pickler(output, -1)
+        dfworm = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
+                               dfworm.sel, dfworm.coord)
+        pickler.dump(dfworm)
+    del dfworm_burnin
+    with open('dfHost_{}.pkl'.format(month), 'wb') as output:
+        pickle.dump(dfHost, output, -1)
+    with open('L3transdict_{}.pkl'.format(month), 'wb') as output:
+        pickle.dump(L3transdict, output, -1)  
+    
+    #start stats    
+    figstats(L3transdict, dfworm, dfHost, village, outstats)  
+    final_prev = [x.pop() for item in L3transdict.keys() for x in L3transdict[item]]    
+    return("SEED\t{}\n".format(seed), dfHost.describe(), dfworm.meta.describe(), final_prev)
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     village,dfHost, dfworm = wb_sims('../tests/wbsims.cfg')
-
+     wb_sims('../tests/wbsims.cfg')
+     

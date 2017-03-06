@@ -219,7 +219,7 @@ def transmission_fx(month,
         print(prev_t)
         avgMF = mfiix_vill.shape[0]/float(infhost)
         L3trans = vectorbite_fx(vill, prev_t, month, village, densitydep_uptake, avgMF)
-        L3transdict[str(vill)].append(L3trans)
+        L3transdict[str(vill)].append((prev_t, L3trans))
         print("village is %i transmitted is %i" %(vill, L3trans))
         if L3trans != 0:
             if L3trans > mfiix_vill.shape[0]:  #more transmision events than possible MF
