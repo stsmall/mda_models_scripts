@@ -56,7 +56,8 @@ def survivalmda_fx(month,
                    densitydep_surv,
                    densitydep_fec,
                    dfHost,
-                   dfworm):
+                   dfworm,
+                   R0netlist):
 
     '''base survival function
     Parameters
@@ -168,6 +169,8 @@ def survivalmda_fx(month,
         hostmda = dfHost[dfHost.MDAstate == 1].hostidx.values
 #######################
     if month%12 == 0:
+        R0netlist.append(sum((dfworm.meta.stage == "A") & (dfworm.meta.R0net < (len(R0netlist) + 1))
+                                            & (dfworm.meta.R0net > len(R0netlist))))
         dfHost, dfworm = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
                 village)
 
@@ -211,7 +214,7 @@ def survivalmda_fx(month,
     dfAdult_mf.meta.age = 1
     dfworm.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
-    return(dfHost, dfworm)
+    return(dfHost, dfworm, R0netlist)
 
 def survivalmda_sel1_fx(month,
                    village,
@@ -231,7 +234,8 @@ def survivalmda_sel1_fx(month,
                    densitydep_surv,
                    densitydep_fec,
                    dfHost,
-                   dfworm):
+                   dfworm,
+                   R0netlist):
 
     '''
 
@@ -283,6 +287,8 @@ def survivalmda_sel1_fx(month,
         hostmda = dfHost[dfHost.MDAstate == 1].hostidx.values
 #########################################
     if month%12 == 0:
+        R0netlist.append(sum((dfworm.meta.stage == "A") & (dfworm.meta.R0net < (len(R0netlist) + 1))
+                                            & (dfworm.meta.R0net > len(R0netlist))))
         dfHost, dfworm = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
                 village)
 
@@ -326,7 +332,7 @@ def survivalmda_sel1_fx(month,
     dfAdult_mf.meta.age = 1
     dfworm.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
-    return(dfHost, dfworm)
+    return(dfHost, dfworm, R0netlist)
 
 def survivalmda_sel2_fx(month,
                    village,
@@ -346,7 +352,8 @@ def survivalmda_sel2_fx(month,
                    densitydep_surv,
                    densitydep_fec,
                    dfHost,
-                   dfworm):
+                   dfworm,
+                   R0netlist):
 
     '''base survival function
 
@@ -398,6 +405,8 @@ def survivalmda_sel2_fx(month,
         hostmda = dfHost[dfHost.MDAstate == 1].hostidx.values
 ########################################
     if month%12 == 0:
+        R0netlist.append(sum((dfworm.meta.stage == "A") & (dfworm.meta.R0net < (len(R0netlist) + 1))
+                                            & (dfworm.meta.R0net > len(R0netlist))))
         adiix = dfworm.meta.index[dfworm.meta.stage == "A"].values
         #Adult survival is based on weibull cdf
         kill_adult_rand = np.random.random(adiix.shape[0])
@@ -456,4 +465,4 @@ def survivalmda_sel2_fx(month,
     dfAdult_mf.meta.age = 1
     dfworm.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
-    return(dfHost, dfworm)
+    return(dfHost, dfworm, R0netlist)

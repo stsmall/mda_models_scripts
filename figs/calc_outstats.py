@@ -10,26 +10,6 @@ import numpy as np
 import pandas as pd
 from collections import Counter
 
-def R0net_fx(dfAdult, dfMF, dfJuv):
-    '''Calculates the reproductive number, R0, by counting the uniqueness
-    of R0net per village and taking the mean counts
-
-    Parameters
-    ----------
-    dfJuv : df
-        dataframe of juvenilles age 13
-
-    Returns
-    --------
-    R0 : float, list
-        reproductive rate of each village
-    '''
-    #cant remember whether to calculate this as Juv age 13 or adult age 0
-    dfJuv[dfJuv.age == 13].groupby(["village", "R0net"]).size()[1].mean()
-    R0 = 1
-    return(R0)
-
-
 def allelefreq_fx(dfAdult, dfSel):
     ''' Calculates allele freq for mutations in dfSel by village
 

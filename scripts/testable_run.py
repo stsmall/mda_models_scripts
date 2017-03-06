@@ -196,6 +196,7 @@ def wb_sims(config_file):
     mdalist = [mda_start + burn_in, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
     L3transdict = defaultdict(list)
+    R0netlist = []
 
 ####start sims
     for month in range(1,sim_time):
@@ -207,7 +208,7 @@ def wb_sims(config_file):
                                                             dfHost,
                                                             dfworm,
                                                             L3transdict)
-        dfHost, dfworm = survfx(month,
+        dfHost, dfworm, R0netlist = survfx(month,
                                 village,
                                 surv_Juv,
                                 shapeMF,
@@ -225,7 +226,8 @@ def wb_sims(config_file):
                                 densitydep_surv,
                                 densitydep_fec,
                                 dfHost,
-                                dfworm)
+                                dfworm,
+                                R0netlist)
         print(dfworm.meta.shape[0])
         if dfworm.meta.shape[0] == 0:
             break
@@ -262,19 +264,16 @@ def wb_sims(config_file):
         pickle.dump(dfHost, output, -1)
     with open('L3transdict_{}.pkl'.format(month), 'wb') as output:
         pickle.dump(L3transdict, output, -1)
+    with open('R0netlist.pkl'.format(month), 'wb') as output:
+        pickle.dump(R0netlist, output, -1)
 
     #start stats
     #figstats(L3transdict, dfworm, dfHost, village, outstats)
 
-    final_prev = [L3transdict[item].pop() for item in L3transdict.keys()]
-    return(seed, dfHost.describe(), dfworm.meta.describe(),
-           final_prev, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))
+    return(seed, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     seed, dfhost_describe, dfworm_describe, final_prev, model = wb_sims('../tests/wbsims.cfg')
+     seed, model = wb_sims('../tests/wbsims.cfg')
      print("\nSEED\t{}\n".format(seed))
      print(model)
-     print(final_prev)
-     print(dfhost_describe)
-     print(dfworm_describe)
