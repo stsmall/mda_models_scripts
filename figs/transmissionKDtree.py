@@ -66,16 +66,17 @@ def vectorbite_fx(vill,
     bncoverage =  village[vill].bncov
     prev_t = prev_t
     #print("vectorbite")
-    if bednets:
-        if month > bnstart and month < bnstop:
-             totalbites = ((1 - bncoverage) * bitesPperson * hours2bite * 30
-                                   * hostpopsize)
-        else:
-             totalbites = (bitesPperson * hours2bite * 30
-                                   * hostpopsize)
-    else:
+    if bednets and (month > bnstart and month < bnstop):
+        print("Start BedNets, vilage {} has coverage {}".format(vill,bncoverage))
+        totalbites = ((1 - bncoverage) * bitesPperson * hours2bite * 30
+                               * hostpopsize)
+    elif bednets and (month > bnstop):
+        print("BedNets stop")
         totalbites = (bitesPperson * hours2bite * 30
                               * hostpopsize)
+    else:
+        totalbites = (bitesPperson * hours2bite * 30
+                      * hostpopsize)
     # 0.37 is prob of bite on infected host picking up MF
     infbites = np.random.binomial(totalbites, (prev_t * 0.37))
     if densitydep_uptake: #values for anopheles from doi:10.1371/journal.pone.0002874.s001

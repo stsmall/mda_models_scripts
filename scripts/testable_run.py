@@ -131,33 +131,32 @@ def wb_sims(config_file):
     wbadultvcf=config.getboolean(sh, 'wbadultvcf')
     wbjuvvcf=config.getboolean(sh, 'wbjuvvcf')
     wbfracvcf=config.getfloat(sh, 'wbfracvcf')
-    figs2scikit=config.getboolean(sh, 'wb2scikit')
-    outstats = [sample_size, window_length, num_windows, wb2vcf, wbmfvcf, 
-                wbadultvcf, wbjuvvcf, wbfracvcf, figs2scikit] 
+    figs2scikit=config.getboolean(sh, 'figs2scikit')
+    outstats = [sample_size, window_length, num_windows, wb2vcf, wbmfvcf,
+                wbadultvcf, wbjuvvcf, wbfracvcf, figs2scikit]
     #start intialize
-    if selection:
-        if mda:
-            if fitness == 1:
-                 from figs.survival_mda import survivalmda_sel1_fx as survfx
-            elif fitness == 2:
-                 from figs.survival_mda import survivalmda_sel2_fx as survfx
-            else:
-                 from figs.survival_mda import survivalmda_fx as survfx
+    if mda:
+        if selection and fitness == 1:
+             from figs.survival_mda import survivalmda_sel1_fx as survfx
+             print("Using MDA and Selection, fitness is 1")
+        elif selection and fitness == 2:
+             from figs.survival_mda import survivalmda_sel2_fx as survfx
+             print("Using MDA and Selection, fitness is 2")
         else:
-            from figs.survival import survivalbase_fx as survfx
+             from figs.survival_mda import survivalmda_fx as survfx
+             print("Using MDA and NO Selection")
     else:
-        if mda:
-            from figs.survival_mda import survivalmda_fx as survfx
-        else:
-            from figs.survival import survivalbase_fx as survfx
+        from figs.survival import survivalbase_fx as survfx
+        print("Using Base Model and Selection is {}".format(selection))
 
+    print("\n\nSelection is {}\nMDA is {}\nFitness is {}\n\n".format(selection, mda, fitness))
     dist = [0]
     dist.extend(initial_distance_m)
     distvill = [sum(dist[:i+1]) for i in range(len(dist))]
     village=[]
 
     if os.path.isfile("dfworm_burnin.pkl"):
-        with open('dfworm_meta.pkl', 'rb') as input:
+        with open('dfworm_burnin.pkl', 'rb') as input:
             dfworm = pickle.load(input)
         with open("dfHost_burnin.pkl",'rb') as input:
             dfHost = pickle.load(input)
@@ -197,8 +196,8 @@ def wb_sims(config_file):
     mdalist = [mda_start + burn_in, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
     L3transdict = defaultdict(list)
-    
-####start sims    
+
+####start sims
     for month in range(1,sim_time):
         print("\nmonth is {}\n".format(month))
         village, dfHost, dfworm, L3transdict = trans.transmission_fx(month,
@@ -227,6 +226,9 @@ def wb_sims(config_file):
                                 densitydep_fec,
                                 dfHost,
                                 dfworm)
+        print(dfworm.meta.shape[0])
+        if dfworm.meta.shape[0] == 0:
+            break
         #store intialized after burnin
         if month == burn_in:
             with open('dfworm_burnin.pkl', 'wb') as output:
@@ -237,36 +239,42 @@ def wb_sims(config_file):
             del dfworm_burnin
             with open('dfHost_burnin.pkl', 'wb') as output:
                 pickle.dump(dfHost, output, -1)
-        #log data        
+        #log data
         elif month > burn_in and month%logTime == 0:
             with open('dfworm_{}.pkl'.format(month), 'wb') as output:
                 pickler = pickle.Pickler(output, -1)
-                dfworm = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
+                dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                        dfworm.sel, dfworm.coord)
                 pickler.dump(dfworm)
-            del dfworm_burnin
+            del dfworm_x
             with open('dfHost_{}.pkl'.format(month), 'wb') as output:
                 pickle.dump(dfHost, output, -1)
         else: pass
-     
+
     #print out last rep
     with open('dfworm_{}.pkl'.format(month), 'wb') as output:
         pickler = pickle.Pickler(output, -1)
-        dfworm = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
+        dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                dfworm.sel, dfworm.coord)
         pickler.dump(dfworm)
-    del dfworm_burnin
+    del dfworm_x
     with open('dfHost_{}.pkl'.format(month), 'wb') as output:
         pickle.dump(dfHost, output, -1)
     with open('L3transdict_{}.pkl'.format(month), 'wb') as output:
-        pickle.dump(L3transdict, output, -1)  
-    
-    #start stats    
-    figstats(L3transdict, dfworm, dfHost, village, outstats)  
-    final_prev = [x.pop() for item in L3transdict.keys() for x in L3transdict[item]]    
-    return("SEED\t{}\n".format(seed), dfHost.describe(), dfworm.meta.describe(), final_prev)
+        pickle.dump(L3transdict, output, -1)
+
+    #start stats
+    #figstats(L3transdict, dfworm, dfHost, village, outstats)
+
+    final_prev = [L3transdict[item].pop() for item in L3transdict.keys()]
+    return(seed, dfHost.describe(), dfworm.meta.describe(),
+           final_prev, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     wb_sims('../tests/wbsims.cfg')
-     
+     seed, dfhost_describe, dfworm_describe, final_prev, model = wb_sims('../tests/wbsims.cfg')
+     print("\nSEED\t{}\n".format(seed))
+     print(model)
+     print(final_prev)
+     print(dfhost_describe)
+     print(dfworm_describe)
