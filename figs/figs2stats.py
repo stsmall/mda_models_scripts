@@ -31,11 +31,12 @@ def figs2pylib_fx(dfworm, outstats):
 #    av1 =
 #    av2 =
 
+    mfgeno = np.append(mfv1,mfv2)
     basepairs = [13000]
     #pylibseq summary of locus
-    sd = simData()
-    sd.assign_sep(dfworm.pos['0'][mfv1] / basepairs[0], dfworm.h1['0'][mfv1])
-    ps = polySIM(sd)
+    sdmf = simData()
+    sdmf.assign_sep(dfworm.pos['0'] / basepairs[0], dfworm.h1['0'][mfgeno])
+    ps = polySIM(sdmf)
     theta = ps.thetaw()
     tajimaD = ps.tajimasd()
 
@@ -44,17 +45,15 @@ def figs2pylib_fx(dfworm, outstats):
     num_windows = outstats[2]
     size = window_length / basepairs[0]
     step = 1.0 / num_windows
-    w = simDataWindows(sd, window_size=size, step_len=step, starting_pos=0., ending_pos=1.0)
+    w = simDataWindows(sdmf, window_size=size, step_len=step, starting_pos=0., ending_pos=1.0)
     for i in range(len(w)):
         wi = w[i]
         pswi = polySIM(wi)
         print(pswi.thetaw())
 
     #fst
-    sd.size()
-    sv1 = mfv1.shape[0]
-    sv2 = mfv2.shape[0]
-    f = fst(sd, [sv1, sv2])
+    sdmf.size()
+    f = fst(sdmf, [mfv1.shape[0], mfv2.shape[0]])
     f.hsm()
 
     return(theta, tajimaD)
@@ -70,11 +69,14 @@ def figs2scikit_fx(dfworm, outstats):
     return None
 
 def popgen_stats_fx(dfworm, outstats):
+    '''
+    '''
     theta, tajimaD = figs2pylib_fx(dfworm, outstats)
-
     #hapdiv
     #hapdiv = np.unique(dfworm.h1['0'],return_counts=True) / dfworm.h1['0'].shape[0]
+    hapdiv = ''
     #sel_af
+    sel_af = ''
 
     return(theta, tajimaD, hapdiv, sel_af)
 def prevTrans_fx(L3transdict, logTime):
@@ -221,11 +223,12 @@ def demostats_fx(logTime, sim_time, outstats):
                                 "var_juv" : vjuv,
                                 "var_mf" : vmf,
                                 "theta" : theta,
+                                "tajD" : tajD,
                                 "hapdiv" : hapdiv
                                 })
     demoTable = demoTable.loc[:, ['month', 'village', 'inf_host', 'avg_prev', 'var_prev', 'avg_trans',
                                   'var_trans', 'R0', 'avg_repo', 'var_repo', 'avg_adult', 'avg_juv', 'avg_mf',
-                                  'var_adult', 'var_juv', 'var_mf','theta', 'hapdiv']]
+                                  'var_adult', 'var_juv', 'var_mf','theta', 'tajD', 'hapdiv']]
     demoTable.to_csv(demoTable)
 
     return(None)
