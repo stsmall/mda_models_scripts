@@ -1,0 +1,120 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Mar  8 11:33:55 2017
+
+@author: scott
+"""
+import numpy as np
+import pandas as pd
+from .plotting.py import plot_coordinates_host
+
+def prevTrans_fx(L3transdict, logTime):
+    '''calculates the mean prev and transmission for summary table
+
+    Parameters
+    ---------
+
+    Returns
+    -------
+    '''
+
+    #trans_prev
+    vill = len(L3transdict['prev'][0])
+    time = len(L3transdict['prev'])
+    trans = [e for l in L3transdict['trans'] for e in l]
+    prev = np.round([e for l in L3transdict['prev'] for e in l],2)
+    month = np.repeat(range(1, time + 1), vill)
+    village = range(vill) * time
+
+    transTable = pd.DataFrame({"month" : month,
+                                "village" : village,
+                                "trans" : trans,
+                                "prev" : prev})
+    transTable = transTable.loc[:, ['month','village', 'trans', 'prev']]
+
+    meantran = [transTable.groupby("village").rolling(logTime).mean().dropna()['trans'][v::logTime][v] for v in range(vill)]
+    vartran = [transTable.groupby("village").rolling(logTime).mean().dropna()['trans'][v::logTime][v] for v in range(vill)]
+    meanprev = [transTable.groupby("village").rolling(logTime).mean().dropna()['prev'][v::logTime][v] for v in range(vill)]
+    varprev = [transTable.groupby("village").rolling(logTime).var().dropna()['prev'][v::logTime][v] for v in range(vill)]
+    avgTrans = [val for pair in zip(*meantran) for val in pair]
+    varTrans = [val for pair in zip(*vartran) for val in pair]
+    avgPrev = [val for pair in zip(*meanprev) for val in pair]
+    varPrev = [val for pair in zip(*varprev) for val in pair]
+
+    #write to out
+    transTable.to_csv(transTable)
+
+    return(avgTrans, avgPrev, varTrans, varPrev, vill)
+
+def R0net_fx(R0netlist):
+    '''calculate the reproductive rate, R0 for summary table
+
+    Parameters
+    ---------
+
+    Returns
+    -------
+    '''
+    #R0 by village
+    R0 = []
+    R0_t = zip(*R0netlist['R0'])
+    for v in range(len(R0_t)):
+        R0.append([float(j) / R0_t[v][i-1] for i,j in enumerate(R0_t[v])])
+
+    #reproductive mean and var
+    ravg = [j for time in R0netlist['repoavg'] for j in time]
+    rvar = [j for time in R0netlist['repovar'] for j in time]
+
+    return(R0, ravg, rvar)
+
+def demo_stats_fx(dfworm, vill):
+    '''calculates various demographic statistics for summary table
+
+    Parameters
+    ---------
+
+    Returns
+    -------
+    '''
+
+    adult = dfworm.meta.groupby(["stage","village","hostidx"]).size()['A'][vill].mean()
+    vadult = dfworm.meta.groupby(["stage","village","hostidx"]).size()['A'][vill].var()
+    juv = dfworm.meta.groupby(["stage","village","hostidx"]).size()['J'][vill].mean()
+    vjuv = dfworm.meta.groupby(["stage","village","hostidx"]).size()['J'][vill].var()
+    mf = dfworm.meta.groupby(["stage","village","hostidx"]).size()['M'][vill].mean()
+    vmf = dfworm.meta.groupby(["stage","village","hostidx"]).size()['M'][vill].var()
+
+    return(adult, vadult, juv, vjuv, mf, vmf)
+
+#################################
+def demo_hoststats_fx(dfworm, dfHost):
+    '''calculates various demographic statistics for each hostidx
+
+    Parameters
+    ---------
+
+    Returns
+    -------
+    '''
+
+    adult = dfworm.meta.groupby(["stage","hostidx"]).size()['A'].sum()
+    juv = dfworm.meta.groupby(["stage","hostidx"]).size()['J'].sum()
+    mf = dfworm.meta.groupby(["stage","hostidx"]).size()['M'].sum()
+    dfhost.MDAcum
+    demohostTable = pd.DataFrame({})
+    demohostTable.to_csv()
+    return(None)
+###################################
+def host_stats_fx(dfHost, thetaHost):
+    '''calculates stats for the specific host
+
+    Parameters
+    ---------
+
+    Returns
+    -------
+    '''
+    infhost = ([dfHost.groupy("village").size()[i] for i in range(len())])
+    plot_coordinates_host(dfHost, thetaHost)
+    return(infhost)

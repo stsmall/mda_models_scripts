@@ -22,10 +22,7 @@ from figs.worm import Worms
 import figs.wbsims_initialize as wbinit
 import figs.transmissionKDtree as trans
 from figs.village import Village
-from figs.calc_outstats import allelefreq_fx
-from figs.plotting import (plot_allele_frequency,
-        plot_coordinates_host)
-import figs.figs2stats.py as demostats
+from figs.figs2stats.py import output_tables_fx
 #import figs.figs2stats as figstats
 
 def wb_sims(config_file):
@@ -128,13 +125,10 @@ def wb_sims(config_file):
     window_length=config.getint(sh, 'window_length')
     num_windows=config.getint(sh, 'num_windows')
     wb2vcf=config.getboolean(sh, 'wb2vcf')
-    wbmfvcf=config.getboolean(sh, 'wbmfvcf')
-    wbadultvcf=config.getboolean(sh, 'wbadultvcf')
-    wbjuvvcf=config.getboolean(sh, 'wbjuvvcf')
-    wbfracvcf=config.getfloat(sh, 'wbfracvcf')
     figs2scikit=config.getboolean(sh, 'figs2scikit')
-    outstats = [sample_size, window_length, num_windows, wb2vcf, wbmfvcf,
-                wbadultvcf, wbjuvvcf, wbfracvcf, figs2scikit]
+
+    outstats = [basepairs, sample_size, window_length, num_windows, wb2vcf, figs2scikit]
+
     #start intialize
     if mda:
         if selection and fitness == 1:
@@ -269,7 +263,7 @@ def wb_sims(config_file):
         pickle.dump(R0netlist, output, -1)
 
     #start stats
-    demostats(logTime, sim_time, outstats)
+    output_tables_fx(logTime, sim_time, outstats)
 
     return(seed, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))
 

@@ -8,151 +8,37 @@ Created on Sun Mar  5 19:29:56 2017
 import pickle
 import numpy as np
 import pandas as pd
-from libsequence.polytable import simData
-from libsequence.summstats import polySIM
-from libsequence.windows import simDataWindows
-from libsequence.fst import fst
-from .plottin.py import plot_coordinates_host
-from .plottin.py import sel_allele_trace
-from .plottin.py import plot_allele_frequency
 
-def figs2pylib_fx(dfworm, outstats):
-    '''
-    population genentic stats
-    '''
-    #outstats = [sample_size, window_length, num_windows, wb2vcf, wbmfvcf, wbadultvcf,
-    #            wbjuvvcf, wbfracvcf, figs2scikit]
+#popgen
+from .figs_popgen.py import villpopgen_fx #time series, only on MF
+from .figs_popgen.py import figs2vcf_fx #only on final, all stages
+from .figs_popgen.py import figs2scikit_fx
+from .figs_popgen.py import hostpopgen_fx
+#demography
+from .figs_demo.py import demo_stats_fx
+from .figs_demo.py import prevTrans_fx
+from .figs_demo.py import R0net_fx
+from .figs_demo.py import host_stats_fx
+from .figs_demo.py import demo_hoststats_fx
 
-    sample_size = outstats[0]
-    mfv1 = dfworm.meta[('village == 1') & ('stage == "M"')].sample(frac = sample_size).index.values
-    mfv2 = dfworm.meta[('village == 2') & ('stage == "M"')].sample(frac = sample_size).index.values
-#    jv1 =
-#    jv2 =
-#    av1 =
-#    av2 =
-
-    mfgeno = np.append(mfv1,mfv2)
-    basepairs = [13000]
-    #pylibseq summary of locus
-    sdmf = simData()
-    sdmf.assign_sep(dfworm.pos['0'] / basepairs[0], dfworm.h1['0'][mfgeno])
-    ps = polySIM(sdmf)
-    theta = ps.thetaw()
-    tajimaD = ps.tajimasd()
-
-    #windows
-    window_length = outstats[1]
-    num_windows = outstats[2]
-    size = window_length / basepairs[0]
-    step = 1.0 / num_windows
-    w = simDataWindows(sdmf, window_size=size, step_len=step, starting_pos=0., ending_pos=1.0)
-    for i in range(len(w)):
-        wi = w[i]
-        pswi = polySIM(wi)
-        print(pswi.thetaw())
-
-    #fst
-    sdmf.size()
-    f = fst(sdmf, [mfv1.shape[0], mfv2.shape[0]])
-    f.hsm()
-
-    return(theta, tajimaD)
-
-def figs2scikit_fx(dfworm, outstats):
-    '''
-
-    '''
-    #outstats = [sample_size, window_length, num_windows, wb2vcf, wbmfvcf, wbadultvcf,
-    #            wbjuvvcf, wbfracvcf, figs2scikit]
-
-
-    return None
-
-def popgen_stats_fx(dfworm, outstats):
-    '''
-    '''
-    theta, tajimaD = figs2pylib_fx(dfworm, outstats)
-    #hapdiv
-    #hapdiv = np.unique(dfworm.h1['0'],return_counts=True) / dfworm.h1['0'].shape[0]
-    hapdiv = ''
-    #sel_af
-    sel_af = ''
-
-    return(theta, tajimaD, hapdiv, sel_af)
-def prevTrans_fx(L3transdict, logTime):
-    '''Calculates the reproductive number, R0, by counting the uniqueness
-    of R0net per village and taking the mean counts
+def output_tables_fx(logTime, sim_time, outstats):
+    '''builds summary table from FiGS simulations
 
     Parameters
-    ----------
-    dfJuv : df
-        dataframe of juvenilles age 13
+    ---------
 
     Returns
-    --------
-    R0 : float, list
-        reproductive rate of each village
-    '''
-    #logTime = 12
-    with open('L3transdict.pkl','rb') as input:
-        L3transdict = pickle.load(input)
-
-    #trans_prev
-    vill = len(L3transdict['prev'][0])
-    time = len(L3transdict['prev'])
-    trans = [e for l in L3transdict['trans'] for e in l]
-    prev = np.round([e for l in L3transdict['prev'] for e in l],2)
-    month = np.repeat(range(1, time + 1), vill)
-    village = range(vill) * time
-    transTable = pd.DataFrame({"month" : month,
-                                "village" : village,
-                                "trans" : trans,
-                                "prev" : prev})
-    transTable = transTable.loc[:, ['month','village', 'trans', 'prev']]
-    transTable.to_csv(transTable)
-
-    meantran = [transTable.groupby("village").rolling(logTime).mean().dropna()['trans'][v::logTime][v] for v in range(vill)]
-    vartran = [transTable.groupby("village").rolling(logTime).mean().dropna()['trans'][v::logTime][v] for v in range(vill)]
-    meanprev = [transTable.groupby("village").rolling(logTime).mean().dropna()['prev'][v::logTime][v] for v in range(vill)]
-    varprev = [transTable.groupby("village").rolling(logTime).var().dropna()['prev'][v::logTime][v] for v in range(vill)]
-    avgTrans = [val for pair in zip(*meantran) for val in pair]
-    varTrans = [val for pair in zip(*vartran) for val in pair]
-    avgPrev = [val for pair in zip(*meanprev) for val in pair]
-    varPrev = [val for pair in zip(*varprev) for val in pair]
-    return(avgTrans, avgPrev, varTrans, varPrev, vill)
-
-def demostats_fx(logTime, sim_time, outstats):
-    '''Calculates the reproductive number, R0, by counting the uniqueness
-    of R0net per village and taking the mean counts
-
-    Parameters
-    ----------
-    dfJuv : df
-        dataframe of juvenilles age 13
-
-    Returns
-    --------
-    R0 : float, list
-        reproductive rate of each village
+    -------
     '''
     #prev, transmission
     with open('L3transdict.pkl','rb') as input:
         L3transdict = pickle.load(input)
-    #returns avg of 12 months
     avgTrans, avgPrev, varTrans, varPrev, vill= prevTrans_fx(L3transdict, logTime)
 
     #R0net
     with open('R0netlist.pkl','rb') as input:
         R0netlist = pickle.load(input)
-    #R0 by village
-    R0 = []
-    R0_t = zip(*R0netlist['R0'])
-    for v in range(len(R0_t)):
-        R0.append([float(j) / R0_t[v][i-1] for i,j in enumerate(R0_t[v])])
-
-    #reproductive mean and var
-    ravg = [j for time in R0netlist['repoavg'] for j in time]
-    rvar = [j for time in R0netlist['repovar'] for j in time]
+    R0, ravg, rvar = R0net_fx(R0netlist)
 
     #demo table params
     month = np.repeat(range(logTime, sim_time, logTime), vill)
@@ -164,49 +50,54 @@ def demostats_fx(logTime, sim_time, outstats):
     vadult = []
     vjuv = []
     vmf = []
-    theta = []
-    tajD = []
-    hapdiv = []
-    sel_allelefreq = []
+    thetaA = []
+    thetaJ = []
+    thetaM = []
+    fst_b = []
+    Tw_Tb =[]
+    dxy = []
+    tajD =[]
 
-    #load data
+    ####load data from incremental output
     for mon in range(logTime, sim_time, logTime):
-        #worm stats
+        #worm files
         with open('dfworm_{}.pkl'.format(mon), 'rb') as worm:
             dfworm = pickle.load(worm)
+
         for v in range(vill):
-            adult.append(dfworm.meta.groupby(["stage","village","hostidx"]).size()['A'][v].mean())
-            vadult.append(dfworm.meta.groupby(["stage","village","hostidx"]).size()['A'][v].var())
-            juv.append(dfworm.meta.groupby(["stage","village","hostidx"]).size()['J'][v].mean())
-            vjuv.append(dfworm.meta.groupby(["stage","village","hostidx"]).size()['J'][v].var())
-            mf.append(dfworm.meta.groupby(["stage","village","hostidx"]).size()['M'][v].mean())
-            vmf.append(dfworm.meta.groupby(["stage","village","hostidx"]).size()['M'][v].var())
+            #demo stats
+            adult_t, vadult_t, juv_t, vjuv_t, mf_t, vmf_t = demo_stats_fx(dfworm, vill)
 
-        #popgen stats
-        theta_v, tajD_v, hapdiv_v, sel_af = popgen_stats_fx(dfworm, outstats)
-        theta.append(theta_v)
-        tajD.append(tajD_v)
-        hapdiv.append(hapdiv_v)
-        sel_allelefreq.append(sel_af)
+            adult.append(adult_t)
+            juv.append(juv_t)
+            mf.append(mf_t)
+            vadult.append(vadult_t)
+            vjuv.append(vjuv_t)
+            vmf.append(vmf_t)
 
-        #host stats
+            #popgen stats
+            thetaA_t, thetaJ_t, thetaM_t, fst_b_t, Tw_Tb_t, dxy_t, tajD_t = villpopgen_fx(dfworm, outstats, vill, mon)
+
+            thetaA.append(thetaA_t)
+            thetaJ.append(thetaJ_t)
+            thetaM.append(thetaM_t)
+            fst_b.append(fst_b_t)
+            Tw_Tb.append(Tw_Tb_t)
+            dxy.append(dxy_t)
+            tajD.append(tajD_t)
+
+        ##hostidx level popgen stats
+        thetaHost = hostpopgen_fx(dfworm, outstats, mon)
+
+        ##host stats
         with open('dfHost_{}.pkl'.format(mon), 'rb') as host:
             dfHost = pickle.load(host)
-        infhost.append([dfHost.groupy("village").size()[i] for i in range(len())])
-
-    ##final dataframe for figs
-    with open('dfworm_final.pkl', 'rb') as worm:
-        dfworm = pickle.load(worm)
-    plot_allele_frequency(dfworm)
-    figs2scikit_fx(dfworm, outstats)
-    sel_allele_trace(sel_allelefreq)
-
-    with open('dfHost_final.pkl','rb') as host:
-        dfHost = pickle.load(host)
-    plot_coordinates_host(dfHost)
+        infhost_t = host_stats_fx(dfHost, thetaHost)
+        infhost.append(infhost_t)
+        demo_hoststats_fx(dfworm, dfHost, vill, mon)
 
     #demotable
-    demoTable = pd.DataFrame({"month" : month,
+    summaryTable = pd.DataFrame({"month" : month,
                                 "village" : village,
                                 "inf_host" : infhost,
                                 "avg_prev" : avgPrev,
@@ -222,16 +113,30 @@ def demostats_fx(logTime, sim_time, outstats):
                                 "var_adult" : vadult,
                                 "var_juv" : vjuv,
                                 "var_mf" : vmf,
-                                "theta" : theta,
-                                "tajD" : tajD,
-                                "hapdiv" : hapdiv
+                                "thetaA" : thetaA,
+                                "thetaJ" : thetaJ,
+                                "thetaM" : thetaM,
+                                "fst_b" : fst_b,
+                                "Tw_Tb" : Tw_Tb,
+                                "dxy" : dxy,
+                                "tajD" : tajD
                                 })
-    demoTable = demoTable.loc[:, ['month', 'village', 'inf_host', 'avg_prev', 'var_prev', 'avg_trans',
+    summaryTable = summaryTable.loc[:, ['month', 'village', 'inf_host', 'avg_prev', 'var_prev', 'avg_trans',
                                   'var_trans', 'R0', 'avg_repo', 'var_repo', 'avg_adult', 'avg_juv', 'avg_mf',
-                                  'var_adult', 'var_juv', 'var_mf','theta', 'tajD', 'hapdiv']]
-    demoTable.to_csv(demoTable)
+                                  'var_adult', 'var_juv', 'var_mf','thetaA', 'thetaJ', 'thetaM', 'fst_b', 'Tw_Tb', 'dxy', 'tajD']]
+    summaryTable.to_csv(summaryTable)
+
+
+    #####final dataframe from figs
+    if outstats[4] or outstats[5]:
+        with open('dfworm_final.pkl', 'rb') as worm:
+            dfworm = pickle.load(worm)
+        if outstats[4]:
+            figs2vcf_fx(dfworm)
+        else: pass
+        if outstats[5]:
+            figs2scikit_fx(dfworm)
+        else: pass
+    else: pass
 
     return(None)
-
-#if __name__ == '__main__':
-#    demostats_fx(logTime, sim_time, outstats)
