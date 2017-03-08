@@ -134,7 +134,7 @@ def survivalmda_fx(month,
 
     ##calculates time since mda as clear_count
     if month < mda_start or month > (mda_start + mda_freq * mda_num):
-            clear_count = 0
+        clear_count = 0
     else:
         if month%mda_freq == 0:
              clear_count = 1
@@ -146,7 +146,7 @@ def survivalmda_fx(month,
                   clear_count = ((month-mda_freq)%mda_freq + 1)
              else:
                   clear_count = 0
-
+    print(clear_count)
 #######################
     ##assign MDA to hosts
     if clear_count == 1:
@@ -169,8 +169,12 @@ def survivalmda_fx(month,
         hostmda = dfHost[dfHost.MDAstate == 1].hostidx.values
 #######################
     if month%12 == 0:
-        R0netlist.append(sum((dfworm.meta.stage == "A") & (dfworm.meta.R0net < (len(R0netlist) + 1))
-                                            & (dfworm.meta.R0net > len(R0netlist))))
+        x = dfworm.meta.groupby(["village","stage"]).apply(lambda y: y[(y.R0net < (len(R0netlist['R0']) + 1))
+                            & (y.R0net > len(R0netlist['R0']))]).R0net[:,'A']
+        R0netlist['R0'].append([len(x[i]) for i in range(len(x.index.levels[0]))])
+        R0netlist['repoavg'].append([np.mean((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+        R0netlist['repovar'].append([np.var((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+
         dfHost, dfworm = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
                 village)
 
@@ -287,8 +291,12 @@ def survivalmda_sel1_fx(month,
         hostmda = dfHost[dfHost.MDAstate == 1].hostidx.values
 #########################################
     if month%12 == 0:
-        R0netlist.append(sum((dfworm.meta.stage == "A") & (dfworm.meta.R0net < (len(R0netlist) + 1))
-                                            & (dfworm.meta.R0net > len(R0netlist))))
+        x = dfworm.meta.groupby(["village","stage"]).apply(lambda y: y[(y.R0net < (len(R0netlist['R0']) + 1))
+                            & (y.R0net > len(R0netlist['R0']))]).R0net[:,'A']
+        R0netlist['R0'].append([len(x[i]) for i in range(len(x.index.levels[0]))])
+        R0netlist['repoavg'].append([np.mean((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+        R0netlist['repovar'].append([np.var((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+
         dfHost, dfworm = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
                 village)
 
@@ -405,8 +413,12 @@ def survivalmda_sel2_fx(month,
         hostmda = dfHost[dfHost.MDAstate == 1].hostidx.values
 ########################################
     if month%12 == 0:
-        R0netlist.append(sum((dfworm.meta.stage == "A") & (dfworm.meta.R0net < (len(R0netlist) + 1))
-                                            & (dfworm.meta.R0net > len(R0netlist))))
+        x = dfworm.meta.groupby(["village","stage"]).apply(lambda y: y[(y.R0net < (len(R0netlist['R0']) + 1))
+                            & (y.R0net > len(R0netlist['R0']))]).R0net[:,'A']
+        R0netlist['R0'].append([len(x[i]) for i in range(len(x.index.levels[0]))])
+        R0netlist['repoavg'].append([np.mean((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+        R0netlist['repovar'].append([np.var((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+
         adiix = dfworm.meta.index[dfworm.meta.stage == "A"].values
         #Adult survival is based on weibull cdf
         kill_adult_rand = np.random.random(adiix.shape[0])

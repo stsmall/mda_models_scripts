@@ -25,7 +25,8 @@ from figs.village import Village
 from figs.calc_outstats import allelefreq_fx
 from figs.plotting import (plot_allele_frequency,
         plot_coordinates_host)
-import figs.figs2stats as figstats
+import figs.figs2stats.py as demostats
+#import figs.figs2stats as figstats
 
 def wb_sims(config_file):
     '''main function for simulations
@@ -138,18 +139,18 @@ def wb_sims(config_file):
     if mda:
         if selection and fitness == 1:
              from figs.survival_mda import survivalmda_sel1_fx as survfx
-             print("Using MDA and Selection, fitness is 1")
+             print("\nUsing MDA and Selection, fitness is 1")
         elif selection and fitness == 2:
              from figs.survival_mda import survivalmda_sel2_fx as survfx
-             print("Using MDA and Selection, fitness is 2")
+             print("\nUsing MDA and Selection, fitness is 2")
         else:
              from figs.survival_mda import survivalmda_fx as survfx
-             print("Using MDA and NO Selection")
+             print("\nUsing MDA and NO Selection")
     else:
         from figs.survival import survivalbase_fx as survfx
-        print("Using Base Model and Selection is {}".format(selection))
+        print("\nUsing Base Model and Selection is {}".format(selection))
 
-    print("\n\nSelection is {}\nMDA is {}\nFitness is {}\n\n".format(selection, mda, fitness))
+    #print("\n\nSelection is {}\nMDA is {}\nFitness is {}\n\n".format(selection, mda, fitness))
     dist = [0]
     dist.extend(initial_distance_m)
     distvill = [sum(dist[:i+1]) for i in range(len(dist))]
@@ -196,7 +197,7 @@ def wb_sims(config_file):
     mdalist = [mda_start + burn_in, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
     L3transdict = defaultdict(list)
-    R0netlist = []
+    R0netlist = defaultdict(list)
 
 ####start sims
     for month in range(1,sim_time):
@@ -228,7 +229,7 @@ def wb_sims(config_file):
                                 dfHost,
                                 dfworm,
                                 R0netlist)
-        print(dfworm.meta.shape[0])
+        #print(dfworm.meta.shape[0])
         if dfworm.meta.shape[0] == 0:
             break
         #store intialized after burnin
@@ -243,32 +244,32 @@ def wb_sims(config_file):
                 pickle.dump(dfHost, output, -1)
         #log data
         elif month > burn_in and month%logTime == 0:
-            with open('dfworm_{}.pkl'.format(month), 'wb') as output:
+            with open('dfworm_{}.pkl'.format(month - burn_in), 'wb') as output:
                 pickler = pickle.Pickler(output, -1)
                 dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                        dfworm.sel, dfworm.coord)
                 pickler.dump(dfworm)
             del dfworm_x
-            with open('dfHost_{}.pkl'.format(month), 'wb') as output:
+            with open('dfHost_{}.pkl'.format(month - burn_in), 'wb') as output:
                 pickle.dump(dfHost, output, -1)
         else: pass
 
     #print out last rep
-    with open('dfworm_{}.pkl'.format(month), 'wb') as output:
+    with open('dfworm_final.pkl', 'wb') as output:
         pickler = pickle.Pickler(output, -1)
         dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                dfworm.sel, dfworm.coord)
         pickler.dump(dfworm)
     del dfworm_x
-    with open('dfHost_{}.pkl'.format(month), 'wb') as output:
+    with open('dfHost_final.pkl', 'wb') as output:
         pickle.dump(dfHost, output, -1)
-    with open('L3transdict_{}.pkl'.format(month), 'wb') as output:
+    with open('L3transdict.pkl'.format(month), 'wb') as output:
         pickle.dump(L3transdict, output, -1)
     with open('R0netlist.pkl'.format(month), 'wb') as output:
         pickle.dump(R0netlist, output, -1)
 
     #start stats
-    #figstats(L3transdict, dfworm, dfHost, village, outstats)
+    demostats(logTime, sim_time, outstats)
 
     return(seed, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))
 

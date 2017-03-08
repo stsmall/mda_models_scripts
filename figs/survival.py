@@ -103,8 +103,13 @@ def survivalbase_fx(month,
 
     '''
     if month%12 == 0:
-        R0netlist.append(sum((dfworm.meta.stage == "A") & (dfworm.meta.R0net < (len(R0netlist) + 1))
-                                            & (dfworm.meta.R0net > len(R0netlist))))
+        ##stats
+        x = dfworm.meta.groupby(["village","stage"]).apply(lambda y: y[(y.R0net < (len(R0netlist['R0']) + 1))
+                            & (y.R0net > len(R0netlist['R0']))]).R0net[:,'A']
+        R0netlist['R0'].append([len(x[i]) for i in range(len(x.index.levels[0]))])
+        R0netlist['repoavg'].append([np.mean((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+        R0netlist['repovar'].append([np.var((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+        ##
         dfHost, dfworm = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
                 village)
 
