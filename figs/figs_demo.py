@@ -7,7 +7,7 @@ Created on Wed Mar  8 11:33:55 2017
 """
 import numpy as np
 import pandas as pd
-from .plotting.py import plot_coordinates_host
+from .plotting import plot_coordinates_host
 
 def prevTrans_fx(L3transdict, logTime):
     '''calculates the mean prev and transmission for summary table
@@ -43,7 +43,7 @@ def prevTrans_fx(L3transdict, logTime):
     varPrev = [val for pair in zip(*varprev) for val in pair]
 
     #write to out
-    transTable.to_csv(transTable)
+    transTable.to_csv("transTable.csv")
 
     return(avgTrans, avgPrev, varTrans, varPrev, vill)
 
@@ -125,7 +125,7 @@ def demo_hoststats_fx(dfworm, dfHost, mon):
                                   "juv" : njuv,
                                   "mf" : nmf
                                   })
-    demohostTable.to_csv()
+    demohostTable.to_csv('demohostTable.csv')
     return(None)
 ###################################
 def host_stats_fx(dfHost, thetaHost):

@@ -10,16 +10,15 @@ import numpy as np
 import pandas as pd
 
 #popgen
-from .figs_popgen.py import villpopgen_fx #time series, only on MF
-from .figs_popgen.py import figs2vcf_fx #only on final, all stages
-from .figs_popgen.py import figs2scikit_fx
-from .figs_popgen.py import hostpopgen_fx
+from .figs_popgen import villpopgen_fx #time series, only on MF
+from .figs_popgen import figs2vcf_fx #only on final, all stages
+from .figs_popgen import figs2scikit_fx
 #demography
-from .figs_demo.py import demo_stats_fx
-from .figs_demo.py import prevTrans_fx
-from .figs_demo.py import R0net_fx
-from .figs_demo.py import host_stats_fx
-from .figs_demo.py import demo_hoststats_fx
+from .figs_demo import demo_stats_fx
+from .figs_demo import prevTrans_fx
+from .figs_demo import R0net_fx
+from .figs_demo import host_stats_fx
+from .figs_demo import demo_hoststats_fx
 
 def output_tables_fx(logTime, sim_time, outstats):
     '''builds summary table from FiGS simulations

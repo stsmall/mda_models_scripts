@@ -18,10 +18,10 @@ from libsequence.parallel import scheduler_init
 init = scheduler_init(10)
 from libsequence.fst import fst
 #plotting
-from .plottin.py import plot_allele_trace #for sel_trace_allele
-from .plottin.py import plot_allele_frequency #for SFS and jSFS
-from .plotting.py import plot_hapnetwork #for mitochondrial networks on MF
-from .plotting.py import plot_pairwise
+from .plotting import plot_allele_trace #for sel_trace_allele
+from .plotting import plot_allele_frequency #for SFS and jSFS
+from .plotting import plot_hapnetwork #for mitochondrial networks on MF
+from .plotting import plot_pairwise
 
 def site_freqspec_fx(dfworm, mon, mf, locus):
     '''calculates the site frequency spectrum. If >1 pop also does jSFS
@@ -246,7 +246,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
                                 "numsingletons" : numsingletons
                                 })
     popgenTable.to_csv("popgenHostTable_v{}_m{}".format(vill, mon))
-
+    #maybe these are nested lists then to numpy then to ndarray.tofile('fstmatrix_)
 #    #writes full matrix for analysis
 #    write2file.csv("fstmatrix_v{}_m{}".format(vill, mon))
 #    write2file.csv("dxymatrix_v{}_m{}".format(vill, mon))
@@ -293,6 +293,7 @@ def villpopgen_fx(dfworm, outstats, vill, mon):
         pos = dfworm.pos[locus] / float(basepairs[loc])
 #        win_size = float(outstats[2]) / float(basepairs[loc])
 #        win_step = 1.0/num_windows
+        import ipdb; ipdb.set_trace()
         adpop = dfworm.meta[(dfworm.meta.village == vill) & (dfworm.meta.stage == "A")].sample(sample_size).index.values
         jvpop = dfworm.meta[(dfworm.meta.village == vill) & (dfworm.meta.stage == "J")].sample(sample_size).index.values
         mfpop = dfworm.meta[(dfworm.meta.village == vill) & (dfworm.meta.stage == "M")].sample(sample_size).index.values

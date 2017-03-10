@@ -22,7 +22,7 @@ from figs.worm import Worms
 import figs.wbsims_initialize as wbinit
 import figs.transmissionKDtree as trans
 from figs.village import Village
-from figs.figs2stats.py import output_tables_fx
+from figs.figs2stats import output_tables_fx
 #import figs.figs2stats as figstats
 
 def wb_sims(config_file):
