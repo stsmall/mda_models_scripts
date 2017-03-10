@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 from libsequence.polytable import simData
 from libsequence.summstats import polySIM
+from libsequence.summstats import garudStats
+from libsequence.summstats import ld
+from libsequence.summstats import lhaf
 from libsequence.windows import Windows
 from libsequence.parallel import scheduler_init
 init = scheduler_init(10)
@@ -87,7 +90,7 @@ def figs2vcf_fx(dfworm):
 
     return(None)
 
-def figs2scikit_fx(dfworm):
+def figs2scikit_fx(dfworm, sample_size, vill):
     '''takes worm object and output format to load into scikit-allel
 
     Parameters
@@ -96,7 +99,26 @@ def figs2scikit_fx(dfworm):
     Returns
     -------
     '''
-
+    import allel
+    sample_size = 30
+    vill = 1
+    #groupby: village == vill, stage == "M", hostidx
+    mf = dfworm.meta[(dfworm.meta["stage"] == "M") & (dfworm.meta["village"] == vill)].index.values
+    mf_subsample = mf[np.random.choice(mf.shape[0], sample_size, replace = False)]
+    haps1 = dfworm.h1['1'][mf_subsample]
+    haps2 = dfworm.h2['1'][mf_subsample]
+    #import into allel
+    positions = dfworm.pos['1']
+    haparray_ind = np.dstack((haps1, haps2))
+    haparray_pop = np.concatenate(haparray_ind, axis = 1)
+    h = allel.HaplotypeArray(haparray_pop)
+    #g = h.to_genotypes(ploidy=2)
+    ac = h.count_alleles()
+#    mf_mask = dfworm.meta.ix[mf].groupby("hostidx").size() < sample_size
+#    if any(mf_mask):
+#        mf = dfworm.meta.ix[mf][~dfworm.meta["hostidx"].isin(mf_mask[mf_mask].index.values)].index.values
+#    mf_pairs = dfworm.meta.ix[mf].groupby("hostidx").apply(lambda y: y.sample(sample_size).index.values)
+#    hostidx = [h for h in mf_pairs.keys()]
 
     return(None)
 
@@ -140,13 +162,13 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
         locus = str(loc)
         #print sfs and allele traces
         site_freqspec_fx(dfworm, mon, mf, locus)
-        for host1 in mf_pairs:
-            for host2 in mf_pairs:
+        for host1 in hostidx:
+            for host2 in hostidx:
                 if host1 != host2:
-                    pos = dfworm.pos["locus"] / float(basepairs[loc])
+                    pos = dfworm.pos[locus] / float(basepairs[loc])
                     #pylibseq
-                    pop1 = np.append(dfworm.h1[locus][host1], dfworm.h2[locus][host1])
-                    pop2 = np.append(dfworm.h1[locus][host2], dfworm.h2[locus][host2])
+                    pop1 = np.vstack([dfworm.h1[locus][mf_pairs[host1]], dfworm.h2[locus][mf_pairs[host1]]])
+                    pop2 = np.vstack([dfworm.h1[locus][mf_pairs[host2]], dfworm.h2[locus][mf_pairs[host2]]])
                     gtpop1 = [''.join(str(n) for n in y) for y in pop1]
                     gtpop2 = [''.join(str(n) for n in y) for y in pop2]
 
@@ -183,11 +205,12 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
                     numsingletons.append(pspop1.numsingletons())
                     numsingletons.append(pspop2.numsingletons())
 
-    #                wallsb = pspop1.wallsb() + pspop1_h2.wallsb()
-    #                wallsbprime = pspop1.wallsbprime() + pspop1_h2.wallsbprime()
-    #                wallsq = pspop1.wallsq() + pspop1_h2.wallsq()
-    #                lhaf = pspop1.lhaf() + pspop1_h2.lhaf()
-    #                garudStats = pspop1.garudStats() + pspop1_h2.garudStats()
+#                    wallsb = pspop1.wallsb()
+#                    wallsbprime = pspop1.wallsbprime()
+#                    wallsq = pspop1.wallsq()
+#                    garudStats_t = garudStats(sdpop1)
+#                    lhaf_t = lhaf(sdpop1,10) #what is the double?
+#                    ld_t = ld(sdpop1, haveOutgroup = False, mincount = .05, maxDist = 5000)
 
                     #fst
                     sdfst = simData()
@@ -195,11 +218,11 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
                     sdfst.assign_sep(pos, geno_fst)
                     size = [pop1.shape[0], pop2.shape[0]]
                     f1 = fst(sdfst, size)
-                    fst_t.append(f1)
+                    fst_t.append(f1.slatkin())
 
                     #dxy, sample sizes must be equal
-                    size = max([len(pop1),len(pop2)])
-                    dxy_t = sum([sum((i + j) == 1) for i in pop1[:size] for j in pop2[:size]]) / ((size * (1 - size)) / 2.0)
+                    sizedxy = min(size)
+                    dxy_t = sum([sum((i + j) == 1) for i in pop1[:sizedxy] for j in pop2[:sizedxy]]) / (sizedxy**2)
                     pi_p1 = sum([sum((x + y) == 1) for i, x in enumerate(pop1) for j, y in enumerate(pop1) if i != j ]) / (len(pop1) * (len(pop1) - 1 ) / 2.0)
                     pi_p2 = sum([sum((x + y) == 1) for i, x in enumerate(pop2) for j, y in enumerate(pop2) if i != j ]) / (len(pop2) * (len(pop2) - 1 ) / 2.0)
                     da.append(dxy_t - ((pi_p1 + pi_p2) / 2.0))

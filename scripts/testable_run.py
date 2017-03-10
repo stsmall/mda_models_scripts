@@ -242,7 +242,7 @@ def wb_sims(config_file):
                 pickler = pickle.Pickler(output, -1)
                 dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                        dfworm.sel, dfworm.coord)
-                pickler.dump(dfworm)
+                pickler.dump(dfworm_x)
             del dfworm_x
             with open('dfHost_{}.pkl'.format(month - burn_in), 'wb') as output:
                 pickle.dump(dfHost, output, -1)
@@ -253,7 +253,7 @@ def wb_sims(config_file):
         pickler = pickle.Pickler(output, -1)
         dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                dfworm.sel, dfworm.coord)
-        pickler.dump(dfworm)
+        pickler.dump(dfworm_x)
     del dfworm_x
     with open('dfHost_final.pkl', 'wb') as output:
         pickle.dump(dfHost, output, -1)
