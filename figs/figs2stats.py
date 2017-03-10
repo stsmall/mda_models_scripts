@@ -94,7 +94,7 @@ def output_tables_fx(logTime, sim_time, outstats):
             dfHost = pickle.load(host)
         infhost_t = host_stats_fx(dfHost, thetaHost)
         infhost.append(infhost_t)
-        demo_hoststats_fx(dfworm, dfHost, vill, mon)
+        demo_hoststats_fx(dfworm, dfHost, mon)
 
     #demotable
     summaryTable = pd.DataFrame({"month" : month,

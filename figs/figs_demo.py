@@ -88,7 +88,7 @@ def demo_stats_fx(dfworm, vill):
     return(adult, vadult, juv, vjuv, mf, vmf)
 
 #################################
-def demo_hoststats_fx(dfworm, dfHost):
+def demo_hoststats_fx(dfworm, dfHost, mon):
     '''calculates various demographic statistics for each hostidx
 
     Parameters
@@ -98,11 +98,33 @@ def demo_hoststats_fx(dfworm, dfHost):
     -------
     '''
 
-    adult = dfworm.meta.groupby(["stage","hostidx"]).size()['A'].sum()
-    juv = dfworm.meta.groupby(["stage","hostidx"]).size()['J'].sum()
-    mf = dfworm.meta.groupby(["stage","hostidx"]).size()['M'].sum()
-    dfhost.MDAcum
-    demohostTable = pd.DataFrame({})
+    adult = dfworm.meta.groupby(["stage","hostidx"])
+    juv = dfworm.meta.groupby(["stage","hostidx"])
+    mf = dfworm.meta.groupby(["stage","hostidx"])
+    hostidx = dfworm.meta.hostidx.unique()
+    nadult = []
+    njuv = []
+    nmf = []
+    for host in hostidx:
+        try:
+            nadult.append(adult.size()['A'][host])
+        except KeyError:
+            nadult.append(0)
+        try:
+            njuv.append(juv.size()['J'][host])
+        except KeyError:
+            njuv.append(0)
+        try:
+            nmf.append(mf.size()['M'][host])
+        except KeyError:
+            nmf.append(0)
+
+    demohostTable = pd.DataFrame({"month" : mon,
+                                  "hostidx" : hostidx,
+                                  "adult" : nadult,
+                                  "juv" : njuv,
+                                  "mf" : nmf
+                                  })
     demohostTable.to_csv()
     return(None)
 ###################################
