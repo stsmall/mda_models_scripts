@@ -18,10 +18,10 @@ from libsequence.parallel import scheduler_init
 init = scheduler_init(10)
 from libsequence.fst import fst
 #plotting
-from .plotting import plot_allele_trace #for sel_trace_allele
-from .plotting import plot_allele_frequency #for SFS and jSFS
-from .plotting import plot_hapnetwork #for mitochondrial networks on MF
-from .plotting import plot_pairwise
+#from .plotting import plot_allele_trace #for sel_trace_allele
+#from .plotting import plot_allele_frequency #for SFS and jSFS
+#from .plotting import plot_hapnetwork #for mitochondrial networks on MF
+#from .plotting import plot_pairwise
 
 def site_freqspec_fx(dfworm, mon, mf, locus):
     '''calculates the site frequency spectrum. If >1 pop also does jSFS
@@ -32,15 +32,17 @@ def site_freqspec_fx(dfworm, mon, mf, locus):
     Returns
     -------
     '''
+    print("sfs")
     #calculate SFS
     mfsfs1 = dfworm.h1[locus][mf]
     mfsfs2 = dfworm.h2[locus][mf]
     freqsum = sum(dfworm.h1[locus][mfsfs1]) + sum(dfworm.h2[locus][mfsfs2])
     sfs = np.unique(np.sort(freqsum), return_counts = True)[1]
-    plot_allele_frequency(sfs)
-
+#    plot_allele_frequency(sfs)
+    print("{}".format(sfs))
     #pass to sel_trace
     sel_trace_fx(dfworm, freqsum, locus, mf)
+
     return(None)
 
 def sel_trace_fx(dfworm, freqsum, locus, mf):
@@ -53,13 +55,15 @@ def sel_trace_fx(dfworm, freqsum, locus, mf):
     Returns
     -------
     '''
+    print("seltrace")
     if bool(dfworm.sel):
         #records trace of selected alleles
         ftrace = np.where(dfworm.sel[locus + 'F'] > 0)[0]
         f_freq = freqsum[ftrace] / (2.0 * mf.shape[0])
         strace = np.where(dfworm.sel[locus + 'S'] > 0)[0]
         s_freq = freqsum[strace] / (2.0 * mf.shape[0])
-    plot_allele_trace(f_freq, s_freq)
+#        plot_allele_trace(f_freq, s_freq)
+    else: pass
     return(None)
 
 def haplotype_net_fx(dfworm):
@@ -71,6 +75,7 @@ def haplotype_net_fx(dfworm):
     Returns
     -------
     '''
+    print("hapnet")
     #mthaps = dfworm.h1['0']
     #vcf2networks, fitchi, pegas/adgenet in R ???
 
@@ -86,6 +91,7 @@ def figs2vcf_fx(dfworm):
     Returns
     -------
     '''
+    print("figs2vcf")
 
 
     return(None)
@@ -99,6 +105,7 @@ def figs2scikit_fx(dfworm, sample_size, vill):
     Returns
     -------
     '''
+    print("scikit")
     import allel
     sample_size = 30
     vill = 1
@@ -133,6 +140,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
     fst_slat : float
         slatkin 1991 calculation of Fst, mean over all host-pops in village
     '''
+    print("pairwise")
     fst_t = []
     dxy = []
     da = []
@@ -160,75 +168,65 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
 #####
     for loc in range(1, len(basepairs)):
         locus = str(loc)
+        pop2 = []
         #print sfs and allele traces
         site_freqspec_fx(dfworm, mon, mf, locus)
-        for host1 in hostidx:
-            for host2 in hostidx:
-                if host1 != host2:
-                    pos = dfworm.pos[locus] / float(basepairs[loc])
-                    #pylibseq
-                    pop1 = np.vstack([dfworm.h1[locus][mf_pairs[host1]], dfworm.h2[locus][mf_pairs[host1]]])
-                    pop2 = np.vstack([dfworm.h1[locus][mf_pairs[host2]], dfworm.h2[locus][mf_pairs[host2]]])
-                    gtpop1 = [''.join(str(n) for n in y) for y in pop1]
-                    gtpop2 = [''.join(str(n) for n in y) for y in pop2]
+        print("back2hostgen")
+        pos = dfworm.pos[locus] / float(basepairs[loc])
+        for host in hostidx:
+            #pylibseq
+            pop1 = np.vstack([dfworm.h1[locus][mf_pairs[host]], dfworm.h2[locus][mf_pairs[host]]])
+            pop2.append(pop1)
+            gtpop1 = [''.join(str(n) for n in y) for y in pop1]
+            #host stats
+            sdpop1 = simData()
+            sdpop1.assign_sep(pos, gtpop1)
+            pspop1 = polySIM(sdpop1)
+            print("hoststats")
+            theta.append(pspop1.thetaw())
+            tajimasd.append(pspop1.tajimasd())
+            thetapi.append(pspop1.thetapi())
+            fulid.append(pspop1.fulid())
+            fulidstar.append(pspop1.fulidstar())
+            fulif.append(pspop1.fulif())
+            fulifstar.append(pspop1.fulifstar())
+            hprime.append(pspop1.hprime())
+            numexternalmutations.append(pspop1.numexternalmutations())
+            nummutations.append(pspop1.nummutations())
+            numpoly.append(pspop1.numpoly())
+            numsingletons.append(pspop1.numsingletons())
+#            wallsb = pspop1.wallsb()
+#            wallsbprime = pspop1.wallsbprime()
+#            wallsq = pspop1.wallsq()
+#            garudStats_t = garudStats(sdpop1)
+#            lhaf_t = lhaf(sdpop1,10) #what is the double?
+#            ld_t = ld(sdpop1, haveOutgroup = False, mincount = .05, maxDist = 5000)
 
-                    #host stats
-                    sdpop1 = simData()
-                    sdpop1.assign_sep(pos, gtpop1)
-                    pspop1 = polySIM(sdpop1)
-                    sdpop2 = simData()
-                    sdpop2.assign_sep(pos, gtpop2)
-                    pspop2 = polySIM(sdpop2)
-
-                    theta.append(pspop1.thetaw())
-                    theta.append(pspop2.thetaw())
-                    tajimasd.append(pspop1.tajimasd())
-                    tajimasd.append(pspop2.tajimasd())
-                    thetapi.append(pspop1.thetapi())
-                    thetapi.append(pspop2.thetapi())
-                    fulid.append(pspop1.fulid())
-                    fulid.append(pspop2.fulid())
-                    fulidstar.append(pspop1.fulidstar())
-                    fulidstar.append(pspop2.fulidstar())
-                    fulif.append(pspop1.fulif())
-                    fulif.append(pspop2.fulif())
-                    fulifstar.append(pspop1.fulifstar())
-                    fulifstar.append(pspop2.fulifstar())
-                    hprime.append(pspop1.hprime())
-                    hprime.append(pspop2.hprime())
-                    numexternalmutations.append(pspop1.numexternalmutations())
-                    numexternalmutations.append(pspop2.numexternalmutations())
-                    nummutations.append(pspop1.nummutations())
-                    nummutations.append(pspop2.nummutations())
-                    numpoly.append(pspop1.numpoly())
-                    numpoly.append(pspop2.numpoly())
-                    numsingletons.append(pspop1.numsingletons())
-                    numsingletons.append(pspop2.numsingletons())
-
-#                    wallsb = pspop1.wallsb()
-#                    wallsbprime = pspop1.wallsbprime()
-#                    wallsq = pspop1.wallsq()
-#                    garudStats_t = garudStats(sdpop1)
-#                    lhaf_t = lhaf(sdpop1,10) #what is the double?
-#                    ld_t = ld(sdpop1, haveOutgroup = False, mincount = .05, maxDist = 5000)
-
+        for i, pop in enumerate(pop2):
+            for j, pop in enumerate(pop2):
+                if i != j:
                     #fst
+                    print("fst")
                     sdfst = simData()
-                    geno_fst = gtpop1 + gtpop2
-                    sdfst.assign_sep(pos, geno_fst)
-                    size = [pop1.shape[0], pop2.shape[0]]
+                    geno_fst = np.vstack(pop + pop2[i + 1])
+                    gtpop_fst = [''.join(str(n) for n in y) for y in geno_fst]
+                    sdfst.assign_sep(pos, gtpop_fst)
+                    size = [len(pop), len(pop2[i+1])]
                     f1 = fst(sdfst, size)
                     fst_t.append(f1.slatkin())
-
+                    #pylibseq
+                    print("dxy")
                     #dxy, sample sizes must be equal
-                    sizedxy = min(size)
-                    dxy_t = sum([sum((i + j) == 1) for i in pop1[:sizedxy] for j in pop2[:sizedxy]]) / (sizedxy**2)
-                    pi_p1 = sum([sum((x + y) == 1) for i, x in enumerate(pop1) for j, y in enumerate(pop1) if i != j ]) / (len(pop1) * (len(pop1) - 1 ) / 2.0)
-                    pi_p2 = sum([sum((x + y) == 1) for i, x in enumerate(pop2) for j, y in enumerate(pop2) if i != j ]) / (len(pop2) * (len(pop2) - 1 ) / 2.0)
+                    sizedxy = min(pop.shape[0],pop2[i + 1].shape[0])
+                    #is this total pairwise or product of 2 pops? Diploid?
+                    dxy_t = sum([sum((i + j) == 1) for i in pop1[:sizedxy] for j in pop2[:sizedxy]]) / (sizedxy**2.0)
+                    pi_p1 = sum([sum((x + y) == 1) for i, x in enumerate(pop1) for j, y in enumerate(pop1) if i != j ]) / (len(pop1)**2.0)
+                    pi_p2 = sum([sum((x + y) == 1) for i, x in enumerate(pop2) for j, y in enumerate(pop2) if i != j ]) / (len(pop2)**2.0)
                     da.append(dxy_t - ((pi_p1 + pi_p2) / 2.0))
                     dxy.append(dxy_t)
                     pi.append(pi_p1)
                     pi.append(pi_p2)
+                else: pass
 
     popgenTable = pd.DataFrame({"month" : [mon] * len(hostidx),
                                 "hostidx" : hostidx,
@@ -270,6 +268,7 @@ def villpopgen_fx(dfworm, outstats, vill, mon):
     -------
 
     '''
+    print("villagePopgen")
     #vary these for sample size and locus size info
     sample_size = outstats[1] #number of sequences to sample
     num_windows = outstats[3]
@@ -293,7 +292,6 @@ def villpopgen_fx(dfworm, outstats, vill, mon):
         pos = dfworm.pos[locus] / float(basepairs[loc])
 #        win_size = float(outstats[2]) / float(basepairs[loc])
 #        win_step = 1.0/num_windows
-        import ipdb; ipdb.set_trace()
         adpop = dfworm.meta[(dfworm.meta.village == vill) & (dfworm.meta.stage == "A")].sample(sample_size).index.values
         jvpop = dfworm.meta[(dfworm.meta.village == vill) & (dfworm.meta.stage == "J")].sample(sample_size).index.values
         mfpop = dfworm.meta[(dfworm.meta.village == vill) & (dfworm.meta.stage == "M")].sample(sample_size).index.values

@@ -7,7 +7,7 @@ Created on Wed Mar  8 11:33:55 2017
 """
 import numpy as np
 import pandas as pd
-from .plotting import plot_coordinates_host
+#from .plotting import plot_coordinates_host
 
 def prevTrans_fx(L3transdict, logTime):
     '''calculates the mean prev and transmission for summary table
@@ -18,7 +18,7 @@ def prevTrans_fx(L3transdict, logTime):
     Returns
     -------
     '''
-
+    print("prevTrans")
     #trans_prev
     vill = len(L3transdict['prev'][0])
     time = len(L3transdict['prev'])
@@ -56,6 +56,7 @@ def R0net_fx(R0netlist):
     Returns
     -------
     '''
+    print("R0")
     #R0 by village
     R0 = []
     R0_t = zip(*R0netlist['R0'])
@@ -77,7 +78,7 @@ def demo_stats_fx(dfworm, vill):
     Returns
     -------
     '''
-
+    print("demostats")
     adult = dfworm.meta.groupby(["stage","village","hostidx"]).size()['A'][vill].mean()
     vadult = dfworm.meta.groupby(["stage","village","hostidx"]).size()['A'][vill].var()
     juv = dfworm.meta.groupby(["stage","village","hostidx"]).size()['J'][vill].mean()
@@ -97,7 +98,7 @@ def demo_hoststats_fx(dfworm, dfHost, mon):
     Returns
     -------
     '''
-
+    print("demohoststats")
     adult = dfworm.meta.groupby(["stage","hostidx"])
     juv = dfworm.meta.groupby(["stage","hostidx"])
     mf = dfworm.meta.groupby(["stage","hostidx"])
@@ -137,6 +138,7 @@ def host_stats_fx(dfHost, thetaHost):
     Returns
     -------
     '''
+    print("infhost")
     infhost = ([dfHost.groupy("village").size()[i] for i in range(len())])
-    plot_coordinates_host(dfHost, thetaHost)
+#    plot_coordinates_host(dfHost, thetaHost)
     return(infhost)

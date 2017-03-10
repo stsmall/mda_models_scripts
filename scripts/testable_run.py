@@ -263,6 +263,7 @@ def wb_sims(config_file):
         pickle.dump(R0netlist, output, -1)
 
     #start stats
+    print("\n\ncalculating stats\n\n")
     output_tables_fx(logTime, sim_time, outstats)
 
     return(seed, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))

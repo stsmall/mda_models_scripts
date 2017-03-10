@@ -29,10 +29,11 @@ def output_tables_fx(logTime, sim_time, outstats):
     Returns
     -------
     '''
+
     #prev, transmission
     with open('L3transdict.pkl','rb') as input:
         L3transdict = pickle.load(input)
-    avgTrans, avgPrev, varTrans, varPrev, vill= prevTrans_fx(L3transdict, logTime)
+    avgTrans, avgPrev, varTrans, varPrev, villages = prevTrans_fx(L3transdict, logTime)
 
     #R0net
     with open('R0netlist.pkl','rb') as input:
@@ -40,8 +41,8 @@ def output_tables_fx(logTime, sim_time, outstats):
     R0, ravg, rvar = R0net_fx(R0netlist)
 
     #demo table params
-    month = np.repeat(range(logTime, sim_time, logTime), vill)
-    village = range(vill) * len(month)
+    month = np.repeat(range(logTime, sim_time, logTime), villages)
+    village = range(villages) * len(month)
     infhost = []
     adult = []
     juv = []
@@ -60,11 +61,12 @@ def output_tables_fx(logTime, sim_time, outstats):
 
     ####load data from incremental output
     for mon in range(logTime, sim_time, logTime):
+        print("figs2stats")
         #worm files
         with open('dfworm_{}.pkl'.format(mon), 'rb') as worm:
             dfworm = pickle.load(worm)
 
-        for v in range(vill):
+        for vill in range(villages):
             #demo stats
             adult_t, vadult_t, juv_t, vjuv_t, mf_t, vmf_t = demo_stats_fx(dfworm, vill)
 
