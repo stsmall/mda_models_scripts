@@ -54,9 +54,10 @@ def output_tables_fx(logTime, sim_time, outstats):
     thetaJ = []
     thetaM = []
     fst_b = []
-    Tw_Tb =[]
+    da =[]
     dxy = []
     tajD =[]
+    pi = []
 
     ####load data from incremental output
     for mon in range(logTime, sim_time, logTime):
@@ -76,23 +77,21 @@ def output_tables_fx(logTime, sim_time, outstats):
             vmf.append(vmf_t)
 
             #popgen stats
-            thetaA_t, thetaJ_t, thetaM_t, fst_b_t, Tw_Tb_t, dxy_t, tajD_t = villpopgen_fx(dfworm, outstats, vill, mon)
+            thetaA_t, thetaJ_t, thetaM_t, fst_b_t, da_t, dxy_t, tajD_t, pi_t= villpopgen_fx(dfworm, outstats, vill, mon)
 
             thetaA.append(thetaA_t)
             thetaJ.append(thetaJ_t)
             thetaM.append(thetaM_t)
             fst_b.append(fst_b_t)
-            Tw_Tb.append(Tw_Tb_t)
+            da.append(da_t)
             dxy.append(dxy_t)
             tajD.append(tajD_t)
-
-        ##hostidx level popgen stats
-        thetaHost = hostpopgen_fx(dfworm, outstats, mon)
+            pi.append(pi_t)
 
         ##host stats
         with open('dfHost_{}.pkl'.format(mon), 'rb') as host:
             dfHost = pickle.load(host)
-        infhost_t = host_stats_fx(dfHost, thetaHost)
+        infhost_t = host_stats_fx(dfHost)
         infhost.append(infhost_t)
         demo_hoststats_fx(dfworm, dfHost, mon)
 
@@ -117,13 +116,14 @@ def output_tables_fx(logTime, sim_time, outstats):
                                 "thetaJ" : thetaJ,
                                 "thetaM" : thetaM,
                                 "fst_b" : fst_b,
-                                "Tw_Tb" : Tw_Tb,
+                                "da" : da,
                                 "dxy" : dxy,
-                                "tajD" : tajD
+                                "tajD" : tajD,
+                                "pi" : pi
                                 })
     summaryTable = summaryTable.loc[:, ['month', 'village', 'inf_host', 'avg_prev', 'var_prev', 'avg_trans',
                                   'var_trans', 'R0', 'avg_repo', 'var_repo', 'avg_adult', 'avg_juv', 'avg_mf',
-                                  'var_adult', 'var_juv', 'var_mf','thetaA', 'thetaJ', 'thetaM', 'fst_b', 'Tw_Tb', 'dxy', 'tajD']]
+                                  'var_adult', 'var_juv', 'var_mf','thetaA', 'thetaJ', 'thetaM', 'fst_b', 'da', 'dxy', 'tajD', 'pi']]
     summaryTable.to_csv(summaryTable)
 
 
