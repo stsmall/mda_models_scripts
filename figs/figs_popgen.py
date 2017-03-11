@@ -198,7 +198,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
             numsingletons.append(pspop1.numsingletons())
             #this is super slow
             size = pop1.shape[0]
-            pi.append(sum([sum((i+j) == 1) for i,j in combinations(pop1, 2)]) / (size*(size-1)/2.0))
+            pi.append(sum([sum((i+j) == 1) for i, j in combinations(pop1, 2)]) / (size*(size-1)/2.0))
 
 #            wallsb = pspop1.wallsb()
 #            wallsbprime = pspop1.wallsbprime()

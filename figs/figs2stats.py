@@ -92,7 +92,7 @@ def output_tables_fx(logTime, sim_time, outstats):
         ##host stats
         with open('dfHost_{}.pkl'.format(mon), 'rb') as host:
             dfHost = pickle.load(host)
-        infhost_t = host_stats_fx(dfHost)
+        infhost_t = host_stats_fx(dfHost, villages)
         infhost.append(infhost_t)
         demo_hoststats_fx(dfworm, dfHost, mon)
 

@@ -129,7 +129,7 @@ def demo_hoststats_fx(dfworm, dfHost, mon):
     demohostTable.to_csv('demohostTable.csv')
     return(None)
 ###################################
-def host_stats_fx(dfHost):
+def host_stats_fx(dfHost,villages):
     '''calculates stats for the specific host
 
     Parameters
@@ -139,6 +139,6 @@ def host_stats_fx(dfHost):
     -------
     '''
     print("infhost")
-    infhost = ([dfHost.groupy("village").size()[i] for i in range(len())])
+    infhost = [dfHost.groupy("village").size()[i] for i in range(villages)]
 #    plot_coordinates_host(dfHost, thetaHost)
     return(infhost)
