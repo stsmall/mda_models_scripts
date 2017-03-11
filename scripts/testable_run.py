@@ -226,6 +226,7 @@ def wb_sims(config_file):
         #print(dfworm.meta.shape[0])
         if dfworm.meta.shape[0] == 0:
             break
+            print("\n\n****POPULATION IS EXTINCT***\n\n")
         #store intialized after burnin
         if month == burn_in:
             with open('dfworm_burnin.pkl', 'wb') as output:

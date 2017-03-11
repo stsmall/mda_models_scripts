@@ -8,6 +8,7 @@
 """
 import numpy as np
 import pandas as pd
+from itertools import combinations
 from libsequence.polytable import simData
 from libsequence.summstats import polySIM
 from libsequence.summstats import garudStats
@@ -34,10 +35,12 @@ def site_freqspec_fx(dfworm, mon, mf, locus):
     '''
     print("sfs")
     #calculate SFS
-    mfsfs1 = dfworm.h1[locus][mf]
-    mfsfs2 = dfworm.h2[locus][mf]
-    freqsum = sum(dfworm.h1[locus][mfsfs1]) + sum(dfworm.h2[locus][mfsfs2])
-    sfs = np.unique(np.sort(freqsum), return_counts = True)[1]
+    mfsfs = np.vstack([dfworm.h1[locus][mf], dfworm.h2[locus][mf]])
+    freqsum = np.sum(mfsfs, axis=0)
+    sfs = np.unique(np.sort(freqsum), return_counts = True)
+#    sfsx = sfs[0]
+#    sfsy = sfs[1]
+    #np.histogram(mfsfs, bins = 10)
 #    plot_allele_frequency(sfs)
     print("{}".format(sfs))
     #pass to sel_trace
@@ -168,7 +171,6 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
 #####
     for loc in range(1, len(basepairs)):
         locus = str(loc)
-        pop2 = []
         #print sfs and allele traces
         site_freqspec_fx(dfworm, mon, mf, locus)
         print("back2hostgen")
@@ -176,13 +178,12 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
         for host in hostidx:
             #pylibseq
             pop1 = np.vstack([dfworm.h1[locus][mf_pairs[host]], dfworm.h2[locus][mf_pairs[host]]])
-            pop2.append(pop1)
             gtpop1 = [''.join(str(n) for n in y) for y in pop1]
             #host stats
             sdpop1 = simData()
             sdpop1.assign_sep(pos, gtpop1)
             pspop1 = polySIM(sdpop1)
-            print("hoststats")
+            print("hoststats {}".format(host))
             theta.append(pspop1.thetaw())
             tajimasd.append(pspop1.tajimasd())
             thetapi.append(pspop1.thetapi())
@@ -195,38 +196,41 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
             nummutations.append(pspop1.nummutations())
             numpoly.append(pspop1.numpoly())
             numsingletons.append(pspop1.numsingletons())
+            #this is super slow
+            size = pop1.shape[0]
+            pi.append(sum([sum((i+j) == 1) for i,j in combinations(pop1, 2)]) / (size*(size-1)/2.0))
+
 #            wallsb = pspop1.wallsb()
 #            wallsbprime = pspop1.wallsbprime()
 #            wallsq = pspop1.wallsq()
 #            garudStats_t = garudStats(sdpop1)
 #            lhaf_t = lhaf(sdpop1,10) #what is the double?
 #            ld_t = ld(sdpop1, haveOutgroup = False, mincount = .05, maxDist = 5000)
-
-        for i, pop in enumerate(pop2):
-            for j, pop in enumerate(pop2):
-                if i != j:
-                    #fst
-                    print("fst")
-                    sdfst = simData()
-                    geno_fst = np.vstack(pop + pop2[i + 1])
-                    gtpop_fst = [''.join(str(n) for n in y) for y in geno_fst]
-                    sdfst.assign_sep(pos, gtpop_fst)
-                    size = [len(pop), len(pop2[i+1])]
-                    f1 = fst(sdfst, size)
-                    fst_t.append(f1.slatkin())
-                    #pylibseq
-                    print("dxy")
-                    #dxy, sample sizes must be equal
-                    sizedxy = min(pop.shape[0],pop2[i + 1].shape[0])
-                    #is this total pairwise or product of 2 pops? Diploid?
-                    dxy_t = sum([sum((i + j) == 1) for i in pop1[:sizedxy] for j in pop2[:sizedxy]]) / (sizedxy**2.0)
-                    pi_p1 = sum([sum((x + y) == 1) for i, x in enumerate(pop1) for j, y in enumerate(pop1) if i != j ]) / (len(pop1)**2.0)
-                    pi_p2 = sum([sum((x + y) == 1) for i, x in enumerate(pop2) for j, y in enumerate(pop2) if i != j ]) / (len(pop2)**2.0)
-                    da.append(dxy_t - ((pi_p1 + pi_p2) / 2.0))
-                    dxy.append(dxy_t)
-                    pi.append(pi_p1)
-                    pi.append(pi_p2)
-                else: pass
+        print("fst, dxy")
+        for hostX, hostY in combinations(hostidx, 2):
+            popX = np.vstack([dfworm.h1[locus][mf_pairs[hostX]], dfworm.h2[locus][mf_pairs[hostX]]])
+            popY = np.vstack([dfworm.h1[locus][mf_pairs[hostY]], dfworm.h2[locus][mf_pairs[hostY]]])
+            sdfst = simData()
+            geno_fst = np.vstack([popX, popY])
+            gtpop_fst = [''.join(str(n) for n in y) for y in geno_fst]
+            sdfst.assign_sep(pos, gtpop_fst)
+            size = [popX.shape[0], popY.shape[0]]
+            f1 = fst(sdfst, size)
+            fst_t.append(f1.slatkin())
+            #good summary stats for ABC analysis
+#            fst_trad = f1.hsm()
+#            gst = f1.hbk()
+#            shared_sites = f1.shared()
+#            private_sites = f1.priv()
+#            fixed_sites = f1.fixed()
+            #dxy, sample sizes must be equal
+            sizedxy = min(size)
+            #is this total pairwise or product of 2 pops? Diploid?
+            dxy.append(sum([sum((x + y) == 1) for x, y in zip(popX, popY)]) / float((sizedxy))) #approximate
+            #dxy_t = sum([sum((x + y) == 1) for x in popX for y in popY]) / (sizedxy**2.0) #more precise, but really slow
+        print("da")
+        da_t = [dx - np.mean(pi_xy) for dx, pi_xy in zip(dxy, combinations(pi,2))]
+        da.append(da_t)
 
     popgenTable = pd.DataFrame({"month" : [mon] * len(hostidx),
                                 "hostidx" : hostidx,
@@ -243,7 +247,10 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
                                 "numpoly" : numpoly,
                                 "numsingletons" : numsingletons
                                 })
-    popgenTable.to_csv("popgenHostTable_v{}_m{}".format(vill, mon))
+    popgenTable = popgenTable.loc[:, ['month', 'hostidx', 'theta', 'tajD', 'thetapi', 'fulid',
+                              'fulidstar', 'fulif', 'fulifstar', 'hprime', 'numexternalmutations', 'nummutations', 'numpoly',
+                              'numsingletons']]
+    popgenTable.to_csv("popgenHostTable_v{}_m{}.csv".format(vill, mon))
     #maybe these are nested lists then to numpy then to ndarray.tofile('fstmatrix_)
 #    #writes full matrix for analysis
 #    write2file.csv("fstmatrix_v{}_m{}".format(vill, mon))
@@ -253,7 +260,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
 #    plot_pairwise(fst)
 #    plot_pairwise(dxy)
 #    plot_pairwise(da)
-    return(fst, dxy, da, pi)
+    return(fst_t, dxy, da, pi)
 
 def villpopgen_fx(dfworm, outstats, vill, mon):
     '''calculates popgen statistic for each village

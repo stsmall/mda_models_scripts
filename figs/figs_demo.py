@@ -129,7 +129,7 @@ def demo_hoststats_fx(dfworm, dfHost, mon):
     demohostTable.to_csv('demohostTable.csv')
     return(None)
 ###################################
-def host_stats_fx(dfHost, thetaHost):
+def host_stats_fx(dfHost):
     '''calculates stats for the specific host
 
     Parameters
