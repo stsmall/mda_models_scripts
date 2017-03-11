@@ -139,6 +139,6 @@ def host_stats_fx(dfHost,villages):
     -------
     '''
     print("infhost")
-    infhost = [dfHost.groupy("village").size()[i] for i in range(villages)]
+    infhost = [dfHost.groupby("village").size()[i] for i in range(villages)]
 #    plot_coordinates_host(dfHost, thetaHost)
     return(infhost)
