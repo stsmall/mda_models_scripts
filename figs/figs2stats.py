@@ -20,7 +20,7 @@ from .figs_demo import R0net_fx
 from .figs_demo import host_stats_fx
 from .figs_demo import demo_hoststats_fx
 
-def output_tables_fx(logTime, sim_time, outstats):
+def output_tables_fx(logTime, nGens, outstats):
     '''builds summary table from FiGS simulations
 
     Parameters
@@ -41,8 +41,8 @@ def output_tables_fx(logTime, sim_time, outstats):
     R0, ravg, rvar = R0net_fx(R0netlist)
 
     #demo table params
-    month = np.repeat(range(logTime, sim_time, logTime), villages)
-    village = range(villages) * len(month)
+    month = np.repeat(range(logTime, nGens, logTime), villages)
+    village = range(villages) * (len(month) / 2)
     infhost = []
     adult = []
     juv = []
@@ -57,10 +57,9 @@ def output_tables_fx(logTime, sim_time, outstats):
     da =[]
     dxy = []
     tajD =[]
-    pi = []
 
     ####load data from incremental output
-    for mon in range(logTime, sim_time, logTime):
+    for mon in range(logTime, nGens, logTime):
         print("figs2stats")
         #worm files
         with open('dfworm_{}.pkl'.format(mon), 'rb') as worm:
@@ -78,7 +77,7 @@ def output_tables_fx(logTime, sim_time, outstats):
             vmf.append(vmf_t)
 
             #popgen stats
-            thetaA_t, thetaJ_t, thetaM_t, fst_b_t, da_t, dxy_t, tajD_t, pi_t= villpopgen_fx(dfworm, outstats, vill, mon)
+            thetaA_t, thetaJ_t, thetaM_t, fst_b_t, da_t, dxy_t, tajD_t = villpopgen_fx(dfworm, outstats, vill, mon)
 
             thetaA.append(thetaA_t)
             thetaJ.append(thetaJ_t)
@@ -87,7 +86,6 @@ def output_tables_fx(logTime, sim_time, outstats):
             da.append(da_t)
             dxy.append(dxy_t)
             tajD.append(tajD_t)
-            pi.append(pi_t)
 
         ##host stats
         with open('dfHost_{}.pkl'.format(mon), 'rb') as host:
@@ -95,18 +93,18 @@ def output_tables_fx(logTime, sim_time, outstats):
         infhost_t = host_stats_fx(dfHost, villages)
         infhost.append(infhost_t)
         demo_hoststats_fx(dfworm, dfHost, mon)
-
+    import ipdb; ipdb.set_trace()
     #demotable
     summaryTable = pd.DataFrame({"month" : month,
                                 "village" : village,
-                                "inf_host" : infhost,
-                                "avg_prev" : avgPrev,
-                                "var_prev" : varPrev,
-                                "avg_trans" : avgTrans,
-                                "var_trans" : varTrans,
-                                "R0" : R0,
-                                "avg_repo" : ravg,
-                                "var_repo" : rvar,
+                                "inf_host" : infhost, #flatten
+                                "avg_prev" : avgPrev, #too long
+                                "var_prev" : varPrev, #too long
+                                "avg_trans" : avgTrans, #too long
+                                "var_trans" : varTrans, #too long
+                                "R0" : R0,  #zip(R0[0],R[1])
+                                "avg_repo" : ravg, #too long, drop first 2
+                                "var_repo" : rvar, #too long, drop first 2
                                 "avg_adult" : adult,
                                 "avg_juv" : juv,
                                 "avg_mf" : mf,
@@ -119,12 +117,11 @@ def output_tables_fx(logTime, sim_time, outstats):
                                 "fst_b" : fst_b,
                                 "da" : da,
                                 "dxy" : dxy,
-                                "tajD" : tajD,
-                                "pi" : pi
+                                "tajD" : tajD
                                 })
     summaryTable = summaryTable.loc[:, ['month', 'village', 'inf_host', 'avg_prev', 'var_prev', 'avg_trans',
                                   'var_trans', 'R0', 'avg_repo', 'var_repo', 'avg_adult', 'avg_juv', 'avg_mf',
-                                  'var_adult', 'var_juv', 'var_mf','thetaA', 'thetaJ', 'thetaM', 'fst_b', 'da', 'dxy', 'tajD', 'pi']]
+                                  'var_adult', 'var_juv', 'var_mf','thetaA', 'thetaJ', 'thetaM', 'fst_b', 'da', 'dxy', 'tajD']]
     summaryTable.to_csv(summaryTable)
 
 

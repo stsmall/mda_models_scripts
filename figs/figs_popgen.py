@@ -29,9 +29,19 @@ def site_freqspec_fx(dfworm, mon, mf, locus):
 
     Parameters
     ---------
-
+    dfworm : df
+        padas df with meta, h1/h2 etc ...
+    mon : int
+        month of logTime
+    mf : array
+        list of indexes corresponding to stage == M
+    locus : str
+        locus to query
     Returns
     -------
+    plotSFS : fig
+        plot of site freq spectrum
+
     '''
     print("sfs")
     #calculate SFS
@@ -54,9 +64,18 @@ def sel_trace_fx(dfworm, freqsum, locus, mf):
 
     Parameters
     ---------
-
+    dfworm : df
+        padas df with meta, h1/h2 etc ...
+    freqsum : array
+        counts of all allele as sfs
+    mf : array
+        list of indexes corresponding to stage == M
+    locus : str
+        locus to query
     Returns
     -------
+    plotSelTrace : fig
+        plot of allele freq trace for selected sites
     '''
     print("seltrace")
     if bool(dfworm.sel):
@@ -74,14 +93,43 @@ def haplotype_net_fx(dfworm):
 
     Parameters
     ---------
+    dfworm : df
+        padas df with meta, h1/h2 etc ...
 
     Returns
     -------
+    hapnetwork : fig
+        haplotype network
+    HapConfig : list
+        haplotype configuration
     '''
     print("hapnet")
-    #mthaps = dfworm.h1['0']
-    #vcf2networks, fitchi, pegas/adgenet in R ???
+    sample_size = 100
+#    K = np.vstack({tuple(row) for row in dfworm.h1['0']})
+    mf = dfworm.meta[(dfworm.meta["stage"] == "M")].index.values
+    mfhaps = dfworm.meta.ix[mf].groupby("village").apply(lambda y: y.sample(sample_size).index.values)
+    #haplotype configuration
+    H = []
+    M = []
+    K = []
+    C = []
+    for v in range(len(mfhaps)):
+        hap_sample = dfworm.h1['0'][[(mfhaps[v])]]
+        uniqhaps = np.array([np.array(x) for x in set(tuple(x) for x in hap_sample)])
+        hapfreq = np.array([len(hap_sample[np.all(hap_sample==x, axis=1)]) for x in uniqhaps],dtype=int)
+        n = sum(hapfreq)
+        C_freq, C_count = np.unique(hapfreq,return_counts=True)
+        C_v = np.zeros(n)
+        C_v[C_freq-1] = C_count #full hap configuration
+        C.append(C_v)
+        #haplotype diversity
+        H.append(1 - sum([(((i+1)/float(n))**2) * c for i,c in enumerate(C_v)]))
+        M.append(max(C_v))
+        K.append(sum(C_v))
 
+    #haplotype networks
+    #TO DO: calculate haplotype networks
+    #vcf2networks, fitchi, pegas/adgenet in R ???
     #plot_hapnetwork(hapnetobj)
     return(None)
 
@@ -90,23 +138,35 @@ def figs2vcf_fx(dfworm):
 
     Parameters
     ---------
+    dfworm : df
+        padas df with meta, h1/h2 etc ...
 
     Returns
     -------
+    figs2vcf : file
+        vcf formatted file
     '''
     print("figs2vcf")
 
 
     return(None)
 
-def figs2scikit_fx(dfworm, sample_size, vill):
+def figs2scikit_fx(dfworm, sample_size, vill, locus):
     '''takes worm object and output format to load into scikit-allel
 
     Parameters
     ---------
+    dfworm : df
+        padas df with meta, h1/h2 etc ...
+    sample_size : int
+        number of worms to use for stats calculation
+    vill : int
+    locus : str
 
     Returns
     -------
+    scikit object
+        calculate stats using modules in scikit-allel
     '''
     print("scikit")
     import allel
@@ -115,10 +175,10 @@ def figs2scikit_fx(dfworm, sample_size, vill):
     #groupby: village == vill, stage == "M", hostidx
     mf = dfworm.meta[(dfworm.meta["stage"] == "M") & (dfworm.meta["village"] == vill)].index.values
     mf_subsample = mf[np.random.choice(mf.shape[0], sample_size, replace = False)]
-    haps1 = dfworm.h1['1'][mf_subsample]
-    haps2 = dfworm.h2['1'][mf_subsample]
+    haps1 = dfworm.h1[locus][mf_subsample]
+    haps2 = dfworm.h2[locus][mf_subsample]
     #import into allel
-    positions = dfworm.pos['1']
+    positions = dfworm.pos[locus]
     haparray_ind = np.dstack((haps1, haps2))
     haparray_pop = np.concatenate(haparray_ind, axis = 1)
     h = allel.HaplotypeArray(haparray_pop)
@@ -137,11 +197,27 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
 
     Parameters
     ---------
+    dfworm : df
+        padas df with meta, h1/h2 etc ...
+    mon : int
+        month of logTime
+    vill : int
+        which village
+    basepairs : list
+        list of locus sizes in basepairs
+    sample_size : int
+        number of worms to use for stats calculation
 
     Returns
     -------
-    fst_slat : float
-        slatkin 1991 calculation of Fst, mean over all host-pops in village
+    fst_t : list
+        slatkin 1991 calculation of Fst
+    dxy : list
+        pairwise diversity between 2 populations
+    da : list
+        pairwise diversity normalize by pi
+    popgenTable : df
+        summary stats for all host in each village at time mon
     '''
     print("pairwise")
     fst_t = []
@@ -159,7 +235,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
     nummutations = []
     numpoly = []
     numsingletons = []
-    pi = []
+    #pi = []
 #####
     #groupby: village == vill, stage == "M", hostidx
     mf = dfworm.meta[(dfworm.meta["stage"] == "M") & (dfworm.meta["village"] == vill)].index.values
@@ -198,8 +274,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
             numsingletons.append(pspop1.numsingletons())
             #this is super slow
             size = pop1.shape[0]
-            pi.append(sum([sum((i+j) == 1) for i, j in combinations(pop1, 2)]) / (size*(size-1)/2.0))
-
+            #pi.append(sum([sum((i+j) == 1) for i, j in combinations(pop1, 2)]) / (size*(size-1)/2.0))
 #            wallsb = pspop1.wallsb()
 #            wallsbprime = pspop1.wallsbprime()
 #            wallsq = pspop1.wallsq()
@@ -229,7 +304,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
             dxy.append(sum([sum((x + y) == 1) for x, y in zip(popX, popY)]) / float((sizedxy))) #approximate
             #dxy_t = sum([sum((x + y) == 1) for x in popX for y in popY]) / (sizedxy**2.0) #more precise, but really slow
         print("da")
-        da_t = [dx - np.mean(pi_xy) for dx, pi_xy in zip(dxy, combinations(pi,2))]
+        da_t = [dx - np.mean(pi_xy) for dx, pi_xy in zip(dxy, combinations(thetapi,2))]
         da.append(da_t)
 
     popgenTable = pd.DataFrame({"month" : [mon] * len(hostidx),
@@ -260,7 +335,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
 #    plot_pairwise(fst)
 #    plot_pairwise(dxy)
 #    plot_pairwise(da)
-    return(fst_t, dxy, da, pi)
+    return(fst_t, dxy, da)
 
 def villpopgen_fx(dfworm, outstats, vill, mon):
     '''calculates popgen statistic for each village
@@ -268,8 +343,13 @@ def villpopgen_fx(dfworm, outstats, vill, mon):
     Parameters
     ---------
     dfworm : df
-    outstats : list
+        padas df with meta, h1/h2 etc ...
+    mon : int
+        month of logTime
     vill : int
+        which village
+    outstats : list
+        contains [basepairs, sample_size, window_length, num_windows, wb2vcf, figs2scikit]
 
     Returns
     -------
@@ -339,11 +419,10 @@ def villpopgen_fx(dfworm, outstats, vill, mon):
         tajD_t.append((psmf1.tajimasd() + psmf2.tajimasd()) / 2.0)
 
     #call paired functions
-    fst, dxy, da, pi = pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size) #returns mean fst_slatkin
+    fst, dxy, da = pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size) #returns mean fst_slatkin
     fst_slat_t = np.mean(fst)
     dxy_t = np.mean(dxy)
     da_t = np.mean(da)
-    pi_t = np.mean(pi)
 
     return(np.mean(thetaA_t), np.mean(thetaJ_t), np.mean(thetaM_t), fst_slat_t,
-           da_t, dxy_t, tajD_t, pi_t)
+           da_t, dxy_t, np.mean(tajD_t))

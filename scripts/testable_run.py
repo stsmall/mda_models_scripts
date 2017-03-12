@@ -265,7 +265,7 @@ def wb_sims(config_file):
 
     #start stats
     print("\n\ncalculating stats\n\n")
-    output_tables_fx(logTime, sim_time, outstats)
+    output_tables_fx(logTime, numberGens, outstats)
 
     return(seed, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))
 
