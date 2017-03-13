@@ -127,7 +127,7 @@ def wb_sims(config_file):
     wb2vcf=config.getboolean(sh, 'wb2vcf')
     figs2scikit=config.getboolean(sh, 'figs2scikit')
 
-    outstats = [basepairs, sample_size, window_length, num_windows, wb2vcf, figs2scikit]
+    outstats = [basepairs, sample_size, window_length, num_windows, wb2vcf, figs2scikit, burn_in]
 
     #start intialize
     if mda:
