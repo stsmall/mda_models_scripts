@@ -263,6 +263,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
             theta.append(pspop1.thetaw())
             tajimasd.append(pspop1.tajimasd())
             thetapi.append(pspop1.thetapi())
+            #pi.append(sum([(2.0*i*(size-i)) / (size*(size-1)) for i in np.sum(pop1)]))
             fulid.append(pspop1.fulid())
             fulidstar.append(pspop1.fulidstar())
             fulif.append(pspop1.fulif())
@@ -274,15 +275,16 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
             numsingletons.append(pspop1.numsingletons())
             #this is super slow
             size = pop1.shape[0]
-            #pi.append(sum([sum((i+j) == 1) for i, j in combinations(pop1, 2)]) / (size*(size-1)/2.0))
 #            wallsb = pspop1.wallsb()
 #            wallsbprime = pspop1.wallsbprime()
 #            wallsq = pspop1.wallsq()
-#            garudStats_t = garudStats(sdpop1)
-#            lhaf_t = lhaf(sdpop1,10) #what is the double?
+#            garudStats_t = garudStats(sdpop1) #garud 2015
+#            lhaf_t = lhaf(sdpop1,1) #1-HAF is most common; Ronen 2016
 #            ld_t = ld(sdpop1, haveOutgroup = False, mincount = .05, maxDist = 5000)
-        print("fst, dxy")
+
+#############this part is just slow, maybe parallel ??
         for hostX, hostY in combinations(hostidx, 2):
+            #print("fst")
             popX = np.vstack([dfworm.h1[locus][mf_pairs[hostX]], dfworm.h2[locus][mf_pairs[hostX]]])
             popY = np.vstack([dfworm.h1[locus][mf_pairs[hostY]], dfworm.h2[locus][mf_pairs[hostY]]])
             sdfst = simData()
@@ -301,8 +303,11 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
             #dxy, sample sizes must be equal
             sizedxy = min(size)
             #is this total pairwise or product of 2 pops? Diploid?
+            #print("dxy")
             dxy.append(sum([sum((x + y) == 1) for x, y in zip(popX, popY)]) / float((sizedxy))) #approximate
             #dxy_t = sum([sum((x + y) == 1) for x in popX for y in popY]) / (sizedxy**2.0) #more precise, but really slow
+#############
+
         print("da")
         da_t = [dx - np.mean(pi_xy) for dx, pi_xy in zip(dxy, combinations(thetapi,2))]
         da.append(da_t)

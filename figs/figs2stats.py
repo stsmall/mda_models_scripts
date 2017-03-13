@@ -29,16 +29,16 @@ def output_tables_fx(logTime, nGens, outstats):
     Returns
     -------
     '''
-
+    burnin = outstats[6]
     #prev, transmission
     with open('L3transdict.pkl','rb') as input:
         L3transdict = pickle.load(input)
-    avgTrans, avgPrev, varTrans, varPrev, villages = prevTrans_fx(L3transdict, logTime)
+    meantran, meanprev, vartran, varprev, villages, month1 = prevTrans_fx(L3transdict, logTime)
 
     #R0net
     with open('R0netlist.pkl','rb') as input:
         R0netlist = pickle.load(input)
-    R0, ravg, rvar = R0net_fx(R0netlist)
+    R0, ravg, rvar = R0net_fx(R0netlist, month1)
 
     #demo table params
     month = np.repeat(range(logTime, nGens, logTime), villages)
@@ -93,18 +93,17 @@ def output_tables_fx(logTime, nGens, outstats):
         infhost_t = host_stats_fx(dfHost, villages)
         infhost.append(infhost_t)
         demo_hoststats_fx(dfworm, dfHost, mon)
-    import ipdb; ipdb.set_trace()
     #demotable
     summaryTable = pd.DataFrame({"month" : month,
                                 "village" : village,
-                                "inf_host" : infhost, #flatten
-                                "avg_prev" : avgPrev, #too long
-                                "var_prev" : varPrev, #too long
-                                "avg_trans" : avgTrans, #too long
-                                "var_trans" : varTrans, #too long
-                                "R0" : R0,  #zip(R0[0],R[1])
-                                "avg_repo" : ravg, #too long, drop first 2
-                                "var_repo" : rvar, #too long, drop first 2
+                                "inf_host" : [j for i in infhost for j in i],
+                                "avg_prev" : [val for pair in zip(*meanprev)[(burnin/logTime):] for val in pair], #too long
+                                "var_prev" : [val for pair in zip(*varprev)[(burnin/logTime):] for val in pair], #too long
+                                "avg_trans" : [val for pair in zip(*meantran)[(burnin/logTime):] for val in pair], #too long
+                                "var_trans" : [val for pair in zip(*vartran)[(burnin/logTime):] for val in pair], #too long
+                                "R0" : [j for i in zip(*R0)[(burnin/logTime):] for j in i],
+                                "avg_repo" : [j for i in ravg[(burnin/logTime):] for j in i],
+                                "var_repo" : [j for i in rvar[(burnin/logTime):] for j in i],
                                 "avg_adult" : adult,
                                 "avg_juv" : juv,
                                 "avg_mf" : mf,
@@ -122,7 +121,7 @@ def output_tables_fx(logTime, nGens, outstats):
     summaryTable = summaryTable.loc[:, ['month', 'village', 'inf_host', 'avg_prev', 'var_prev', 'avg_trans',
                                   'var_trans', 'R0', 'avg_repo', 'var_repo', 'avg_adult', 'avg_juv', 'avg_mf',
                                   'var_adult', 'var_juv', 'var_mf','thetaA', 'thetaJ', 'thetaM', 'fst_b', 'da', 'dxy', 'tajD']]
-    summaryTable.to_csv(summaryTable)
+    summaryTable.to_csv("summaryTable.csv")
 
 
     #####final dataframe from figs

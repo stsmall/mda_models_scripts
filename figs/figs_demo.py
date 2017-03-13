@@ -32,22 +32,22 @@ def prevTrans_fx(L3transdict, logTime):
                                 "trans" : trans,
                                 "prev" : prev})
     transTable = transTable.loc[:, ['month','village', 'trans', 'prev']]
-
     meantran = [transTable.groupby("village").rolling(logTime).mean().dropna()['trans'][v::logTime][v] for v in range(vill)]
-    vartran = [transTable.groupby("village").rolling(logTime).mean().dropna()['trans'][v::logTime][v] for v in range(vill)]
+    vartran = [transTable.groupby("village").rolling(logTime).var().dropna()['trans'][v::logTime][v] for v in range(vill)]
     meanprev = [transTable.groupby("village").rolling(logTime).mean().dropna()['prev'][v::logTime][v] for v in range(vill)]
     varprev = [transTable.groupby("village").rolling(logTime).var().dropna()['prev'][v::logTime][v] for v in range(vill)]
-    avgTrans = [val for pair in zip(*meantran) for val in pair]
-    varTrans = [val for pair in zip(*vartran) for val in pair]
-    avgPrev = [val for pair in zip(*meanprev) for val in pair]
-    varPrev = [val for pair in zip(*varprev) for val in pair]
+
+#    avgTrans = [val for pair in zip(*meantran)[] for val in pair]
+#    varTrans = [val for pair in zip(*vartran)[] for val in pair]
+#    avgPrev = [val for pair in zip(*meanprev)[] for val in pair]
+#    varPrev = [val for pair in zip(*varprev)[] for val in pair]
 
     #write to out
     transTable.to_csv("transTable.csv")
 
-    return(avgTrans, avgPrev, varTrans, varPrev, vill)
+    return(meantran, meanprev, vartran, varprev, vill, month)
 
-def R0net_fx(R0netlist):
+def R0net_fx(R0netlist, month):
     '''calculate the reproductive rate, R0 for summary table
 
     Parameters
@@ -64,9 +64,15 @@ def R0net_fx(R0netlist):
         R0.append([float(j) / R0_t[v][i-1] for i,j in enumerate(R0_t[v])])
 
     #reproductive mean and var
-    ravg = [j for time in R0netlist['repoavg'] for j in time]
-    rvar = [j for time in R0netlist['repovar'] for j in time]
+    ravg = R0netlist['repoavg']
+    rvar = R0netlist['repovar']
 
+    R0Table = pd.DataFrame({"R0" : [j for i in zip(*R0) for j in i],
+                            "ravg" : [j for i in ravg for j in i],
+                            "rvar" : [j for i in rvar for j in i]
+                            })
+    R0Table = R0Table.loc[:, ['R0', 'ravg', 'rvar']]
+    R0Table.to_csv("R0Table.csv")
     return(R0, ravg, rvar)
 
 def demo_stats_fx(dfworm, vill):
@@ -126,6 +132,8 @@ def demo_hoststats_fx(dfworm, dfHost, mon):
                                   "juv" : njuv,
                                   "mf" : nmf
                                   })
+    demohostTable = demohostTable.loc[:, ['month', 'hostidx', 'adult', 'juv', 'mf']]
+
     demohostTable.to_csv('demohostTable.csv')
     return(None)
 ###################################
