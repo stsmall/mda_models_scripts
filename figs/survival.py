@@ -6,7 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-import ipdb
+
 import numpy as np
 from scipy.stats import weibull_min
 
@@ -55,7 +55,8 @@ def survivalbase_fx(month,
                     densitydep_surv,
                     densitydep_fec,
                     dfHost,
-                    dfworm):
+                    dfworm,
+                    R0netlist):
     '''Base survival function
     Parameters
     ---------
@@ -101,6 +102,13 @@ def survivalbase_fx(month,
 
     '''
     if month%12 == 0:
+        ##stats
+        x = dfworm.meta.groupby(["village","stage"]).apply(lambda y: y[(y.R0net < (len(R0netlist['R0']) + 1))
+                            & (y.R0net > len(R0netlist['R0']))]).R0net[:,'A']
+        R0netlist['R0'].append([len(x[i]) for i in range(len(x.index.levels[0]))])
+        R0netlist['repoavg'].append([np.mean((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+        R0netlist['repovar'].append([np.var((np.unique(x[i],return_counts=True)[1])) for i in range(len(x.index.levels[0]))])
+        ##
         dfHost, dfworm = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
                 village)
 
@@ -143,4 +151,4 @@ def survivalbase_fx(month,
     dfAdult_mf.meta.age = 1
     dfworm.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
-    return(dfHost, dfworm)
+    return(dfHost, dfworm, R0netlist)

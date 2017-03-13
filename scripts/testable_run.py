@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.metrics import pairwise_distances
 from scipy.stats import weibull_min
 import matplotlib.pyplot as plt
-
+from collections import defaultdict
 try:
     import configparser
 except ImportError:
@@ -22,9 +22,8 @@ from figs.worm import Worms
 import figs.wbsims_initialize as wbinit
 import figs.transmissionKDtree as trans
 from figs.village import Village
-from figs.calc_outstats import allelefreq_fx
-from figs.plotting import (plot_allele_frequency,
-        plot_coordinates_host)
+from figs.figs2stats import output_tables_fx
+#import figs.figs2stats as figstats
 
 def wb_sims(config_file):
     '''main function for simulations
@@ -121,48 +120,40 @@ def wb_sims(config_file):
 
     # outfiles
     sh = 'outfiles'
-    demofigs=config.getboolean(sh, 'demofigs')
-    demotables=config.getboolean(sh, 'demotables')
-    demoTime=config.getint(sh, 'demoTime')
+    logTime=config.getint(sh, 'logdf2file')
     sample_size=config.getfloat(sh, 'sample_size')
     window_length=config.getint(sh, 'window_length')
     num_windows=config.getint(sh, 'num_windows')
-    popgenfigs=config.getboolean(sh, 'popgenfigs')
-    popgentables=config.getboolean(sh, 'popgentables')
-    popgenTime=config.getint(sh, 'popgenTime')
     wb2vcf=config.getboolean(sh, 'wb2vcf')
-    wbmfvcf=config.getboolean(sh, 'wbmfvcf')
-    wbadultvcf=config.getboolean(sh, 'wbadultvcf')
-    wbjuvvcf=config.getboolean(sh, 'wbjuvvcf')
-    wbfracvcf=config.getfloat(sh, 'wbfracvcf')
-    wb2scikit=config.getboolean(sh, 'wb2scikit')
-    wbdebug=config.getboolean(sh, 'wbdebug')
+    figs2scikit=config.getboolean(sh, 'figs2scikit')
 
-    if selection:
-        if mda:
-            if fitness == 1:
-                 from figs.survival_mda import survivalmda_sel1_fx as survfx
-            elif fitness == 2:
-                 from figs.survival_mda import survivalmda_sel2_fx as survfx
-            else:
-                 from figs.survival_mda import survivalmda_fx as survfx
+    outstats = [basepairs, sample_size, window_length, num_windows, wb2vcf, figs2scikit, burn_in]
+
+    #start intialize
+    if mda:
+        if selection and fitness == 1:
+             from figs.survival_mda import survivalmda_sel1_fx as survfx
+             print("\nUsing MDA and Selection, fitness is 1")
+        elif selection and fitness == 2:
+             from figs.survival_mda import survivalmda_sel2_fx as survfx
+             print("\nUsing MDA and Selection, fitness is 2")
         else:
-            from figs.survival import survivalbase_fx as survfx
+             from figs.survival_mda import survivalmda_fx as survfx
+             print("\nUsing MDA and NO Selection")
     else:
-        if mda:
-            from figs.survival_mda import survivalmda_fx as survfx
-        else:
-            from figs.survival import survivalbase_fx as survfx
+        from figs.survival import survivalbase_fx as survfx
+        print("\nUsing Base Model and Selection is {}".format(selection))
 
+    #print("\n\nSelection is {}\nMDA is {}\nFitness is {}\n\n".format(selection, mda, fitness))
     dist = [0]
     dist.extend(initial_distance_m)
     distvill = [sum(dist[:i+1]) for i in range(len(dist))]
     village=[]
 
-    if os.path.isfile("dfworm_meta.pkl"):
-        with open('dfworm_meta.pkl', 'rb') as input:
+    if os.path.isfile("dfworm_burnin.pkl"):
+        with open('dfworm_burnin.pkl', 'rb') as input:
             dfworm = pickle.load(input)
-        with open("dfHost_df.pkl",'rb') as input:
+        with open("dfHost_burnin.pkl",'rb') as input:
             dfHost = pickle.load(input)
         sim_time = numberGens
         burn_in = 0
@@ -199,16 +190,20 @@ def wb_sims(config_file):
 
     mdalist = [mda_start + burn_in, mda_num, mda_freq, mda_coverage, mda_macro, mda_juvicide,
             mda_micro, mda_sterile, mda_clear]
+    L3transdict = defaultdict(list)
+    R0netlist = defaultdict(list)
 
+####start sims
     for month in range(1,sim_time):
         print("\nmonth is {}\n".format(month))
-        village, dfHost, dfworm, L3trans = trans.transmission_fx(month,
+        village, dfHost, dfworm, L3transdict = trans.transmission_fx(month,
                                                             village,
                                                             sigma,
                                                             densitydep_uptake,
                                                             dfHost,
-                                                            dfworm)
-        dfHost, dfworm = survfx(month,
+                                                            dfworm,
+                                                            L3transdict)
+        dfHost, dfworm, R0netlist = survfx(month,
                                 village,
                                 surv_Juv,
                                 shapeMF,
@@ -226,20 +221,56 @@ def wb_sims(config_file):
                                 densitydep_surv,
                                 densitydep_fec,
                                 dfHost,
-                                dfworm)
+                                dfworm,
+                                R0netlist)
+        #print(dfworm.meta.shape[0])
+        if dfworm.meta.shape[0] == 0:
+            break
+            print("\n\n****POPULATION IS EXTINCT***\n\n")
+        #store intialized after burnin
         if month == burn_in:
-            with open('dfworm_meta.pkl', 'wb') as output:
+            with open('dfworm_burnin.pkl', 'wb') as output:
                 pickler = pickle.Pickler(output, -1)
                 dfworm_burnin = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
                                        dfworm.sel, dfworm.coord)
                 pickler.dump(dfworm_burnin)
             del dfworm_burnin
-            with open('dfHost_df.pkl', 'wb') as output:
+            with open('dfHost_burnin.pkl', 'wb') as output:
                 pickle.dump(dfHost, output, -1)
+        #log data
+        elif month > burn_in and month%logTime == 0:
+            with open('dfworm_{}.pkl'.format(month - burn_in), 'wb') as output:
+                pickler = pickle.Pickler(output, -1)
+                dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
+                                       dfworm.sel, dfworm.coord)
+                pickler.dump(dfworm_x)
+            del dfworm_x
+            with open('dfHost_{}.pkl'.format(month - burn_in), 'wb') as output:
+                pickle.dump(dfHost, output, -1)
+        else: pass
 
-    return(village, dfHost, dfworm)
+    #print out last rep
+    with open('dfworm_final.pkl', 'wb') as output:
+        pickler = pickle.Pickler(output, -1)
+        dfworm_x = Worms(dfworm.meta, dfworm.h1, dfworm.h2, dfworm.pos,
+                               dfworm.sel, dfworm.coord)
+        pickler.dump(dfworm_x)
+    del dfworm_x
+    with open('dfHost_final.pkl', 'wb') as output:
+        pickle.dump(dfHost, output, -1)
+    with open('L3transdict.pkl'.format(month), 'wb') as output:
+        pickle.dump(L3transdict, output, -1)
+    with open('R0netlist.pkl'.format(month), 'wb') as output:
+        pickle.dump(R0netlist, output, -1)
+
+    #start stats
+    print("\n\ncalculating stats\n\n")
+    output_tables_fx(logTime, numberGens, outstats)
+
+    return(seed, "Selection is {}\nMDA is {}\nFitness is {}".format(selection, mda, fitness))
 
 if __name__ == '__main__':
      # this probably needs to be run for at least 240 - 360 months to get away from starting conditions
-     village,dfHost, dfworm = wb_sims('../tests/wbsims.cfg')
-
+     seed, model = wb_sims('../tests/wbsims.cfg')
+     print("\nSEED\t{}\n".format(seed))
+     print(model)

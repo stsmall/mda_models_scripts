@@ -6,8 +6,6 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
-import numpy as np
-import ipdb
 
 def hostmda_fx(village,
                dfHost,
@@ -37,6 +35,6 @@ def hostmda_fx(village,
      dfHost.MDA = 0
      ##assign MDA randomly
      for vill in range(len(village)):
-          sub = round(mda_coverage[vill] * len(dfHost[dfHost.village == vill]))
-          dfHost.ix[np.random.choice(dfHost.index, sub, replace = False), "MDAstate"] = 1
+         mdaiix = dfHost[dfHost.village == vill].sample(frac = mda_coverage[vill]).index.values
+         dfHost.loc[mdaiix, "MDAstate"] = 1
      return(dfHost)
