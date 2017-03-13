@@ -60,11 +60,11 @@ def host_fx(village, infhost):
         'age': [i[0] for i in age_death],
         'agedeath': [i[1] for i in age_death],
         'coordinates': coordinates,
-        'MDA': np.zeros(sum(infhost)),
-        'MDA_cum': np.zeros(sum(infhost))
+        'MDAstate': np.zeros(sum(infhost)),
+        'MDAcum': [[] for i in range(sum(infhost))]
     })
     dfHost = dfHost.loc[:, ['village', 'hostidx', 'sex',
-            'age', 'agedeath', 'coordinates', 'MDA', 'MDA_cum']]
+            'age', 'agedeath', 'coordinates', 'MDAstate', 'MDAcum']]
     return(dfHost)
 
 

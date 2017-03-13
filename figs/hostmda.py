@@ -7,7 +7,7 @@
     under certain conditions; type `show c' for details.
 """
 import numpy as np
-
+import ipdb
 
 def hostmda_fx(village,
                dfHost,
@@ -27,12 +27,16 @@ def hostmda_fx(village,
      dfHost : df
           now will mda column as identity 0 or 1, and updates mda_sum column
      '''
+     #ipdb.set_trace()
+     y = lambda z: z.append(1)
+     x = lambda z: z.append(0)
      ##add to MDA_cum
-     dfHost.ix[dfHost.MDA==1, "MDA_cum"] += 1
+     dfHost.loc[dfHost.MDAstate == 1].MDAcum.apply(y)
+     dfHost.loc[dfHost.MDAstate == 0].MDAcum.apply(x)
      ##rezero MDA identifier
      dfHost.MDA = 0
      ##assign MDA randomly
      for vill in range(len(village)):
           sub = round(mda_coverage[vill] * len(dfHost[dfHost.village == vill]))
-          dfHost.ix[np.random.choice(dfHost.index, sub, replace = False), "MDA"] = 1
+          dfHost.ix[np.random.choice(dfHost.index, sub, replace = False), "MDAstate"] = 1
      return(dfHost)

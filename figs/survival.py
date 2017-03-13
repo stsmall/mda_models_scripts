@@ -6,6 +6,7 @@
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 """
+import ipdb
 import numpy as np
 from scipy.stats import weibull_min
 
@@ -13,25 +14,27 @@ from figs.fecundity import fecunditybase_fx
 from figs.host_migration import hostmigration_fx
 
 
-def kill_adults(worms, hosts, month, shapeAdult, scaleAdult,
+def kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
         village):
     """
     """
-    adiix = worms.meta.index[worms.meta.stage == "A"].values
+    adiix = dfworm.meta.index[dfworm.meta.stage == "A"].values
+    #Adult survival is based on weibull cdf
     kill_adult_rand = np.random.random(adiix.shape[0])
     try:
-        kill_adult_fx_age = weibull_min.cdf(worms.meta.age[adiix], shapeAdult,
+        kill_adult_fx_age = weibull_min.cdf(dfworm.meta.age[adiix], shapeAdult,
                 loc=0, scale=scaleAdult)
     except TypeError:
         kill_adult_fx_age = weibull_min.cdf(0, shapeAdult, loc=0, scale=scaleAdult)
     dieAdult = adiix[np.where(kill_adult_rand < kill_adult_fx_age)]
-    worms.meta.age[adiix] += 1 #2 - 21
-    dfHost = hosts.query("age < agedeath")
+    dfworm.meta.ix[adiix, "age"] += 1 #2 - 21
+    ##host survival is from act table
+    dfHost = dfHost.query("age < agedeath")
     diehost = dfHost.hostidx.values
     dead_worms = np.append(dieAdult,
-            worms.meta[~worms.meta.hostidx.isin(diehost)].index.values)
-    worms.drop_worms(dead_worms)
-    return(dfHost)
+            dfworm.meta[~dfworm.meta.hostidx.isin(diehost)].index.values)
+    dfworm.drop_worms(dead_worms)
+    return(dfHost, dfworm)
 
 
 def survivalbase_fx(month,
@@ -98,13 +101,13 @@ def survivalbase_fx(month,
 
     '''
     if month%12 == 0:
-        dfHost = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
+        dfHost, dfworm = kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
                 village)
-    else: pass
 
-    dfHost.age = dfHost.age + 1
-    if hostmigrate != 0:
-        dfHost = hostmigration_fx(village, dfHost, hostmigrate)
+        dfHost.age = dfHost.age + 1
+        if hostmigrate != 0:
+            dfHost = hostmigration_fx(village, dfHost, hostmigrate)
+    else: pass
 
     ##Juv is exponential 0.866; surv_Juv
     juviix = dfworm.meta[dfworm.meta.stage == "J"].index.values
@@ -123,7 +126,6 @@ def survivalbase_fx(month,
     dfworm.meta.ix[mfiix, 'age'] += 1
 
     ##move Juv age 13 to adult age 1
-#    ipdb.set_trace()
     juviix12 = dfworm.meta.ix[juviix].query('age > 12').index.values
     if any(juviix12):
         #reset age to adult
