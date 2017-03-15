@@ -1,7 +1,7 @@
 """
 """
 from numpy import delete as ndelete
-from numpy import vstack
+from numpy import vstack, hstack
 import numpy as np
 import pandas as pd
 
@@ -71,7 +71,7 @@ class Worms(object):
 
 
 
-    def add_worms(self, oworms, index, update=False):
+    def add_worms(self, oworms, new_pos, update=False):
         """
         Parameters
         ----------
@@ -80,40 +80,48 @@ class Worms(object):
         index : int list
             numerical index from the other Worms object to add
         """
-        if len(index) != 0 and self.meta.shape[0] !=0:
-            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]],
+        if len(new_pos) != 0 and self.meta.shape[0] !=0:
+            self.meta = pd.concat([self.meta, oworms.meta],
                     ignore_index=True)
             self.meta.reset_index(drop=True, inplace=True)
             for i in oworms.h1.keys():
+                assert oworms.h1[i].shape[1] >= self.h1[i].shape[1]
                 if np.array_equal(self.pos[i],  oworms.pos[i]):
-                    self.h1[i] = vstack((self.h1[i], oworms.h1[i][index,:]))
+                    self.h1[i] = vstack((self.h1[i], oworms.h1[i]))
                     if i in oworms.h2.keys():
                         self.h2[i] = vstack((self.h2[i],
-                            oworms.h2[i][index,:]))
+                            oworms.h2[i]))
                     else:
                         pass
                 else:
-                    _oworm = self._merge_positions(i, oworms)
-                    self.h1[i] = vstack((self.h1[i], _oworm.h1[i][index,:]))
+                    self.h1[i] = hstack((self.h1[i],
+                        np.zeros((self.h1[i].shape[0], len(new_pos)), 
+                            dtype = np.uint8)))
+                    print(self.h1[i].shape)
+                    self.pos[i] = np.append(self.pos[i], new_pos[i])
+                    print(self.pos[i])
+                    iix = np.argsort(self.pos[i])
+                    self.h1[i] = self.h1[i][:, iix]
+                    self.h1[i] = vstack((self.h1[i], oworms.h1[i]))
                     try:
                         self.h2[i] = vstack((self.h2[i],
-                            _oworm.h2[i][index,:]))
+                            oworms.h2[i]))
                     except KeyError:
                         pass
                 if update:
                     oworms.h1[i] = oworms
                     oworms.pos[i] =  self.pos[i]
-        elif self.meta.shape[0] == 0 and len(index) != 0:
-            self.meta = oworms.meta.ix[index, :]
+        elif self.meta.shape[0] == 0 and len(new_pos) != 0:
+            self.meta = oworms.meta
             self.meta.reset_index(drop=True, inplace=True)
             for i in oworms.h1.keys():
-                self.h1[i] = oworms.h1[i][index, :]
+                self.h1[i] = oworms.h1[i]
                 self.pos[i] = oworms.pos[i]
             for i in oworms.h2.keys():
-                self.h2[i] = oworms.h2[i][index, :]
+                self.h2[i] = oworms.h2[i]
 
         else:
-            self.meta = pd.concat([self.meta, oworms.meta.ix[index, :]],
+            self.meta = pd.concat([self.meta, oworms.meta],
                     ignore_index=True)
             self.meta.reset_index(drop=True, inplace=True)
             print("Nothing to add")

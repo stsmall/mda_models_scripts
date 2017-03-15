@@ -147,8 +147,5 @@ def survivalbase_fx(month,
     dfAdult_mf, dfworm = fecunditybase_fx(fecund, dfworm, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
                                          densitydep_fec)
-    dfAdult_mf.meta.sex = np.random.choice(['M', 'F'] , size=len(dfAdult_mf.meta))
-    dfAdult_mf.meta.age = 1
-    dfworm.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
     return(dfHost, dfworm, R0netlist)
