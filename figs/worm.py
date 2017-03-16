@@ -61,6 +61,7 @@ class Worms(object):
                     iix = np.argsort(self.pos[i])
                     self.h1[i] = self.h1[i][:, iix]
                     self.h1[i] = vstack((self.h1[i], oworms.h1[i]))
+                    self.pos[i] = self.pos[i][iix]
                     try:
                         self.h2[i] = hstack((self.h2[i],
                             np.zeros((self.h2[i].shape[0], len(new_pos[i])),
