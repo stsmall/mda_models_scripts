@@ -242,6 +242,7 @@ def pairwise_div_fx(dfworm, mon, vill, basepairs, sample_size):
     mf_mask = dfworm.meta.ix[mf].groupby("hostidx").size() < sample_size
     if any(mf_mask):
         mf = dfworm.meta.ix[mf][~dfworm.meta["hostidx"].isin(mf_mask[mf_mask].index.values)].index.values
+        import ipdb; ipdb.set_trace()
     mf_pairs = dfworm.meta.ix[mf].groupby("hostidx").apply(lambda y: y.sample(sample_size).index.values)
     hostidx = [h for h in mf_pairs.keys()]
 #####
