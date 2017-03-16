@@ -30,46 +30,6 @@ class Worms(object):
         else:
             self.coord = {}
 
-    def _merge_positions(self, loc, oworm, newpos = None):
-        # Not the fastest
-        assert self.h1[loc].shape[1] == len(self.pos[loc])
-        pos1 = np.copy(self.pos[loc])
-        pos2 = np.copy(oworm.pos[loc])
-        m1 = np.setdiff1d(pos1, pos2)
-        m2 = np.setdiff1d(pos2, pos1)
-        n1 = self.h1[loc].shape[0]
-        iix = []
-        for i in m2:
-            iix.append(np.argmax(pos1 > i))
-
-
-        self.h1[loc] = np.insert(self.h1[loc], iix,
-                np.zeros((n1, len(m2)), dtype=np.uint8), axis=1)
-        try:
-            self.h2[loc] = np.insert(self.h2[loc], iix,
-                    np.zeros((n1, len(m2)), dtype=np.uint8), axis=1)
-        except KeyError:
-            pass
-        pos1 = np.insert(pos1, iix, m2)
-
-        self.pos[loc] = pos1
-
-        n2 = oworm.h1[loc].shape[0]
-        iix = []
-        for i in m1:
-            iix.append(np.argmax(pos2 > i))
-        oworm.h1[loc] = np.insert(oworm.h1[loc], iix,
-                np.zeros((n2, len(m1)), dtype=np.uint8), axis=1)
-        try:
-            oworm.h2[loc] = np.insert(oworm.h2[loc], iix,
-                    np.zeros((n2, len(m1)), dtype=np.uint8), axis=1)
-        except KeyError:
-            pass
-
-        #pos2 = np.insert(pos2, iix, m1)
-        return(oworm)
-
-
 
     def add_worms(self, oworms, new_pos, update=False):
         """
@@ -95,15 +55,17 @@ class Worms(object):
                         pass
                 else:
                     self.h1[i] = hstack((self.h1[i],
-                        np.zeros((self.h1[i].shape[0], len(new_pos)), 
+                        np.zeros((self.h1[i].shape[0], len(new_pos[i])), 
                             dtype = np.uint8)))
-                    print(self.h1[i].shape)
                     self.pos[i] = np.append(self.pos[i], new_pos[i])
-                    print(self.pos[i])
                     iix = np.argsort(self.pos[i])
                     self.h1[i] = self.h1[i][:, iix]
                     self.h1[i] = vstack((self.h1[i], oworms.h1[i]))
                     try:
+                        self.h2[i] = hstack((self.h2[i],
+                            np.zeros((self.h2[i].shape[0], len(new_pos[i])),
+                                dtype=np.uint8)))
+                        self.h2[i] = self.h2[i][:, iix]
                         self.h2[i] = vstack((self.h2[i],
                             oworms.h2[i]))
                     except KeyError:
@@ -119,7 +81,6 @@ class Worms(object):
                 self.pos[i] = oworms.pos[i]
             for i in oworms.h2.keys():
                 self.h2[i] = oworms.h2[i]
-
         else:
             self.meta = pd.concat([self.meta, oworms.meta],
                     ignore_index=True)
