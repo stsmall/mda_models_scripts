@@ -31,7 +31,6 @@ def kill_adults(dfworm, dfHost, month, shapeAdult, scaleAdult,
     ##host survival is from act table
     dfHost = dfHost.query("age < agedeath")
     diehost = dfHost.hostidx.values
-
     dead_worms = np.append(dieAdult,
             dfworm.meta[~dfworm.meta.hostidx.isin(diehost)].index.values)
     dfworm.drop_worms(dead_worms)
@@ -135,7 +134,6 @@ def survivalbase_fx(month,
     dfworm.meta.ix[mfiix, 'age'] += 1
 
     ##move Juv age 13 to adult age 1
-#    ipdb.set_trace()
     juviix12 = dfworm.meta.ix[juviix].query('age > 12').index.values
     if any(juviix12):
         #reset age to adult
@@ -149,8 +147,5 @@ def survivalbase_fx(month,
     dfAdult_mf, dfworm = fecunditybase_fx(fecund, dfworm, locus, mutation_rate,
                                          recombination_rate, basepairs, selection,
                                          densitydep_fec)
-    dfAdult_mf.meta.sex = np.random.choice(['M', 'F'] , size=len(dfAdult_mf.meta))
-    dfAdult_mf.meta.age = 1
-    dfworm.add_worms(dfAdult_mf, dfAdult_mf.meta.index.values)
 
     return(dfHost, dfworm, R0netlist)

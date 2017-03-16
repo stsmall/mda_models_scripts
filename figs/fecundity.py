@@ -41,7 +41,6 @@ def fecunditybase_fx(fecund,
     dfSel : df
 
     '''
-#    ipdb.set_trace()
     adiix = dfworm.meta[dfworm.meta.stage == "A"].index.values
     young = adiix[np.where(dfworm.meta.ix[adiix].age < 6)]
     old = adiix[np.where(dfworm.meta.ix[adiix].age >= 6)]
@@ -55,9 +54,11 @@ def fecunditybase_fx(fecund,
     dfworm.meta.ix[old, 'fec'] = np.random.poisson(positive_lambda).astype(np.int64)
     #sex, recombination, mutation
     dfAdult_mf = recombination_fx(locus, dfworm, adiix, recombination_rate, basepairs)
-    # Positions is just the new positions
+    dfAdult_mf.meta.sex = np.random.choice(['M', 'F'] , size=len(dfAdult_mf.meta))
+    dfAdult_mf.meta.age = 1
     dfAdult_mf, new_positions = mutation_fx(locus, dfAdult_mf,
          mutation_rate, recombination_rate, basepairs)
+    dfworm.add_worms(dfAdult_mf, new_positions)
     if selection: #dfAdult.sel will be updated here to same length as dfAdult_mf.pos
         dfAdult_mf, dfworm = selection_fx(dfworm, dfAdult_mf, new_positions)
     return(dfAdult_mf, dfworm)
