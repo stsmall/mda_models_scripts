@@ -80,11 +80,17 @@ def sel_trace_fx(dfworm, freqsum, locus, mf):
     print("seltrace")
     if bool(dfworm.sel):
         #records trace of selected alleles
+        nind = mf.shape[0]
         ftrace = np.where(dfworm.sel[locus + 'F'] > 0)[0]
-        f_freq = freqsum[ftrace] / (2.0 * mf.shape[0])
+        f_freq = freqsum[ftrace] / (2.0 * nind)
         strace = np.where(dfworm.sel[locus + 'S'] > 0)[0]
-        s_freq = freqsum[strace] / (2.0 * mf.shape[0])
+        s_freq = freqsum[strace] / (2.0 * nind)
 #        plot_allele_trace(f_freq, s_freq)
+        #avg fitness
+        avgF = dfworm.meta.loc[mf,"fitF"].mean()
+        avgS = dfworm.meta.loc[mf, "fitS"].mean()
+        #dfworm.meta.loc[mf,"fitF"].hist()
+        #dfworm.meta.loc[mf,"fitS"].hist()
     else: pass
     return(None)
 
