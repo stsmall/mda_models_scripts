@@ -114,8 +114,10 @@ def survivalbase_fx(month,
                 village)
 
         dfHost.age = dfHost.age + 1
-        if hostmigrate != 0:
-            dfHost = hostmigration_fx(village, dfHost, hostmigrate)
+
+        hostmignumb = np.random.poisson(hostmigrate)
+        if hostmignumb != 0:
+            dfHost = hostmigration_fx(village, dfHost, hostmignumb)
     else: pass
 
     ##Juv is exponential 0.866; surv_Juv
